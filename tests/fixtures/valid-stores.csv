@@ -1,0 +1,4 @@
+name,address,city,state,postalCode,country,phone,email,website,latitude,longitude,featured,category
+Main Store,123 Main St,New York,NY,10001,US,+1-555-0100,store@example.com,https://example.com,40.7128,-74.0060,true,retail
+Branch Store,456 Oak Ave,Los Angeles,CA,90001,US,+1-555-0200,la@example.com,https://example.com/la,34.0522,-118.2437,false,retail
+Downtown Location,789 Pine St,Chicago,IL,60601,US,+1-555-0300,chicago@example.com,,41.8781,-87.6298,false,warehouse

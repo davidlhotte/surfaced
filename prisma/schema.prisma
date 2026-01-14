@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Shop {
+  id              String    @id @default(cuid())
+  shopDomain      String    @unique
+  accessToken     String    // Encrypted AES-256-GCM
+  name            String?   // Shop name from Shopify
+  email           String?   // Shop owner email for notifications
+  plan            Plan      @default(FREE)
+  trialEndsAt     DateTime?
+  installedAt     DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  settings        Settings?
+  auditLogs       AuditLog[]
+}
+
+model Settings {
+  id                String        @id @default(cuid())
+  shopId            String        @unique
+  shop              Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  // Add your app-specific settings here
+  // Example:
+  // featureEnabled    Boolean       @default(false)
+  // customConfig      Json?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  shopId      String
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  action      String
+  details     Json?
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([shopId, createdAt])
+}
+
+enum Plan {
+  FREE
+  BASIC
+  PLUS
+  PREMIUM
+}

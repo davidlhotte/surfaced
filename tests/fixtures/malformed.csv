@@ -1,0 +1,6 @@
+name,address,city,country
+,Missing Name,New York,US
+Store 1,,New York,US
+Store 2,123 Main St,,US
+Store 3,456 Oak Ave,LA,
+=FORMULA,Injection Test,Chicago,US

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/conversion-emails",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}

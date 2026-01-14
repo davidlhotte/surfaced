@@ -1,0 +1,30 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+# TODO: Replace with your Shopify app credentials from Partner Dashboard
+client_id = "YOUR_SHOPIFY_CLIENT_ID"
+name = "Surfaced"
+handle = "surfaced"
+application_url = "https://surfaced.vercel.app/admin"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = false
+
+[webhooks]
+api_version = "2025-01"
+
+  [webhooks.privacy_compliance]
+  customer_deletion_url = "https://surfaced.vercel.app/api/webhooks/gdpr/customers-redact"
+  customer_data_request_url = "https://surfaced.vercel.app/api/webhooks/gdpr/customers-data-request"
+  shop_deletion_url = "https://surfaced.vercel.app/api/webhooks/gdpr/shop-redact"
+
+[access_scopes]
+# TODO: Adjust scopes based on your app's needs
+scopes = "read_content,write_content"
+# Use managed installation - Shopify handles the install flow
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = ["https://surfaced.vercel.app/api/auth/callback"]
+
+[pos]
+embedded = false
