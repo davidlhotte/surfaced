@@ -24,6 +24,7 @@ import {
   ChartVerticalFilledIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
+import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 
 type DashboardData = {
   shop: {
@@ -67,32 +68,53 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [auditing, setAuditing] = useState(false);
 
+  const { fetch: authFetch } = useAuthenticatedFetch();
+  const { isLoading: shopLoading, error: shopError, isAuthenticated } = useShopContext();
+
   const fetchDashboard = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/dashboard');
-      if (!response.ok) throw new Error('Failed to fetch dashboard data');
+      console.log('[Surfaced] Fetching dashboard...');
+      const response = await authFetch('/api/dashboard');
+      console.log('[Surfaced] Dashboard response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('[Surfaced] Dashboard error:', errorText);
+        throw new Error(`Failed to fetch dashboard data: ${errorText}`);
+      }
+
       const result = await response.json();
+      console.log('[Surfaced] Dashboard result:', result);
+
       if (result.success) {
         setData(result.data);
+        setError(null);
       } else {
         setError(result.error || 'Unknown error');
       }
     } catch (err) {
+      console.error('[Surfaced] Dashboard fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authFetch]);
 
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    // Wait for shop context to be ready
+    if (!shopLoading && isAuthenticated) {
+      fetchDashboard();
+    } else if (!shopLoading && shopError) {
+      setError(shopError);
+      setLoading(false);
+    }
+  }, [fetchDashboard, shopLoading, isAuthenticated, shopError]);
 
   const runAudit = async () => {
     try {
       setAuditing(true);
-      const response = await fetch('/api/audit', { method: 'POST' });
+      const response = await authFetch('/api/audit', { method: 'POST' });
       if (!response.ok) throw new Error('Audit failed');
       await fetchDashboard();
     } catch (err) {
@@ -114,7 +136,7 @@ export default function Dashboard() {
     return 'critical';
   };
 
-  if (loading) {
+  if (loading || shopLoading) {
     return (
       <Page title="Dashboard">
         <Layout>
@@ -123,7 +145,9 @@ export default function Dashboard() {
               <Box padding="800">
                 <InlineStack align="center" blockAlign="center">
                   <Spinner size="large" />
-                  <Text as="p">Loading your AI visibility data...</Text>
+                  <Text as="p">
+                    {shopLoading ? 'Connecting to Shopify...' : 'Loading your AI visibility data...'}
+                  </Text>
                 </InlineStack>
               </Box>
             </Card>

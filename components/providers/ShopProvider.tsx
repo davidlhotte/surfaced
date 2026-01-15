@@ -6,12 +6,14 @@ interface ShopContextType {
   shop: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  error: string | null;
 }
 
 const ShopContext = createContext<ShopContextType>({
   shop: null,
   isLoading: true,
   isAuthenticated: false,
+  error: null,
 });
 
 // Global shop storage (survives component re-mounts)
@@ -22,25 +24,27 @@ interface ShopProviderProps {
   children: ReactNode;
 }
 
+const DEBUG = true; // Set to true for verbose logging
+
+function debugLog(message: string, data?: unknown) {
+  if (DEBUG) {
+    console.log(`[Surfaced] ${message}`, data !== undefined ? data : '');
+  }
+}
+
 export function ShopProvider({ children }: ShopProviderProps) {
   const [shop, setShop] = useState<string | null>(globalShop);
   const [isLoading, setIsLoading] = useState(!globalShop);
   const [isAuthenticated, setIsAuthenticated] = useState(isTokenExchanged);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Set up Web Vitals monitoring if available
-    if (typeof window !== 'undefined' && window.shopify?.webVitals?.onReport) {
-      window.shopify.webVitals.onReport((metrics) => {
-        // Log Web Vitals for monitoring
-        console.log('[LocateUs] Web Vitals:', metrics);
-        // In production, you could send this to your analytics service
-      });
-    }
-  }, []);
+    debugLog('ShopProvider mounted');
+    debugLog('Initial state:', { globalShop, isTokenExchanged });
 
-  useEffect(() => {
     // If we already have the shop and token, don't search again
     if (globalShop && isTokenExchanged) {
+      debugLog('Using cached shop and token');
       setShop(globalShop);
       setIsLoading(false);
       setIsAuthenticated(true);
@@ -48,17 +52,22 @@ export function ShopProvider({ children }: ShopProviderProps) {
     }
 
     const detectShop = (): string | null => {
+      debugLog('Detecting shop...');
+
       // Try App Bridge config first (preferred method)
       if (typeof window !== 'undefined' && window.shopify?.config?.shop) {
+        debugLog('Found shop via App Bridge:', window.shopify.config.shop);
         return window.shopify.config.shop;
       }
 
       // Try URL search params
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
+        debugLog('URL params:', Object.fromEntries(urlParams.entries()));
 
         const shopParam = urlParams.get('shop');
         if (shopParam) {
+          debugLog('Found shop in URL params:', shopParam);
           return shopParam;
         }
 
@@ -67,12 +76,14 @@ export function ShopProvider({ children }: ShopProviderProps) {
         if (hostParam) {
           try {
             const decoded = atob(hostParam);
+            debugLog('Decoded host param:', decoded);
             const match = decoded.match(/([^/]+\.myshopify\.com)/);
             if (match) {
+              debugLog('Extracted shop from host:', match[1]);
               return match[1];
             }
-          } catch {
-            // Invalid base64
+          } catch (e) {
+            debugLog('Failed to decode host param:', e);
           }
         }
       }
@@ -80,47 +91,61 @@ export function ShopProvider({ children }: ShopProviderProps) {
       // Try sessionStorage
       if (typeof window !== 'undefined') {
         try {
-          const stored = sessionStorage.getItem('locateus_shop_domain');
-          if (stored) return stored;
+          const stored = sessionStorage.getItem('surfaced_shop_domain');
+          if (stored) {
+            debugLog('Found shop in sessionStorage:', stored);
+            return stored;
+          }
         } catch {
           // Storage access denied
         }
       }
 
+      debugLog('No shop detected');
       return null;
     };
 
-    const performTokenExchange = async (_shopDomain: string) => {
+    const performTokenExchange = async (shopDomain: string) => {
+      debugLog('Starting token exchange for:', shopDomain);
       let sessionToken: string | null = null;
 
       // Try to get session token from App Bridge first
       if (typeof window !== 'undefined' && window.shopify?.idToken) {
         try {
+          debugLog('Requesting session token from App Bridge...');
           sessionToken = await window.shopify.idToken();
+          debugLog('Got session token (first 20 chars):', sessionToken?.substring(0, 20) + '...');
         } catch (error) {
-          console.warn('[LocateUs] App Bridge idToken failed:', error);
+          debugLog('App Bridge idToken failed:', error);
         }
       }
 
-      // Fallback: get id_token from URL parameters (when App Bridge fails)
+      // Fallback: get id_token from URL parameters
       if (!sessionToken && typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         const idToken = urlParams.get('id_token');
         if (idToken) {
           sessionToken = idToken;
-          console.log('[LocateUs] Using id_token from URL params');
+          debugLog('Using id_token from URL params');
         }
       }
 
-      // If no session token available, skip token exchange
+      // If no session token available, we're in dev mode or something is wrong
       if (!sessionToken) {
-        console.warn('[LocateUs] No session token available for token exchange');
-        setIsAuthenticated(true);
-        isTokenExchanged = true;
+        debugLog('No session token available - checking if in dev mode');
+        // In dev mode, we can skip token exchange
+        if (process.env.NODE_ENV === 'development') {
+          debugLog('Dev mode - skipping token exchange');
+          setIsAuthenticated(true);
+          isTokenExchanged = true;
+          return;
+        }
+        setError('Could not get session token from Shopify');
         return;
       }
 
       try {
+        debugLog('Sending token exchange request...');
         const response = await fetch('/api/auth/token', {
           method: 'POST',
           headers: {
@@ -129,14 +154,23 @@ export function ShopProvider({ children }: ShopProviderProps) {
           },
         });
 
+        const responseText = await response.text();
+        debugLog('Token exchange response:', { status: response.status, body: responseText });
+
         if (response.ok) {
+          debugLog('Token exchange successful!');
           setIsAuthenticated(true);
           isTokenExchanged = true;
+          setError(null);
         } else {
-          console.error('[LocateUs] Token exchange failed:', await response.text());
+          const errorMsg = `Token exchange failed: ${responseText}`;
+          debugLog('Token exchange error:', errorMsg);
+          setError(errorMsg);
         }
       } catch (error) {
-        console.error('[LocateUs] Token exchange error:', error);
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        debugLog('Token exchange exception:', errorMsg);
+        setError(errorMsg);
       }
     };
 
@@ -147,7 +181,7 @@ export function ShopProvider({ children }: ShopProviderProps) {
       setShop(detected);
       // Store in sessionStorage
       try {
-        sessionStorage.setItem('locateus_shop_domain', detected);
+        sessionStorage.setItem('surfaced_shop_domain', detected);
       } catch {
         // Ignore storage errors
       }
@@ -165,12 +199,13 @@ export function ShopProvider({ children }: ShopProviderProps) {
     let attemptIndex = 0;
 
     const tryAgain = () => {
+      debugLog(`Retry attempt ${attemptIndex + 1}/${attempts.length}`);
       detected = detectShop();
       if (detected) {
         globalShop = detected;
         setShop(detected);
         try {
-          sessionStorage.setItem('locateus_shop_domain', detected);
+          sessionStorage.setItem('surfaced_shop_domain', detected);
         } catch {
           // Ignore
         }
@@ -186,7 +221,8 @@ export function ShopProvider({ children }: ShopProviderProps) {
       if (attemptIndex < attempts.length) {
         setTimeout(tryAgain, attempts[attemptIndex]);
       } else {
-        // Give up after all attempts
+        debugLog('All retry attempts exhausted');
+        setError('Could not detect shop from Shopify');
         setIsLoading(false);
       }
     };
@@ -194,7 +230,7 @@ export function ShopProvider({ children }: ShopProviderProps) {
     setTimeout(tryAgain, attempts[0]);
   }, []);
 
-  const value = useMemo(() => ({ shop, isLoading, isAuthenticated }), [shop, isLoading, isAuthenticated]);
+  const value = useMemo(() => ({ shop, isLoading, isAuthenticated, error }), [shop, isLoading, isAuthenticated, error]);
 
   return (
     <ShopContext.Provider value={value}>
@@ -209,7 +245,6 @@ export function useShopContext(): ShopContextType {
 
 /**
  * Hook to create an authenticated fetch function using shop from context
- * Uses App Bridge session tokens when available (recommended by Shopify)
  */
 export function useAuthenticatedFetch() {
   const { shop, isAuthenticated } = useShopContext();
@@ -244,15 +279,18 @@ export function useAuthenticatedFetch() {
 
       if (shopDomain) {
         headers.set('x-shopify-shop-domain', shopDomain);
+        debugLog(`Authenticated fetch to: ${url} for shop: ${shopDomain}`);
+      } else {
+        debugLog(`WARNING: No shop domain for authenticated fetch to: ${url}`);
       }
 
-      // Add session token if App Bridge is available (for token exchange)
+      // Add session token if App Bridge is available
       if (typeof window !== 'undefined' && window.shopify?.idToken) {
         try {
           const sessionToken = await window.shopify.idToken();
           headers.set('Authorization', `Bearer ${sessionToken}`);
         } catch (error) {
-          console.warn('[LocateUs] Could not get session token:', error);
+          debugLog('Could not get session token for fetch:', error);
         }
       }
 

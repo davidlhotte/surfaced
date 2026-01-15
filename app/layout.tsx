@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  display: "swap", // Prevent FOIT (Flash of Invisible Text)
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -17,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Surfaced - Shopify App",
-  description: "A powerful Shopify app built with Next.js, Prisma, and Polaris.",
+  description: "AI Visibility tracking for Shopify stores.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -27,7 +26,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Surfaced - Shopify App",
-    description: "A powerful Shopify app built with Next.js, Prisma, and Polaris.",
+    description: "AI Visibility tracking for Shopify stores.",
     type: "website",
   },
 };
@@ -48,23 +47,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Shopify App Bridge API Key - required for embedded apps */}
+        {/* Shopify App Bridge API Key - MUST be before app-bridge.js */}
         <meta name="shopify-api-key" content={apiKey} />
-        {/* Preload App Bridge for faster initialization */}
-        <link
-          rel="preload"
-          href="https://cdn.shopify.com/shopifycloud/app-bridge.js"
-          as="script"
-        />
-        {/* Shopify App Bridge 4.x - loaded from Shopify CDN (required) */}
-        <Script
+        {/*
+          CRITICAL: Shopify App Bridge MUST be loaded synchronously
+          - No async, no defer, no type=module
+          - Must be first script tag
+          Using dangerouslySetInnerHTML to avoid Next.js adding async
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: '',
+          }}
           src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
-          strategy="beforeInteractive"
         />
-        {/* Web Vitals debug mode for development */}
-        {process.env.NODE_ENV === "development" && (
-          <meta name="shopify-debug" content="web-vitals" />
-        )}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
