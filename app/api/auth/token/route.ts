@@ -13,10 +13,18 @@ import { logger, auditLog } from '@/lib/monitoring/logger';
  * @see https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens/token-exchange
  */
 export async function POST(request: NextRequest) {
+  logger.info('Token exchange endpoint called');
+
   try {
     // Get session token from Authorization header
     const authHeader = request.headers.get('authorization');
+    logger.info({
+      hasAuthHeader: !!authHeader,
+      headerType: authHeader?.substring(0, 10),
+    }, 'Checking authorization header');
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logger.error({ authHeader: authHeader?.substring(0, 20) }, 'Missing or invalid Authorization header');
       return NextResponse.json(
         { error: 'Missing or invalid Authorization header' },
         { status: 401 }
@@ -24,10 +32,12 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionToken = authHeader.replace('Bearer ', '');
+    logger.info({ tokenLength: sessionToken.length }, 'Extracted session token');
 
     // Verify and decode the session token
     const tokenData = verifySessionToken(sessionToken);
     if (!tokenData) {
+      logger.error('Session token verification failed');
       return NextResponse.json(
         { error: 'Invalid or expired session token' },
         { status: 401 }
@@ -35,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { shop } = tokenData;
-    logger.info({ shop }, 'Token exchange request received');
+    logger.info({ shop }, 'Token exchange request received - session token valid');
 
     // Check if we already have a valid access token for this shop
     const existingShop = await prisma.shop.findUnique({

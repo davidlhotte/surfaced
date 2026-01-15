@@ -3,10 +3,14 @@ import { prisma } from '@/lib/db/prisma';
 import { handleApiError } from '@/lib/utils/errors';
 import { getShopFromRequest } from '@/lib/shopify/get-shop';
 import { PLAN_LIMITS } from '@/lib/constants/plans';
+import { logger } from '@/lib/monitoring/logger';
 
 export async function GET(request: NextRequest) {
+  logger.info('Dashboard API called');
+
   try {
     const shopDomain = await getShopFromRequest(request, { rateLimit: false });
+    logger.info({ shopDomain }, 'Dashboard request authenticated');
 
     const shop = await prisma.shop.findUnique({
       where: { shopDomain },
@@ -23,8 +27,17 @@ export async function GET(request: NextRequest) {
     });
 
     if (!shop) {
+      logger.error({ shopDomain }, 'Shop not found in database');
       return handleApiError(new Error('Shop not found'));
     }
+
+    logger.info({
+      shopDomain,
+      productsCount: shop.productsCount,
+      auditCount: shop.productsAudit.length,
+      visibilityChecksCount: shop.visibilityChecks.length,
+      competitorsCount: shop.competitors.length,
+    }, 'Dashboard data loaded');
 
     // Calculate audit statistics
     const auditStats = {

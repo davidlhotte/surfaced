@@ -15,6 +15,7 @@ import { UnauthorizedError, ValidationError } from '@/lib/utils/errors';
 import { adminRateLimit, checkRateLimit } from '@/lib/security/rate-limit';
 import { getDevShop } from '@/lib/utils/dev';
 import { encryptToken } from '@/lib/security/encryption';
+import { logger } from '@/lib/monitoring/logger';
 
 export type GetShopOptions = {
   /** Whether to apply rate limiting (default: true) */
@@ -41,9 +42,12 @@ export async function getShopFromRequest(
 ): Promise<string> {
   const { rateLimit = true } = options;
 
+  logger.info({ url: request.nextUrl.pathname, rateLimit }, 'getShopFromRequest called');
+
   // Development mode - use test shop (NEVER in production)
   const devShop = getDevShop();
   if (devShop) {
+    logger.info({ devShop }, 'Using development shop');
     // Ensure dev shop exists in DB (upsert to avoid race conditions)
     await prisma.shop.upsert({
       where: { shopDomain: devShop },
@@ -59,12 +63,18 @@ export async function getShopFromRequest(
 
   // Production: Get shop from session token or header
   const shop = request.headers.get('x-shopify-shop-domain');
+  logger.info({ shop, hasShopHeader: !!shop }, 'Checking shop header');
+
   if (!shop) {
+    logger.error('Missing x-shopify-shop-domain header');
     throw new UnauthorizedError('Missing shop domain');
   }
 
   const session = await getShopSession(shop);
+  logger.info({ shop, hasSession: !!session }, 'Checked shop session');
+
   if (!session) {
+    logger.error({ shop }, 'No valid session found for shop');
     throw new UnauthorizedError('Invalid session');
   }
 
@@ -72,10 +82,12 @@ export async function getShopFromRequest(
   if (rateLimit) {
     const rateLimitResult = await checkRateLimit(adminRateLimit, shop);
     if (!rateLimitResult.success) {
+      logger.warn({ shop }, 'Rate limit exceeded');
       throw new ValidationError('Rate limit exceeded');
     }
   }
 
+  logger.info({ shop }, 'Shop authenticated successfully');
   return shop;
 }
 

@@ -12,11 +12,23 @@ if (
   throw new Error('Missing required Shopify environment variables');
 }
 
+// Ensure env vars are trimmed to avoid whitespace/newline issues
+const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY!.trim();
+const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET!.trim();
+const SHOPIFY_APP_URL = process.env.SHOPIFY_APP_URL!.trim();
+const SHOPIFY_SCOPES = (process.env.SHOPIFY_SCOPES || 'read_content,write_content').trim();
+
+logger.info({
+  apiKeyLength: SHOPIFY_API_KEY.length,
+  apiKeyPreview: SHOPIFY_API_KEY.substring(0, 8) + '...',
+  hostName: new URL(SHOPIFY_APP_URL).hostname,
+}, 'Shopify API initialized');
+
 export const shopify = shopifyApi({
-  apiKey: process.env.SHOPIFY_API_KEY!,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET!,
-  scopes: (process.env.SHOPIFY_SCOPES || 'read_content,write_content').split(','),
-  hostName: new URL(process.env.SHOPIFY_APP_URL!.trim()).hostname,
+  apiKey: SHOPIFY_API_KEY,
+  apiSecretKey: SHOPIFY_API_SECRET,
+  scopes: SHOPIFY_SCOPES.split(','),
+  hostName: new URL(SHOPIFY_APP_URL).hostname,
   hostScheme: 'https',
   apiVersion: ApiVersion.October24,
   isEmbeddedApp: true,
@@ -78,12 +90,9 @@ export async function deleteShopSession(shopDomain: string): Promise<void> {
 }
 
 export function getAuthUrl(shop: string, redirectUri: string): string {
-  const scopes = process.env.SHOPIFY_SCOPES || 'read_content,write_content';
-  const apiKey = process.env.SHOPIFY_API_KEY!;
-
   const params = new URLSearchParams({
-    client_id: apiKey,
-    scope: scopes,
+    client_id: SHOPIFY_API_KEY,
+    scope: SHOPIFY_SCOPES,
     redirect_uri: redirectUri,
   });
 
@@ -104,14 +113,16 @@ export async function exchangeCodeForToken(
   shop: string,
   code: string
 ): Promise<{ accessToken: string; scope: string }> {
+  logger.info({ shop, codeLength: code.length }, 'Starting OAuth code exchange');
+
   const response = await fetch(`https://${shop}/admin/oauth/access_token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      client_id: process.env.SHOPIFY_API_KEY,
-      client_secret: process.env.SHOPIFY_API_SECRET,
+      client_id: SHOPIFY_API_KEY,
+      client_secret: SHOPIFY_API_SECRET,
       code,
     }),
   });
@@ -144,13 +155,20 @@ export async function exchangeSessionTokenForAccessToken(
   sessionToken: string,
   tokenType: 'online' | 'offline' = 'offline'
 ): Promise<{ accessToken: string; scope: string; expiresIn?: number }> {
+  logger.info({
+    shop,
+    tokenType,
+    sessionTokenLength: sessionToken.length,
+    apiKeyLength: SHOPIFY_API_KEY.length,
+  }, 'Starting session token exchange');
+
   const requestedTokenType = tokenType === 'online'
     ? 'urn:shopify:params:oauth:token-type:online-access-token'
     : 'urn:shopify:params:oauth:token-type:offline-access-token';
 
   const params = new URLSearchParams({
-    client_id: process.env.SHOPIFY_API_KEY!,
-    client_secret: process.env.SHOPIFY_API_SECRET!,
+    client_id: SHOPIFY_API_KEY,
+    client_secret: SHOPIFY_API_SECRET,
     grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
     subject_token: sessionToken,
     subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
@@ -199,19 +217,27 @@ export function verifySessionToken(sessionToken: string): {
   sub: string;
 } | null {
   try {
+    logger.info({ tokenLength: sessionToken.length }, 'Verifying session token');
+
     // Session tokens are JWTs - decode without verification first to get claims
     const parts = sessionToken.split('.');
     if (parts.length !== 3) {
-      logger.error('Invalid session token format');
+      logger.error({ partsCount: parts.length }, 'Invalid session token format - expected 3 parts');
       return null;
     }
 
     const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+    logger.info({
+      iss: payload.iss,
+      dest: payload.dest,
+      exp: payload.exp,
+      sub: payload.sub?.substring(0, 20) + '...',
+    }, 'Session token payload decoded');
 
     // Verify expiration
     const now = Math.floor(Date.now() / 1000);
     if (payload.exp && payload.exp < now) {
-      logger.error({ exp: payload.exp, now }, 'Session token expired');
+      logger.error({ exp: payload.exp, now, diff: now - payload.exp }, 'Session token expired');
       return null;
     }
 
@@ -221,9 +247,11 @@ export function verifySessionToken(sessionToken: string): {
 
     // Basic validation
     if (!shop.endsWith('.myshopify.com')) {
-      logger.error({ shop }, 'Invalid shop in session token');
+      logger.error({ shop }, 'Invalid shop in session token - must end with .myshopify.com');
       return null;
     }
+
+    logger.info({ shop, expiresIn: payload.exp - now }, 'Session token verified successfully');
 
     return {
       shop,
@@ -233,7 +261,7 @@ export function verifySessionToken(sessionToken: string): {
       sub: payload.sub,
     };
   } catch (error) {
-    logger.error({ error }, 'Failed to verify session token');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to verify session token');
     return null;
   }
 }

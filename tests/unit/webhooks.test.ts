@@ -7,7 +7,15 @@ vi.mock('@/lib/db/prisma', () => ({
     store: { deleteMany: vi.fn() },
     settings: { deleteMany: vi.fn() },
     auditLog: { deleteMany: vi.fn() },
-    shop: { delete: vi.fn() },
+    shop: {
+      delete: vi.fn(),
+      findUnique: vi.fn().mockResolvedValue({ id: 'test-shop-id', shopDomain: 'test.myshopify.com' }),
+    },
+    productAudit: { deleteMany: vi.fn() },
+    visibilityCheck: { deleteMany: vi.fn() },
+    competitor: { deleteMany: vi.fn() },
+    emailSequenceEvent: { deleteMany: vi.fn() },
+    llmsTxtConfig: { deleteMany: vi.fn() },
   },
 }));
 
@@ -129,15 +137,13 @@ describe('Webhooks', () => {
 
       await handleAppUninstalled(shopDomain);
 
-      expect(prisma.store.deleteMany).toHaveBeenCalledWith({
-        where: { shop: { shopDomain } },
+      expect(prisma.shop.findUnique).toHaveBeenCalledWith({
+        where: { shopDomain },
       });
-      expect(prisma.settings.deleteMany).toHaveBeenCalledWith({
-        where: { shop: { shopDomain } },
-      });
-      expect(prisma.auditLog.deleteMany).toHaveBeenCalledWith({
-        where: { shop: { shopDomain } },
-      });
+      expect(prisma.productAudit.deleteMany).toHaveBeenCalled();
+      expect(prisma.visibilityCheck.deleteMany).toHaveBeenCalled();
+      expect(prisma.competitor.deleteMany).toHaveBeenCalled();
+      expect(prisma.settings.deleteMany).toHaveBeenCalled();
       expect(prisma.shop.delete).toHaveBeenCalledWith({
         where: { shopDomain },
       });
@@ -166,7 +172,7 @@ describe('Webhooks', () => {
     it('should throw error if deletion fails', async () => {
       const shopDomain = 'test.myshopify.com';
       const error = new Error('Database error');
-      (prisma.store.deleteMany as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+      (prisma.productAudit.deleteMany as ReturnType<typeof vi.fn>).mockRejectedValue(error);
 
       await expect(handleAppUninstalled(shopDomain)).rejects.toThrow('Database error');
     });
@@ -210,9 +216,13 @@ describe('Webhooks', () => {
   describe('handleShopRedact', () => {
     beforeEach(() => {
       // Reset mocks to default resolved state (previous test might have set them to reject)
-      (prisma.store.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({});
+      (prisma.shop.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'test-shop-id', shopDomain: 'test.myshopify.com' });
+      (prisma.productAudit.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({});
+      (prisma.visibilityCheck.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({});
+      (prisma.competitor.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({});
       (prisma.settings.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({});
-      (prisma.auditLog.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({});
+      (prisma.emailSequenceEvent.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({});
+      (prisma.llmsTxtConfig.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({});
       (prisma.shop.delete as ReturnType<typeof vi.fn>).mockResolvedValue({});
     });
 
@@ -222,12 +232,11 @@ describe('Webhooks', () => {
       await handleShopRedact(shopDomain);
 
       // handleShopRedact calls handleAppUninstalled internally
-      expect(prisma.store.deleteMany).toHaveBeenCalledWith({
-        where: { shop: { shopDomain } },
+      expect(prisma.shop.findUnique).toHaveBeenCalledWith({
+        where: { shopDomain },
       });
-      expect(prisma.settings.deleteMany).toHaveBeenCalledWith({
-        where: { shop: { shopDomain } },
-      });
+      expect(prisma.productAudit.deleteMany).toHaveBeenCalled();
+      expect(prisma.settings.deleteMany).toHaveBeenCalled();
       expect(prisma.shop.delete).toHaveBeenCalledWith({
         where: { shopDomain },
       });
