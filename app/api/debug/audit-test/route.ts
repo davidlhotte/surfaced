@@ -57,8 +57,11 @@ export async function GET(request: NextRequest) {
           name
           email
         }
-        products(first: 1) {
-          totalCount
+        products(first: 50) {
+          nodes {
+            id
+            title
+          }
         }
       }
     `;
@@ -98,7 +101,8 @@ export async function GET(request: NextRequest) {
       debug.step3_graphql = 'OK';
       debug.shopName = json.data?.shop?.name;
       debug.shopEmail = json.data?.shop?.email;
-      debug.productsCount = json.data?.products?.totalCount;
+      debug.productsCount = json.data?.products?.nodes?.length || 0;
+      debug.firstProducts = json.data?.products?.nodes?.slice(0, 3).map((p: { title: string }) => p.title);
 
     } catch (fetchError) {
       debug.step3_graphql = 'EXCEPTION';

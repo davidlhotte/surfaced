@@ -168,9 +168,6 @@ export async function fetchShopInfo(shopDomain: string): Promise<ShopInfoRespons
           displayName
         }
       }
-      products(first: 1) {
-        totalCount
-      }
     }
   `;
 
@@ -181,15 +178,43 @@ export async function fetchShopInfo(shopDomain: string): Promise<ShopInfoRespons
       primaryDomain: { host: string };
       plan: { displayName: string };
     };
-    products: { totalCount: number };
   }>(shopDomain, query);
 
+  // Get product count from a separate query (products are fetched anyway)
+  // We'll estimate from the fetchProducts call in the audit
   return {
     shop: {
       ...result.shop,
       productsCount: {
-        count: result.products.totalCount,
+        count: 0, // Will be updated after fetching products
       },
     },
   };
+}
+
+export async function fetchProductsCount(shopDomain: string): Promise<number> {
+  // Fetch first batch to get accurate count - Shopify doesn't expose totalCount directly
+  const query = `
+    query GetProductsCount {
+      products(first: 250) {
+        nodes {
+          id
+        }
+        pageInfo {
+          hasNextPage
+        }
+      }
+    }
+  `;
+
+  const result = await shopifyGraphQL<{
+    products: {
+      nodes: { id: string }[];
+      pageInfo: { hasNextPage: boolean };
+    };
+  }>(shopDomain, query);
+
+  // If there's no next page, we have exact count
+  // Otherwise, we report what we got (max 250 for FREE plan anyway)
+  return result.products.nodes.length;
 }

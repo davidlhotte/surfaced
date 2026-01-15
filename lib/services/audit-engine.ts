@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
-import { fetchProducts, fetchShopInfo, type ShopifyProduct } from '@/lib/shopify/graphql';
+import { fetchProducts, fetchShopInfo, fetchProductsCount, type ShopifyProduct } from '@/lib/shopify/graphql';
 import { PLAN_LIMITS } from '@/lib/constants/plans';
 import { logger } from '@/lib/monitoring/logger';
 import type { Plan } from '@prisma/client';
@@ -212,17 +212,25 @@ export async function runAudit(shopDomain: string): Promise<AuditResult> {
 
   logger.info({ shopDomain, maxProducts }, 'Fetching shop info from Shopify');
 
-  // Fetch shop info to get product count
+  // Fetch shop info
   let shopInfo;
   try {
     shopInfo = await fetchShopInfo(shopDomain);
+    logger.info({ shopDomain, shopName: shopInfo.shop.name }, 'Shop info fetched successfully');
   } catch (error) {
     logger.error({ shopDomain, error: error instanceof Error ? error.message : 'Unknown' }, 'Failed to fetch shop info');
     throw error;
   }
 
-  const totalProducts = shopInfo.shop.productsCount.count;
-  logger.info({ shopDomain, totalProducts }, 'Shop info fetched successfully');
+  // Get product count (separate query since Shopify doesn't expose totalCount)
+  let totalProducts: number;
+  try {
+    totalProducts = await fetchProductsCount(shopDomain);
+    logger.info({ shopDomain, totalProducts }, 'Product count fetched successfully');
+  } catch (error) {
+    logger.error({ shopDomain, error: error instanceof Error ? error.message : 'Unknown' }, 'Failed to fetch product count');
+    throw error;
+  }
 
   // Fetch products (up to plan limit)
   const productsResponse = await fetchProducts(shopDomain, Math.min(maxProducts, 50));
