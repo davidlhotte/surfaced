@@ -167,12 +167,29 @@ export async function fetchShopInfo(shopDomain: string): Promise<ShopInfoRespons
         plan {
           displayName
         }
-        productsCount {
-          count
-        }
+      }
+      products(first: 1) {
+        totalCount
       }
     }
   `;
 
-  return shopifyGraphQL<ShopInfoResponse>(shopDomain, query);
+  const result = await shopifyGraphQL<{
+    shop: {
+      name: string;
+      email: string;
+      primaryDomain: { host: string };
+      plan: { displayName: string };
+    };
+    products: { totalCount: number };
+  }>(shopDomain, query);
+
+  return {
+    shop: {
+      ...result.shop,
+      productsCount: {
+        count: result.products.totalCount,
+      },
+    },
+  };
 }
