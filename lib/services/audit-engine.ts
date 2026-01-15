@@ -12,7 +12,7 @@ export type AuditIssue = {
 };
 
 export type ProductAuditResult = {
-  shopifyProductId: bigint;
+  shopifyProductId: string; // String representation of BigInt for JSON serialization
   title: string;
   handle: string;
   aiScore: number;
@@ -35,11 +35,12 @@ export type AuditResult = {
   products: ProductAuditResult[];
 };
 
-function extractProductId(gid: string): bigint {
+function extractProductId(gid: string): string {
   // gid format: gid://shopify/Product/123456789
+  // Returns string for JSON serialization, convert to BigInt when saving to DB
   const match = gid.match(/\/(\d+)$/);
   if (!match) throw new Error(`Invalid product GID: ${gid}`);
-  return BigInt(match[1]);
+  return match[1];
 }
 
 function calculateProductScore(product: ShopifyProduct): ProductAuditResult {
@@ -258,11 +259,14 @@ export async function runAudit(shopDomain: string): Promise<AuditResult> {
 
   // Upsert each product audit
   for (const result of auditResults) {
+    // Convert string productId back to BigInt for database storage
+    const productIdBigInt = BigInt(result.shopifyProductId);
+
     await prisma.productAudit.upsert({
       where: {
         shopId_shopifyProductId: {
           shopId: shop.id,
-          shopifyProductId: result.shopifyProductId,
+          shopifyProductId: productIdBigInt,
         },
       },
       update: {
@@ -278,7 +282,7 @@ export async function runAudit(shopDomain: string): Promise<AuditResult> {
       },
       create: {
         shopId: shop.id,
-        shopifyProductId: result.shopifyProductId,
+        shopifyProductId: productIdBigInt,
         title: result.title,
         handle: result.handle,
         aiScore: result.aiScore,
