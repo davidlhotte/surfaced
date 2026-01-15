@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { decryptToken } from '@/lib/security/encryption';
+import { fetchProducts, fetchShopInfo, fetchProductsCount } from '@/lib/shopify/graphql';
+import { PLAN_LIMITS } from '@/lib/constants/plans';
+import type { Plan } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   const shopDomain = request.headers.get('x-shopify-shop-domain') || 'locateus-2.myshopify.com';
@@ -114,6 +117,101 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     debug.error = error instanceof Error ? error.message : 'Unknown error';
     debug.stack = error instanceof Error ? error.stack : undefined;
+    return NextResponse.json({ debug, success: false });
+  }
+}
+
+// POST handler - tests full audit flow step by step
+export async function POST(request: NextRequest) {
+  const shopDomain = request.headers.get('x-shopify-shop-domain') || 'locateus-2.myshopify.com';
+
+  const debug: Record<string, unknown> = {
+    shopDomain,
+    timestamp: new Date().toISOString(),
+    steps: [],
+  };
+
+  const addStep = (name: string, status: string, data?: Record<string, unknown>) => {
+    (debug.steps as unknown[]).push({ name, status, ...data });
+  };
+
+  try {
+    // Step 1: Get shop from DB
+    const shop = await prisma.shop.findUnique({
+      where: { shopDomain },
+      select: { id: true, plan: true },
+    });
+
+    if (!shop) {
+      addStep('db_lookup', 'FAILED', { error: 'Shop not found' });
+      return NextResponse.json({ debug, success: false });
+    }
+    addStep('db_lookup', 'OK', { shopId: shop.id, plan: shop.plan });
+
+    // Step 2: Get plan limits
+    const planLimits = PLAN_LIMITS[shop.plan as Plan];
+    const maxProducts = planLimits.productsAudited;
+    addStep('plan_limits', 'OK', { maxProducts });
+
+    // Step 3: Fetch shop info
+    try {
+      const shopInfo = await fetchShopInfo(shopDomain);
+      addStep('fetch_shop_info', 'OK', { shopName: shopInfo.shop.name });
+    } catch (error) {
+      addStep('fetch_shop_info', 'FAILED', { error: error instanceof Error ? error.message : 'Unknown' });
+      return NextResponse.json({ debug, success: false });
+    }
+
+    // Step 4: Fetch products count
+    let totalProducts: number;
+    try {
+      totalProducts = await fetchProductsCount(shopDomain);
+      addStep('fetch_products_count', 'OK', { totalProducts });
+    } catch (error) {
+      addStep('fetch_products_count', 'FAILED', { error: error instanceof Error ? error.message : 'Unknown' });
+      return NextResponse.json({ debug, success: false });
+    }
+
+    // Step 5: Fetch products with full data
+    try {
+      const productsResponse = await fetchProducts(shopDomain, Math.min(maxProducts, 50));
+      const products = productsResponse.products.nodes;
+      addStep('fetch_products', 'OK', {
+        count: products.length,
+        firstProduct: products[0]?.title,
+        hasImages: products[0]?.images?.nodes?.length > 0,
+        hasDescription: !!products[0]?.description,
+      });
+
+      // Step 6: Try to score first product
+      if (products.length > 0) {
+        const p = products[0];
+        const description = p.description || '';
+        const hasImages = p.images.nodes.length > 0;
+        const hasDescription = description.length > 0;
+        addStep('score_product', 'OK', {
+          title: p.title,
+          descriptionLength: description.length,
+          hasImages,
+          hasDescription,
+          imagesCount: p.images.nodes.length,
+          hasSeoTitle: !!p.seo?.title,
+          hasSeoDesc: !!p.seo?.description,
+        });
+      }
+
+    } catch (error) {
+      addStep('fetch_products', 'FAILED', {
+        error: error instanceof Error ? error.message : 'Unknown',
+        stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
+      });
+      return NextResponse.json({ debug, success: false });
+    }
+
+    return NextResponse.json({ debug, success: true });
+  } catch (error) {
+    debug.error = error instanceof Error ? error.message : 'Unknown error';
+    debug.stack = error instanceof Error ? error.stack?.split('\n').slice(0, 10) : undefined;
     return NextResponse.json({ debug, success: false });
   }
 }
