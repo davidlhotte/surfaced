@@ -189,8 +189,15 @@ export async function POST(request: NextRequest) {
         const description = p.description || '';
         const hasImages = p.images.nodes.length > 0;
         const hasDescription = description.length > 0;
+
+        // Extract product ID
+        const match = p.id.match(/\/(\d+)$/);
+        const shopifyProductId = match ? BigInt(match[1]) : BigInt(0);
+
         addStep('score_product', 'OK', {
           title: p.title,
+          productId: p.id,
+          shopifyProductId: shopifyProductId.toString(),
           descriptionLength: description.length,
           hasImages,
           hasDescription,
@@ -198,6 +205,50 @@ export async function POST(request: NextRequest) {
           hasSeoTitle: !!p.seo?.title,
           hasSeoDesc: !!p.seo?.description,
         });
+
+        // Step 7: Try to save to database
+        try {
+          const now = new Date();
+          await prisma.productAudit.upsert({
+            where: {
+              shopId_shopifyProductId: {
+                shopId: shop.id,
+                shopifyProductId: shopifyProductId,
+              },
+            },
+            update: {
+              title: p.title,
+              handle: p.handle,
+              aiScore: 50, // Test score
+              issues: [],
+              hasImages,
+              hasDescription,
+              hasMetafields: false,
+              descriptionLength: description.length,
+              lastAuditAt: now,
+            },
+            create: {
+              shopId: shop.id,
+              shopifyProductId: shopifyProductId,
+              title: p.title,
+              handle: p.handle,
+              aiScore: 50,
+              issues: [],
+              hasImages,
+              hasDescription,
+              hasMetafields: false,
+              descriptionLength: description.length,
+              lastAuditAt: now,
+            },
+          });
+          addStep('db_save_product', 'OK', { productId: shopifyProductId.toString() });
+        } catch (error) {
+          addStep('db_save_product', 'FAILED', {
+            error: error instanceof Error ? error.message : 'Unknown',
+            stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
+          });
+          return NextResponse.json({ debug, success: false });
+        }
       }
 
     } catch (error) {
