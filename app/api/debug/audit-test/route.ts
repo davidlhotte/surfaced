@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
         shopDomain: true,
         accessToken: true,
         plan: true,
-        createdAt: true,
+        installedAt: true,
         updatedAt: true,
       },
     });
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     debug.shopId = shop.id;
     debug.plan = shop.plan;
     debug.tokenLength = shop.accessToken?.length || 0;
-    debug.createdAt = shop.createdAt?.toISOString();
+    debug.installedAt = shop.installedAt?.toISOString();
     debug.updatedAt = shop.updatedAt?.toISOString();
 
     // Step 2: Try to decrypt token
