@@ -2,18 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/utils/errors';
 import { getShopFromRequest } from '@/lib/shopify/get-shop';
 import { runAudit } from '@/lib/services/audit-engine';
+import { logger } from '@/lib/monitoring/logger';
 
 export async function POST(request: NextRequest) {
   try {
+    logger.info({}, 'Audit POST: Starting');
     const shopDomain = await getShopFromRequest(request, { rateLimit: true });
+    logger.info({ shopDomain }, 'Audit POST: Shop authenticated');
 
     const result = await runAudit(shopDomain);
+    logger.info({ shopDomain, auditedProducts: result.auditedProducts }, 'Audit POST: Completed');
 
     return NextResponse.json({
       success: true,
       data: result,
     });
   } catch (error) {
+    logger.error({
+      error: error instanceof Error ? error.message : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined,
+    }, 'Audit POST: Failed');
     return handleApiError(error);
   }
 }
