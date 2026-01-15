@@ -45,10 +45,10 @@ export type ShopifySession = {
   state?: string;
 };
 
-// Settings types - customize for your app
+// Settings types for Surfaced app
 export type SettingsInput = {
-  // Add your app-specific settings here
-  // Example:
-  // featureEnabled?: boolean;
-  // customConfig?: Record<string, unknown>;
+  emailAlerts?: boolean;
+  weeklyReport?: boolean;
+  autoAuditEnabled?: boolean;
+  auditFrequency?: 'daily' | 'weekly' | 'monthly';
 };

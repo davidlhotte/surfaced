@@ -215,7 +215,7 @@ describe('POST /api/billing', () => {
       body: JSON.stringify({ plan: 'PLUS' }),
     });
     const response = await POST(request);
-    const data = await response.json();
+    const _data = await response.json();
 
     expect(response.status).toBe(200);
     expect(createSubscription).toHaveBeenCalledWith('test.myshopify.com', 'PLUS');
@@ -237,7 +237,7 @@ describe('POST /api/billing', () => {
       body: JSON.stringify({ plan: 'PREMIUM' }),
     });
     const response = await POST(request);
-    const data = await response.json();
+    const _data = await response.json();
 
     expect(response.status).toBe(200);
     expect(createSubscription).toHaveBeenCalledWith('test.myshopify.com', 'PREMIUM');

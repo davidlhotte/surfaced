@@ -6,50 +6,196 @@ datasource db {
   provider = "postgresql"
 }
 
+// ============================================
+// CORE MODELS - Store Management
+// ============================================
+
 model Shop {
   id              String    @id @default(cuid())
   shopDomain      String    @unique
   accessToken     String    // Encrypted AES-256-GCM
   name            String?   // Shop name from Shopify
-  email           String?   // Shop owner email for notifications
+  email           String?   // Shop owner email
   plan            Plan      @default(FREE)
+  planStartedAt   DateTime?
   trialEndsAt     DateTime?
+
+  // AI Readiness Metrics
+  productsCount   Int       @default(0)
+  aiScore         Int?      // 0-100 overall score
+  lastAuditAt     DateTime?
+
   installedAt     DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  // Relations
   settings        Settings?
   auditLogs       AuditLog[]
+  productsAudit   ProductAudit[]
+  visibilityChecks VisibilityCheck[]
+  competitors     Competitor[]
+  llmsTxtConfig   LlmsTxtConfig?
+
+  @@index([plan])
 }
 
 model Settings {
-  id                String        @id @default(cuid())
-  shopId            String        @unique
-  shop              Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  shopId            String   @unique
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
-  // Add your app-specific settings here
-  // Example:
-  // featureEnabled    Boolean       @default(false)
-  // customConfig      Json?
+  // Notification preferences
+  emailAlerts       Boolean  @default(true)
+  weeklyReport      Boolean  @default(true)
 
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  // Audit preferences
+  autoAuditEnabled  Boolean  @default(true)
+  auditFrequency    String   @default("weekly") // daily, weekly, monthly
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
+
+// ============================================
+// AUDIT MODELS - Product AI-Readiness
+// ============================================
+
+model ProductAudit {
+  id                  String    @id @default(cuid())
+  shopId              String
+  shop                Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  shopifyProductId    BigInt
+  title               String
+  handle              String
+
+  // AI Readiness Score
+  aiScore             Int       // 0-100 for this product
+  issues              Json      @default("[]") // Array of AuditIssue objects
+
+  // Quick flags for filtering
+  hasImages           Boolean   @default(false)
+  hasDescription      Boolean   @default(false)
+  hasMetafields       Boolean   @default(false)
+  descriptionLength   Int       @default(0)
+
+  lastAuditAt         DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+
+  @@unique([shopId, shopifyProductId])
+  @@index([shopId])
+  @@index([aiScore])
+}
+
+// ============================================
+// VISIBILITY MODELS - AI Search Tracking
+// ============================================
+
+model VisibilityCheck {
+  id                String    @id @default(cuid())
+  shopId            String
+  shop              Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  platform          Platform  // chatgpt, perplexity, gemini, copilot
+  query             String    // The search query tested
+
+  // Results
+  isMentioned       Boolean?
+  mentionContext    String?   // Extract where brand is mentioned
+  position          Int?      // Position in recommendations if applicable
+  competitorsFound  Json      @default("[]") // Array of {name, url}
+
+  // Raw data for debugging
+  rawResponse       String?   @db.Text
+  responseQuality   ResponseQuality? // good, partial, none
+
+  checkedAt         DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+
+  @@index([shopId])
+  @@index([platform])
+  @@index([checkedAt(sort: Desc)])
+}
+
+model Competitor {
+  id          String    @id @default(cuid())
+  shopId      String
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  domain      String
+  name        String?
+  isActive    Boolean   @default(true)
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([shopId, domain])
+  @@index([shopId])
+}
+
+// ============================================
+// LLMS.TXT MODELS - AI Crawler Configuration
+// ============================================
+
+model LlmsTxtConfig {
+  id                  String    @id @default(cuid())
+  shopId              String    @unique
+  shop                Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  isEnabled           Boolean   @default(true)
+  allowedBots         Json      @default("[\"ChatGPT-User\", \"GPTBot\", \"ClaudeBot\", \"PerplexityBot\", \"Google-Extended\"]")
+
+  // Content inclusion settings
+  includeProducts     Boolean   @default(true)
+  includeCollections  Boolean   @default(true)
+  includeBlog         Boolean   @default(false)
+
+  excludedProductIds  Json      @default("[]")
+  customInstructions  String?   @db.Text
+
+  lastGeneratedAt     DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// ============================================
+// LOGGING
+// ============================================
 
 model AuditLog {
   id          String    @id @default(cuid())
   shopId      String
   shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  action      String
+
+  action      String    // install, uninstall, audit_started, visibility_check, etc.
   details     Json?
   ipAddress   String?
+
   createdAt   DateTime  @default(now())
 
   @@index([shopId, createdAt])
+  @@index([action])
 }
 
+// ============================================
+// ENUMS
+// ============================================
+
 enum Plan {
-  FREE
-  BASIC
-  PLUS
-  PREMIUM
+  FREE      // Free tier / Trial
+  BASIC     // $49/month (Starter)
+  PLUS      // $99/month (Growth)
+  PREMIUM   // $199/month (Scale)
+}
+
+enum Platform {
+  chatgpt
+  perplexity
+  gemini
+  copilot
+}
+
+enum ResponseQuality {
+  good      // Brand clearly mentioned with context
+  partial   // Brand mentioned but vaguely
+  none      // Not mentioned
 }
