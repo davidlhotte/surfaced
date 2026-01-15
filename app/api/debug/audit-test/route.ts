@@ -56,9 +56,9 @@ export async function GET(request: NextRequest) {
         shop {
           name
           email
-          productsCount {
-            count
-          }
+        }
+        products(first: 1) {
+          totalCount
         }
       }
     `;
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
       debug.step3_graphql = 'OK';
       debug.shopName = json.data?.shop?.name;
       debug.shopEmail = json.data?.shop?.email;
-      debug.productsCount = json.data?.shop?.productsCount?.count;
+      debug.productsCount = json.data?.products?.totalCount;
 
     } catch (fetchError) {
       debug.step3_graphql = 'EXCEPTION';
