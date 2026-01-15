@@ -201,15 +201,28 @@ export async function runAudit(shopDomain: string): Promise<AuditResult> {
   });
 
   if (!shop) {
+    logger.error({ shopDomain }, 'Shop not found in database');
     throw new Error('Shop not found');
   }
+
+  logger.info({ shopDomain, shopId: shop.id, plan: shop.plan }, 'Shop found in database');
 
   const planLimits = PLAN_LIMITS[shop.plan as Plan];
   const maxProducts = planLimits.productsAudited;
 
+  logger.info({ shopDomain, maxProducts }, 'Fetching shop info from Shopify');
+
   // Fetch shop info to get product count
-  const shopInfo = await fetchShopInfo(shopDomain);
+  let shopInfo;
+  try {
+    shopInfo = await fetchShopInfo(shopDomain);
+  } catch (error) {
+    logger.error({ shopDomain, error: error instanceof Error ? error.message : 'Unknown' }, 'Failed to fetch shop info');
+    throw error;
+  }
+
   const totalProducts = shopInfo.shop.productsCount.count;
+  logger.info({ shopDomain, totalProducts }, 'Shop info fetched successfully');
 
   // Fetch products (up to plan limit)
   const productsResponse = await fetchProducts(shopDomain, Math.min(maxProducts, 50));

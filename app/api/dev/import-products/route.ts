@@ -386,9 +386,12 @@ const TEST_PRODUCTS = [
 ];
 
 export async function POST(request: NextRequest) {
-  // Only allow in development
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'This endpoint is only available in development' }, { status: 403 });
+  // Allow with secret key for testing in production
+  const authKey = request.headers.get('x-import-key');
+  const expectedKey = process.env.DEV_IMPORT_KEY || 'surfaced-test-import-2025';
+
+  if (authKey !== expectedKey) {
+    return NextResponse.json({ error: 'Unauthorized - invalid import key' }, { status: 403 });
   }
 
   try {

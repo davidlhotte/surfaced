@@ -66,10 +66,13 @@ export async function shopifyGraphQL<T>(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<T> {
+  logger.info({ shopDomain }, 'shopifyGraphQL: Getting session');
   const session = await getShopSession(shopDomain);
   if (!session || !session.accessToken) {
+    logger.error({ shopDomain, hasSession: !!session, hasToken: !!(session?.accessToken) }, 'No valid session found');
     throw new Error('No valid session found for shop');
   }
+  logger.info({ shopDomain, tokenLength: session.accessToken.length }, 'shopifyGraphQL: Session obtained');
 
   const response = await fetch(
     `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,

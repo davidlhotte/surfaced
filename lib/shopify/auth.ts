@@ -36,15 +36,20 @@ export const shopify = shopifyApi({
 
 export async function getShopSession(shopDomain: string): Promise<Session | null> {
   try {
+    logger.info({ shopDomain }, 'getShopSession: Looking up shop');
     const shop = await prisma.shop.findUnique({
       where: { shopDomain },
     });
 
     if (!shop) {
+      logger.warn({ shopDomain }, 'getShopSession: Shop not found in database');
       return null;
     }
 
+    logger.info({ shopDomain, tokenLength: shop.accessToken?.length }, 'getShopSession: Shop found, decrypting token');
+
     const accessToken = decryptToken(shop.accessToken);
+    logger.info({ shopDomain, decryptedLength: accessToken?.length }, 'getShopSession: Token decrypted successfully');
 
     return new Session({
       id: `offline_${shopDomain}`,
@@ -54,7 +59,7 @@ export async function getShopSession(shopDomain: string): Promise<Session | null
       accessToken,
     });
   } catch (error) {
-    logger.error({ error, shopDomain }, 'Failed to get shop session');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown', shopDomain }, 'Failed to get shop session');
     return null;
   }
 }
