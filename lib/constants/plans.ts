@@ -26,6 +26,11 @@ export const PLAN_LIMITS = {
     exportCsv: false,
     apiAccess: false,
     prioritySupport: false,
+    // Legacy features (from template)
+    customMarkerColor: false,
+    customMarkerIcon: false,
+    hideBranding: false,
+    designCustomization: false,
   },
   [Plan.BASIC]: {
     productsAudited: 100,
@@ -36,6 +41,11 @@ export const PLAN_LIMITS = {
     exportCsv: false,
     apiAccess: false,
     prioritySupport: false,
+    // Legacy features
+    customMarkerColor: true,
+    customMarkerIcon: false,
+    hideBranding: false,
+    designCustomization: true,
   },
   [Plan.PLUS]: {
     productsAudited: 500,
@@ -46,6 +56,11 @@ export const PLAN_LIMITS = {
     exportCsv: true,
     apiAccess: false,
     prioritySupport: false,
+    // Legacy features
+    customMarkerColor: true,
+    customMarkerIcon: true,
+    hideBranding: false,
+    designCustomization: true,
   },
   [Plan.PREMIUM]: {
     productsAudited: Infinity,
@@ -56,6 +71,11 @@ export const PLAN_LIMITS = {
     exportCsv: true,
     apiAccess: true,
     prioritySupport: true,
+    // Legacy features
+    customMarkerColor: true,
+    customMarkerIcon: true,
+    hideBranding: true,
+    designCustomization: true,
   },
 } as const;
 
@@ -73,3 +93,31 @@ export const PLAN_NAMES: Record<Plan, string> = {
  * Trial duration in days
  */
 export const TRIAL_DAYS = 14;
+
+/**
+ * Get features for a specific plan
+ */
+export function getPlanFeatures(plan: Plan) {
+  return PLAN_LIMITS[plan];
+}
+
+/**
+ * Feature keys type
+ */
+type PlanFeatureKey = keyof typeof PLAN_LIMITS['FREE'];
+
+/**
+ * Check if a plan has a specific feature
+ */
+export function hasFeature(plan: Plan, feature: PlanFeatureKey): boolean {
+  const features = PLAN_LIMITS[plan];
+  const value = features[feature];
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return value > 0;
+  }
+  return false;
+}

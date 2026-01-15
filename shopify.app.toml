@@ -1,6 +1,5 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-# TODO: Replace with your Shopify app credentials from Partner Dashboard
-client_id = "YOUR_SHOPIFY_CLIENT_ID"
+client_id = "70d4d4ddbe074eb26d2ca316a9bcd6c6"
 name = "Surfaced"
 handle = "surfaced"
 application_url = "https://surfaced.vercel.app/admin"
@@ -18,8 +17,8 @@ api_version = "2025-01"
   shop_deletion_url = "https://surfaced.vercel.app/api/webhooks/gdpr/shop-redact"
 
 [access_scopes]
-# TODO: Adjust scopes based on your app's needs
-scopes = "read_content,write_content"
+# Scopes for AI Visibility app
+scopes = "read_products,read_content,write_content,read_themes,write_themes"
 # Use managed installation - Shopify handles the install flow
 use_legacy_install_flow = false
 

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateSettings } from '@/lib/utils/validation';
-import { handleApiError, ValidationError, ForbiddenError } from '@/lib/utils/errors';
+import { handleApiError, ValidationError } from '@/lib/utils/errors';
 import { cacheDel, cacheKeys } from '@/lib/cache/redis';
-import { hasFeature, getPlanFeatures } from '@/lib/constants/plans';
+import { getPlanFeatures } from '@/lib/constants/plans';
 import { auditLog } from '@/lib/monitoring/logger';
-import { isDevMode } from '@/lib/utils/dev';
 import { getShopFromRequest, getShopWithSettings } from '@/lib/shopify/get-shop';
 import type { SettingsInput } from '@/lib/types';
 
@@ -48,43 +47,25 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = validation.data as SettingsInput;
-    const currentSettings = shopData.settings;
-
-    // Check plan restrictions (skip in development mode for testing)
-    const skipPlanChecks = isDevMode();
-
-    if (!skipPlanChecks) {
-      // Only check if value changed from current settings
-      const colorChanged = data.markerColor && data.markerColor !== currentSettings?.markerColor;
-      if (colorChanged && !hasFeature(shopData.plan, 'customMarkerColor')) {
-        throw new ForbiddenError('Custom marker color requires Basic plan or higher');
-      }
-
-      const iconChanged = data.markerIcon && data.markerIcon !== currentSettings?.markerIcon;
-      if (iconChanged && !hasFeature(shopData.plan, 'customMarkerIcon')) {
-        throw new ForbiddenError('Custom marker icon requires Plus plan or higher');
-      }
-
-      if (data.hidePoweredBy && !currentSettings?.hidePoweredBy && !hasFeature(shopData.plan, 'hideBranding')) {
-        throw new ForbiddenError('Hide branding requires Premium plan');
-      }
-
-      // Design customization requires Basic plan or higher
-      if (data.designSettings && Object.keys(data.designSettings).length > 0 && !hasFeature(shopData.plan, 'designCustomization')) {
-        throw new ForbiddenError('Design customization requires Basic plan or higher');
-      }
-    }
 
     const settings = await prisma.settings.upsert({
       where: { shopId: shopData.id },
-      update: data,
+      update: {
+        emailAlerts: data.emailAlerts,
+        weeklyReport: data.weeklyReport,
+        autoAuditEnabled: data.autoAuditEnabled,
+        auditFrequency: data.auditFrequency,
+      },
       create: {
         shopId: shopData.id,
-        ...data,
+        emailAlerts: data.emailAlerts ?? true,
+        weeklyReport: data.weeklyReport ?? true,
+        autoAuditEnabled: data.autoAuditEnabled ?? true,
+        auditFrequency: data.auditFrequency ?? 'weekly',
       },
     });
 
-    // Invalidate cache (both settings and storefront cache since it includes settings)
+    // Invalidate cache
     await cacheDel(cacheKeys.settings(shop));
     await cacheDel(cacheKeys.stores(shop));
 

@@ -217,7 +217,7 @@ export async function processConversionEmails(): Promise<{
   };
 
   try {
-    // Get all active shops with their store counts
+    // Get all active shops with their product audit counts
     const shops = await prisma.shop.findMany({
       where: {
         plan: { not: 'PREMIUM' }, // Don't email unlimited users
@@ -229,23 +229,23 @@ export async function processConversionEmails(): Promise<{
         name: true,
         plan: true,
         _count: {
-          select: { stores: true },
+          select: { productsAudit: true },
         },
       },
     });
 
     const planLimits: Record<string, number> = {
-      FREE: 5,
-      BASIC: 50,
-      PLUS: 250,
+      FREE: 10,
+      BASIC: 100,
+      PLUS: 500,
     };
 
     for (const shop of shops) {
       stats.processed++;
 
-      const maxStores = planLimits[shop.plan] || 5;
-      const currentStores = shop._count.stores;
-      const usagePercent = (currentStores / maxStores) * 100;
+      const maxProducts = planLimits[shop.plan] || 10;
+      const currentProducts = shop._count.productsAudit;
+      const usagePercent = (currentProducts / maxProducts) * 100;
 
       // Skip if no email or under 80%
       if (!shop.email || usagePercent < 80) {
@@ -255,13 +255,13 @@ export async function processConversionEmails(): Promise<{
       const shopName = shop.name || shop.shopDomain;
 
       // At limit - send critical email
-      if (currentStores >= maxStores) {
+      if (currentProducts >= maxProducts) {
         const sent = await sendLimitReachedEmail(
           shop.shopDomain,
           shop.email,
           shopName,
-          currentStores,
-          maxStores,
+          currentProducts,
+          maxProducts,
           shop.plan
         );
         if (sent) stats.limitReachedSent++;
@@ -272,8 +272,8 @@ export async function processConversionEmails(): Promise<{
           shop.shopDomain,
           shop.email,
           shopName,
-          currentStores,
-          maxStores,
+          currentProducts,
+          maxProducts,
           shop.plan
         );
         if (sent) stats.nearLimitSent++;

@@ -47,8 +47,17 @@ export type ShopifySession = {
 
 // Settings types for Surfaced app
 export type SettingsInput = {
+  // Notification settings
   emailAlerts?: boolean;
   weeklyReport?: boolean;
+
+  // Audit settings
   autoAuditEnabled?: boolean;
   auditFrequency?: 'daily' | 'weekly' | 'monthly';
+
+  // Legacy fields (from template - kept for compatibility)
+  markerColor?: string;
+  markerIcon?: string;
+  hidePoweredBy?: boolean;
+  designSettings?: Record<string, unknown>;
 };

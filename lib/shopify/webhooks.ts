@@ -36,19 +36,43 @@ export async function handleAppUninstalled(shopDomain: string): Promise<void> {
   logger.info({ shopDomain }, 'Processing app uninstall');
 
   try {
-    // Delete all shop data (GDPR compliant)
-    await prisma.store.deleteMany({
-      where: { shop: { shopDomain } },
+    // Find the shop first
+    const shop = await prisma.shop.findUnique({
+      where: { shopDomain },
+    });
+
+    if (!shop) {
+      logger.warn({ shopDomain }, 'Shop not found for uninstall');
+      return;
+    }
+
+    // Delete all related data (GDPR compliant) - cascade should handle most
+    // but we explicitly delete to be sure
+    await prisma.productAudit.deleteMany({
+      where: { shopId: shop.id },
+    });
+
+    await prisma.visibilityCheck.deleteMany({
+      where: { shopId: shop.id },
+    });
+
+    await prisma.competitor.deleteMany({
+      where: { shopId: shop.id },
+    });
+
+    await prisma.llmsTxtConfig.deleteMany({
+      where: { shopId: shop.id },
     });
 
     await prisma.settings.deleteMany({
-      where: { shop: { shopDomain } },
+      where: { shopId: shop.id },
     });
 
     await prisma.auditLog.deleteMany({
-      where: { shop: { shopDomain } },
+      where: { shopId: shop.id },
     });
 
+    // Finally delete the shop
     await prisma.shop.delete({
       where: { shopDomain },
     });
