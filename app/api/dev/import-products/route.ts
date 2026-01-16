@@ -10,6 +10,81 @@ import { getShopFromRequest, getShopData } from '@/lib/shopify/get-shop';
 import { decryptToken } from '@/lib/security/encryption';
 import { logger } from '@/lib/monitoring/logger';
 
+const SHOPIFY_API_VERSION = '2025-01';
+
+/**
+ * Create a product via GraphQL API
+ */
+async function createProductGraphQL(
+  shopDomain: string,
+  accessToken: string,
+  product: typeof TEST_PRODUCTS[0]
+): Promise<{ id: string } | null> {
+  const mutation = `
+    mutation productCreate($input: ProductInput!, $media: [CreateMediaInput!]) {
+      productCreate(input: $input, media: $media) {
+        product {
+          id
+          title
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    input: {
+      title: product.title,
+      descriptionHtml: product.body_html,
+      vendor: product.vendor || undefined,
+      productType: product.product_type || undefined,
+      tags: product.tags ? product.tags.split(', ') : [],
+      status: 'ACTIVE',
+      seo: (product.seo_title || product.seo_description) ? {
+        title: product.seo_title || undefined,
+        description: product.seo_description || undefined,
+      } : undefined,
+    },
+    media: product.image_url ? [{
+      originalSource: product.image_url,
+      alt: product.image_alt || product.title,
+      mediaContentType: 'IMAGE',
+    }] : [],
+  };
+
+  const response = await fetch(
+    `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken,
+      },
+      body: JSON.stringify({ query: mutation, variables }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`GraphQL request failed: ${response.status}`);
+  }
+
+  const json = await response.json();
+
+  if (json.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
+  }
+
+  if (json.data?.productCreate?.userErrors?.length > 0) {
+    throw new Error(`User errors: ${JSON.stringify(json.data.productCreate.userErrors)}`);
+  }
+
+  return json.data?.productCreate?.product || null;
+}
+
+
 // Simplified product data for import
 const TEST_PRODUCTS = [
   // PERFECT QUALITY PRODUCTS (Score 90-100)
@@ -408,58 +483,25 @@ export async function POST(request: NextRequest) {
     };
 
     for (const product of TEST_PRODUCTS) {
-      const productPayload = {
-        product: {
-          title: product.title,
-          body_html: product.body_html,
-          vendor: product.vendor,
-          product_type: product.product_type,
-          tags: product.tags,
-          variants: [{
-            price: product.price,
-            inventory_management: 'shopify',
-            inventory_quantity: 100
-          }],
-          images: product.image_url ? [{
-            src: product.image_url,
-            alt: product.image_alt || product.title
-          }] : undefined,
-          metafields_global_title_tag: product.seo_title,
-          metafields_global_description_tag: product.seo_description
-        }
-      };
-
       try {
-        const response = await fetch(
-          `https://${shopDomain}/admin/api/2024-10/products.json`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Shopify-Access-Token': accessToken,
-            },
-            body: JSON.stringify(productPayload),
-          }
-        );
+        // Create product via GraphQL
+        const createdProduct = await createProductGraphQL(shopDomain, accessToken, product);
 
-        if (response.ok) {
-          const data = await response.json();
+        if (createdProduct) {
           results.success++;
           results.products.push({
             title: product.title,
             success: true,
-            id: data.product.id
+            id: createdProduct.id
           });
-          logger.info({ title: product.title, id: data.product.id }, 'Product created');
+          logger.info({ title: product.title, id: createdProduct.id }, 'Product created via GraphQL');
         } else {
-          const errorText = await response.text();
           results.failed++;
           results.products.push({
             title: product.title,
             success: false,
-            error: `${response.status}: ${errorText}`
+            error: 'No product returned from GraphQL'
           });
-          logger.error({ title: product.title, error: errorText }, 'Product creation failed');
         }
       } catch (error) {
         results.failed++;
@@ -468,6 +510,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'
         });
+        logger.error({ title: product.title, error: error instanceof Error ? error.message : 'Unknown' }, 'Product creation failed');
       }
 
       // Rate limiting - wait 300ms between requests
