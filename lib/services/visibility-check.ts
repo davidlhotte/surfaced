@@ -1,12 +1,46 @@
 import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { prisma } from '@/lib/db/prisma';
 import { PLAN_LIMITS } from '@/lib/constants/plans';
 import { logger } from '@/lib/monitoring/logger';
 import type { Plan, Platform, ResponseQuality } from '@prisma/client';
 
+// OpenAI client for ChatGPT
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Perplexity client (OpenAI-compatible API)
+const perplexity = new OpenAI({
+  apiKey: process.env.PERPLEXITY_API_KEY || '',
+  baseURL: 'https://api.perplexity.ai',
+});
+
+// Gemini client
+const gemini = process.env.GOOGLE_AI_API_KEY
+  ? new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY })
+  : null;
+
+// Platform availability checks
+export function getAvailablePlatforms(): Platform[] {
+  const platforms: Platform[] = [];
+
+  if (process.env.OPENAI_API_KEY) {
+    platforms.push('chatgpt');
+  }
+  if (process.env.PERPLEXITY_API_KEY) {
+    platforms.push('perplexity');
+  }
+  if (process.env.GOOGLE_AI_API_KEY) {
+    platforms.push('gemini');
+  }
+  // Copilot requires Microsoft/Azure integration - coming soon
+  // if (process.env.AZURE_OPENAI_API_KEY) {
+  //   platforms.push('copilot');
+  // }
+
+  return platforms;
+}
 
 export type VisibilityResult = {
   platform: Platform;
@@ -189,11 +223,123 @@ async function checkChatGPT(
   }
 }
 
+/**
+ * Check visibility on Perplexity AI
+ * Uses OpenAI-compatible API with sonar model
+ */
+async function checkPerplexity(
+  query: string,
+  brandName: string,
+  shopDomain: string
+): Promise<VisibilityResult> {
+  if (!process.env.PERPLEXITY_API_KEY) {
+    throw new Error('Perplexity API key not configured');
+  }
+
+  try {
+    const completion = await perplexity.chat.completions.create({
+      model: 'sonar', // Perplexity's search model
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a helpful shopping assistant with access to current web information. Provide detailed recommendations including specific brand names and stores.',
+        },
+        {
+          role: 'user',
+          content: query,
+        },
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+    });
+
+    const rawResponse = completion.choices[0]?.message?.content || '';
+
+    const analysis = analyzeResponse(rawResponse, brandName, shopDomain);
+
+    return {
+      platform: 'perplexity',
+      query,
+      rawResponse,
+      ...analysis,
+    };
+  } catch (error) {
+    logger.error({ error, query }, 'Perplexity visibility check failed');
+    throw error;
+  }
+}
+
+/**
+ * Check visibility on Google Gemini
+ */
+async function checkGemini(
+  query: string,
+  brandName: string,
+  shopDomain: string
+): Promise<VisibilityResult> {
+  if (!gemini) {
+    throw new Error('Gemini API key not configured');
+  }
+
+  try {
+    const response = await gemini.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: query,
+      config: {
+        systemInstruction:
+          'You are a helpful shopping assistant. Provide detailed, honest recommendations based on your knowledge. Include specific brand names and stores when relevant.',
+        maxOutputTokens: 1000,
+        temperature: 0.7,
+      },
+    });
+
+    const rawResponse = response.text || '';
+
+    const analysis = analyzeResponse(rawResponse, brandName, shopDomain);
+
+    return {
+      platform: 'gemini',
+      query,
+      rawResponse,
+      ...analysis,
+    };
+  } catch (error) {
+    logger.error({ error, query }, 'Gemini visibility check failed');
+    throw error;
+  }
+}
+
+/**
+ * Check visibility on a specific platform
+ */
+async function checkPlatform(
+  platform: Platform,
+  query: string,
+  brandName: string,
+  shopDomain: string
+): Promise<VisibilityResult> {
+  switch (platform) {
+    case 'chatgpt':
+      return checkChatGPT(query, brandName, shopDomain);
+    case 'perplexity':
+      return checkPerplexity(query, brandName, shopDomain);
+    case 'gemini':
+      return checkGemini(query, brandName, shopDomain);
+    case 'copilot':
+      // Copilot not yet implemented
+      throw new Error('Copilot integration coming soon');
+    default:
+      throw new Error(`Unknown platform: ${platform}`);
+  }
+}
+
 export async function runVisibilityCheck(
   shopDomain: string,
-  queries?: string[]
+  queries?: string[],
+  platforms?: Platform[]
 ): Promise<VisibilityCheckResult> {
-  logger.info({ shopDomain }, 'Starting visibility check');
+  logger.info({ shopDomain, platforms }, 'Starting visibility check');
 
   // Get shop info
   const shop = await prisma.shop.findUnique({
@@ -245,37 +391,58 @@ export async function runVisibilityCheck(
   // Generate queries if not provided
   const searchQueries = queries || buildSearchQuery(brandName, productType);
 
-  // Run visibility checks (limit based on plan)
+  // Determine which platforms to check
+  const availablePlatforms = getAvailablePlatforms();
+  const platformsToCheck = platforms
+    ? platforms.filter((p) => availablePlatforms.includes(p))
+    : availablePlatforms.slice(0, 1); // Default to first available platform
+
+  if (platformsToCheck.length === 0) {
+    throw new Error('No AI platforms configured. Please add API keys in your environment.');
+  }
+
+  // Calculate remaining checks
   const remainingChecks = planLimits.visibilityChecksPerMonth - currentMonthChecks;
-  const queriesToRun = searchQueries.slice(0, Math.min(remainingChecks, 3));
+
+  // Limit queries based on remaining checks
+  const maxQueriesPerPlatform = Math.floor(remainingChecks / platformsToCheck.length);
+  const queriesToRun = searchQueries.slice(0, Math.min(maxQueriesPerPlatform, 3));
+
+  if (queriesToRun.length === 0) {
+    throw new Error('Not enough remaining checks this month');
+  }
 
   const results: VisibilityResult[] = [];
 
-  for (const query of queriesToRun) {
-    try {
-      const result = await checkChatGPT(query, brandName, shopDomain);
-      results.push(result);
+  // Run checks for each platform and query
+  for (const platform of platformsToCheck) {
+    for (const query of queriesToRun) {
+      try {
+        const result = await checkPlatform(platform, query, brandName, shopDomain);
+        results.push(result);
 
-      // Save to database
-      await prisma.visibilityCheck.create({
-        data: {
-          shopId: shop.id,
-          platform: result.platform,
-          query: result.query,
-          isMentioned: result.isMentioned,
-          mentionContext: result.mentionContext,
-          position: result.position,
-          competitorsFound: result.competitorsFound,
-          rawResponse: result.rawResponse,
-          responseQuality: result.responseQuality,
-          checkedAt: new Date(),
-        },
-      });
+        // Save to database
+        await prisma.visibilityCheck.create({
+          data: {
+            shopId: shop.id,
+            platform: result.platform,
+            query: result.query,
+            isMentioned: result.isMentioned,
+            mentionContext: result.mentionContext,
+            position: result.position,
+            competitorsFound: result.competitorsFound,
+            rawResponse: result.rawResponse,
+            responseQuality: result.responseQuality,
+            checkedAt: new Date(),
+          },
+        });
 
-      // Small delay between requests
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      logger.error({ error, query }, 'Visibility check query failed');
+        // Small delay between requests
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (error) {
+        logger.error({ error, query, platform }, 'Visibility check query failed');
+        // Continue with other checks even if one fails
+      }
     }
   }
 
@@ -286,6 +453,7 @@ export async function runVisibilityCheck(
       action: 'visibility_check',
       details: {
         queriesRun: queriesToRun.length,
+        platformsChecked: platformsToCheck,
         mentioned: results.filter((r) => r.isMentioned).length,
       },
     },
@@ -304,7 +472,7 @@ export async function runVisibilityCheck(
     competitorsFound: uniqueCompetitors,
   };
 
-  logger.info({ shopDomain, summary }, 'Visibility check completed');
+  logger.info({ shopDomain, summary, platformsToCheck }, 'Visibility check completed');
 
   return {
     shopDomain,
