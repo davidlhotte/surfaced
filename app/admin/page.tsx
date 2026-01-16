@@ -365,6 +365,9 @@ export default function Dashboard() {
                     <Link href="/admin/alerts">
                       <Button fullWidth variant="secondary">Alerts & Reports</Button>
                     </Link>
+                    <Link href="/admin/roi">
+                      <Button fullWidth variant="secondary">ROI Dashboard</Button>
+                    </Link>
                     <Link href="/admin/settings">
                       <Button fullWidth variant="secondary">Settings</Button>
                     </Link>
