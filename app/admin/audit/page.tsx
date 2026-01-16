@@ -186,10 +186,10 @@ export default function AuditPage() {
       ) : (
         <>
           {product.issues.filter(i => i.severity === 'critical').length > 0 && (
-            <Badge tone="critical">{product.issues.filter(i => i.severity === 'critical').length}</Badge>
+            <Badge tone="critical">{String(product.issues.filter(i => i.severity === 'critical').length)}</Badge>
           )}
           {product.issues.filter(i => i.severity === 'warning').length > 0 && (
-            <Badge tone="warning">{product.issues.filter(i => i.severity === 'warning').length}</Badge>
+            <Badge tone="warning">{String(product.issues.filter(i => i.severity === 'warning').length)}</Badge>
           )}
         </>
       )}
