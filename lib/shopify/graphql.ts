@@ -218,3 +218,219 @@ export async function fetchProductsCount(shopDomain: string): Promise<number> {
   // Otherwise, we report what we got (max 250 for FREE plan anyway)
   return result.products.nodes.length;
 }
+
+// Types for llms.txt generation
+export type LlmsTxtShopInfo = {
+  shop: {
+    name: string;
+    description: string | null;
+    primaryDomain: {
+      host: string;
+    };
+    currencyCode: string;
+  };
+};
+
+export type LlmsTxtProductNode = {
+  id: string;
+  title: string;
+  handle: string;
+  descriptionHtml: string;
+  productType: string;
+  vendor: string;
+  status: string;
+  priceRangeV2: {
+    minVariantPrice: {
+      amount: string;
+      currencyCode: string;
+    };
+    maxVariantPrice: {
+      amount: string;
+      currencyCode: string;
+    };
+  };
+};
+
+export type LlmsTxtProductsResponse = {
+  products: {
+    nodes: LlmsTxtProductNode[];
+    pageInfo: {
+      hasNextPage: boolean;
+      endCursor: string | null;
+    };
+  };
+};
+
+export type LlmsTxtCollectionNode = {
+  id: string;
+  title: string;
+  handle: string;
+  descriptionHtml: string | null;
+};
+
+export type LlmsTxtCollectionsResponse = {
+  collections: {
+    nodes: LlmsTxtCollectionNode[];
+    pageInfo: {
+      hasNextPage: boolean;
+      endCursor: string | null;
+    };
+  };
+};
+
+/**
+ * Fetch shop info for llms.txt generation (uses accessToken directly)
+ */
+export async function fetchShopInfoForLlmsTxt(
+  shopDomain: string,
+  accessToken: string
+): Promise<LlmsTxtShopInfo> {
+  const query = `
+    query GetShopInfoForLlms {
+      shop {
+        name
+        description
+        primaryDomain {
+          host
+        }
+        currencyCode
+      }
+    }
+  `;
+
+  const response = await fetch(
+    `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken,
+      },
+      body: JSON.stringify({ query }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`GraphQL request failed: ${response.status}`);
+  }
+
+  const json = await response.json();
+  if (json.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
+  }
+
+  return json.data as LlmsTxtShopInfo;
+}
+
+/**
+ * Fetch products for llms.txt generation (uses accessToken directly)
+ */
+export async function fetchProductsForLlmsTxt(
+  shopDomain: string,
+  accessToken: string,
+  first: number = 250,
+  cursor?: string
+): Promise<LlmsTxtProductsResponse> {
+  const query = `
+    query GetProductsForLlms($first: Int!, $after: String) {
+      products(first: $first, after: $after, query: "status:active") {
+        nodes {
+          id
+          title
+          handle
+          descriptionHtml
+          productType
+          vendor
+          status
+          priceRangeV2 {
+            minVariantPrice {
+              amount
+              currencyCode
+            }
+            maxVariantPrice {
+              amount
+              currencyCode
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  `;
+
+  const response = await fetch(
+    `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken,
+      },
+      body: JSON.stringify({ query, variables: { first, after: cursor } }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`GraphQL request failed: ${response.status}`);
+  }
+
+  const json = await response.json();
+  if (json.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
+  }
+
+  return json.data as LlmsTxtProductsResponse;
+}
+
+/**
+ * Fetch collections for llms.txt generation (uses accessToken directly)
+ */
+export async function fetchCollectionsForLlmsTxt(
+  shopDomain: string,
+  accessToken: string,
+  first: number = 250,
+  cursor?: string
+): Promise<LlmsTxtCollectionsResponse> {
+  const query = `
+    query GetCollectionsForLlms($first: Int!, $after: String) {
+      collections(first: $first, after: $after) {
+        nodes {
+          id
+          title
+          handle
+          descriptionHtml
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  `;
+
+  const response = await fetch(
+    `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken,
+      },
+      body: JSON.stringify({ query, variables: { first, after: cursor } }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`GraphQL request failed: ${response.status}`);
+  }
+
+  const json = await response.json();
+  if (json.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
+  }
+
+  return json.data as LlmsTxtCollectionsResponse;
+}

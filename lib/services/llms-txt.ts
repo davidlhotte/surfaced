@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/db/prisma';
 import { logger } from '@/lib/monitoring/logger';
+import {
+  fetchShopInfoForLlmsTxt,
+  fetchProductsForLlmsTxt,
+  fetchCollectionsForLlmsTxt,
+} from '@/lib/shopify/graphql';
 import type { LlmsTxtConfig } from '@prisma/client';
 
 // Types
@@ -294,7 +299,7 @@ export async function updateLlmsTxtConfig(
 }
 
 /**
- * Generate llms.txt for a shop by fetching data from Shopify
+ * Generate llms.txt for a shop by fetching data from Shopify (GraphQL API)
  */
 export async function generateLlmsTxtForShop(
   shopDomain: string,
@@ -310,117 +315,58 @@ export async function generateLlmsTxtForShop(
     throw new Error('llms.txt generation is disabled for this shop');
   }
 
-  // Fetch shop info from Shopify
-  const shopResponse = await fetch(
-    `https://${shopDomain}/admin/api/2024-01/shop.json`,
-    {
-      headers: {
-        'X-Shopify-Access-Token': accessToken,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+  // Fetch shop info via GraphQL
+  const shopData = await fetchShopInfoForLlmsTxt(shopDomain, accessToken);
+  const shopifyShop = shopData.shop;
 
-  if (!shopResponse.ok) {
-    throw new Error('Failed to fetch shop info');
-  }
-
-  const { shop: shopifyShop } = await shopResponse.json();
-
-  // Fetch products
+  // Fetch products via GraphQL
   const products: LlmsTxtProduct[] = [];
   if (config.includeProducts) {
-    const productsResponse = await fetch(
-      `https://${shopDomain}/admin/api/2024-01/products.json?status=active&limit=250`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const productsData = await fetchProductsForLlmsTxt(shopDomain, accessToken, 250);
 
-    if (productsResponse.ok) {
-      const { products: shopifyProducts } = await productsResponse.json();
-
-      for (const p of shopifyProducts) {
-        const prices = p.variants?.map((v: { price: string }) => parseFloat(v.price)) || [0];
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-
-        products.push({
-          id: String(p.id),
-          title: p.title,
-          handle: p.handle,
-          description: p.body_html,
-          productType: p.product_type,
-          vendor: p.vendor,
-          priceRange: {
-            minVariantPrice: { amount: String(minPrice), currencyCode: shopifyShop.currency || 'USD' },
-            maxVariantPrice: { amount: String(maxPrice), currencyCode: shopifyShop.currency || 'USD' },
+    for (const p of productsData.products.nodes) {
+      products.push({
+        id: p.id,
+        title: p.title,
+        handle: p.handle,
+        description: p.descriptionHtml,
+        productType: p.productType,
+        vendor: p.vendor,
+        priceRange: {
+          minVariantPrice: {
+            amount: p.priceRangeV2.minVariantPrice.amount,
+            currencyCode: p.priceRangeV2.minVariantPrice.currencyCode,
           },
-          availableForSale: p.status === 'active',
-        });
-      }
+          maxVariantPrice: {
+            amount: p.priceRangeV2.maxVariantPrice.amount,
+            currencyCode: p.priceRangeV2.maxVariantPrice.currencyCode,
+          },
+        },
+        availableForSale: p.status === 'ACTIVE',
+      });
     }
   }
 
-  // Fetch collections
+  // Fetch collections via GraphQL (includes both custom and smart collections)
   const collections: LlmsTxtCollection[] = [];
   if (config.includeCollections) {
-    const collectionsResponse = await fetch(
-      `https://${shopDomain}/admin/api/2024-01/custom_collections.json?limit=250`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const collectionsData = await fetchCollectionsForLlmsTxt(shopDomain, accessToken, 250);
 
-    if (collectionsResponse.ok) {
-      const { custom_collections } = await collectionsResponse.json();
-
-      for (const c of custom_collections) {
-        collections.push({
-          id: String(c.id),
-          title: c.title,
-          handle: c.handle,
-          description: c.body_html,
-        });
-      }
-    }
-
-    // Also fetch smart collections
-    const smartCollectionsResponse = await fetch(
-      `https://${shopDomain}/admin/api/2024-01/smart_collections.json?limit=250`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    if (smartCollectionsResponse.ok) {
-      const { smart_collections } = await smartCollectionsResponse.json();
-
-      for (const c of smart_collections) {
-        collections.push({
-          id: String(c.id),
-          title: c.title,
-          handle: c.handle,
-          description: c.body_html,
-        });
-      }
+    for (const c of collectionsData.collections.nodes) {
+      collections.push({
+        id: c.id,
+        title: c.title,
+        handle: c.handle,
+        description: c.descriptionHtml,
+      });
     }
   }
 
   // Generate content
   const store: LlmsTxtStore = {
     name: shopifyShop.name || shopDomain.replace('.myshopify.com', ''),
-    domain: shopifyShop.domain || shopDomain,
-    description: shopifyShop.description,
+    domain: shopifyShop.primaryDomain?.host || shopDomain,
+    description: shopifyShop.description || undefined,
   };
 
   const content = generateLlmsTxt({ store, config, products, collections });
