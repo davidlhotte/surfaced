@@ -19,6 +19,7 @@ vi.mock('@/lib/db/prisma', () => ({
 vi.mock('@/lib/shopify/graphql', () => ({
   fetchProducts: vi.fn(),
   fetchShopInfo: vi.fn(),
+  fetchProductsCount: vi.fn(),
 }));
 
 vi.mock('@/lib/monitoring/logger', () => ({
@@ -32,7 +33,7 @@ vi.mock('@/lib/monitoring/logger', () => ({
 // Import after mocks
 import { runAudit, type AuditResult } from '@/lib/services/audit-engine';
 import { prisma } from '@/lib/db/prisma';
-import { fetchProducts, fetchShopInfo } from '@/lib/shopify/graphql';
+import { fetchProducts, fetchShopInfo, fetchProductsCount } from '@/lib/shopify/graphql';
 
 describe('Audit Engine', () => {
   beforeEach(() => {
@@ -52,6 +53,9 @@ describe('Audit Engine', () => {
         id: 'shop-1',
         plan: 'FREE',
       });
+
+      // Mock products count
+      (fetchProductsCount as ReturnType<typeof vi.fn>).mockResolvedValue(2);
 
       // Mock shop info
       (fetchShopInfo as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -148,6 +152,9 @@ describe('Audit Engine', () => {
         id: 'shop-1',
         plan: 'FREE',
       });
+
+      // Mock products count
+      (fetchProductsCount as ReturnType<typeof vi.fn>).mockResolvedValue(3);
 
       (fetchShopInfo as ReturnType<typeof vi.fn>).mockResolvedValue({
         shop: {

@@ -19,9 +19,13 @@ test.describe('Health Checks', () => {
   test('API endpoints are reachable', async ({ request }) => {
     const endpoints = [
       '/api/billing',
-      '/api/stores',
       '/api/settings',
       '/api/auth?shop=test.myshopify.com',
+      // Surfaced-specific endpoints
+      '/api/dashboard',
+      '/api/audit',
+      '/api/visibility',
+      '/api/competitors',
     ];
 
     for (const endpoint of endpoints) {

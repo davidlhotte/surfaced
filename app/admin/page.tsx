@@ -378,7 +378,7 @@ export default function Dashboard() {
                     <BlockStack gap="200">
                       <Text as="p" fontWeight="semibold">Run your first audit</Text>
                       <Text as="p" variant="bodySm">
-                        Click "Run Audit" to scan your products and get personalized recommendations.
+                        Click &quot;Run Audit&quot; to scan your products and get personalized recommendations.
                       </Text>
                     </BlockStack>
                   </Banner>

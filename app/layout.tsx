@@ -55,12 +55,8 @@ export default function RootLayout({
           - Must be first script tag
           Using dangerouslySetInnerHTML to avoid Next.js adding async
         */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: '',
-          }}
-          src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
-        />
+{/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
