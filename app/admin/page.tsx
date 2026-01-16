@@ -359,6 +359,9 @@ export default function Dashboard() {
                     <Link href="/admin/json-ld">
                       <Button fullWidth variant="secondary">JSON-LD Schemas</Button>
                     </Link>
+                    <Link href="/admin/optimize">
+                      <Button fullWidth variant="secondary">AI Content Optimizer</Button>
+                    </Link>
                     <Link href="/admin/settings">
                       <Button fullWidth variant="secondary">Settings</Button>
                     </Link>

@@ -20,6 +20,7 @@ export const PLAN_LIMITS = {
   [Plan.FREE]: {
     productsAudited: 10,
     visibilityChecksPerMonth: 3,
+    aiOptimizationsPerMonth: 3,
     platformsTracked: 1,
     competitorsTracked: 0,
     historyDays: 7,
@@ -35,6 +36,7 @@ export const PLAN_LIMITS = {
   [Plan.BASIC]: {
     productsAudited: 100,
     visibilityChecksPerMonth: 10,
+    aiOptimizationsPerMonth: 20,
     platformsTracked: 2,
     competitorsTracked: 1,
     historyDays: 30,
@@ -50,6 +52,7 @@ export const PLAN_LIMITS = {
   [Plan.PLUS]: {
     productsAudited: 500,
     visibilityChecksPerMonth: 50,
+    aiOptimizationsPerMonth: 100,
     platformsTracked: 4,
     competitorsTracked: 3,
     historyDays: 90,
@@ -65,6 +68,7 @@ export const PLAN_LIMITS = {
   [Plan.PREMIUM]: {
     productsAudited: Infinity,
     visibilityChecksPerMonth: 200,
+    aiOptimizationsPerMonth: 500,
     platformsTracked: 5,
     competitorsTracked: 10,
     historyDays: 365,

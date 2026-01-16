@@ -434,3 +434,71 @@ export async function fetchCollectionsForLlmsTxt(
 
   return json.data as LlmsTxtCollectionsResponse;
 }
+
+/**
+ * Fetch a single product by ID (uses accessToken directly)
+ */
+export async function fetchProductById(
+  shopDomain: string,
+  accessToken: string,
+  productGid: string
+): Promise<ShopifyProduct | null> {
+  const query = `
+    query GetProduct($id: ID!) {
+      product(id: $id) {
+        id
+        title
+        handle
+        descriptionHtml
+        description
+        featuredImage {
+          url
+        }
+        images(first: 10) {
+          nodes {
+            url
+            altText
+          }
+        }
+        metafields(first: 20) {
+          nodes {
+            key
+            value
+            namespace
+          }
+        }
+        seo {
+          title
+          description
+        }
+        vendor
+        productType
+        tags
+        status
+      }
+    }
+  `;
+
+  const response = await fetch(
+    `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken,
+      },
+      body: JSON.stringify({ query, variables: { id: productGid } }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`GraphQL request failed: ${response.status}`);
+  }
+
+  const json = await response.json();
+  if (json.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
+  }
+
+  return json.data.product as ShopifyProduct | null;
+}
