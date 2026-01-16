@@ -362,6 +362,9 @@ export default function Dashboard() {
                     <Link href="/admin/optimize">
                       <Button fullWidth variant="secondary">AI Content Optimizer</Button>
                     </Link>
+                    <Link href="/admin/alerts">
+                      <Button fullWidth variant="secondary">Alerts & Reports</Button>
+                    </Link>
                     <Link href="/admin/settings">
                       <Button fullWidth variant="secondary">Settings</Button>
                     </Link>
