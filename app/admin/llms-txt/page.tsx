@@ -26,7 +26,7 @@ import {
   RefreshIcon,
   InfoIcon,
 } from '@shopify/polaris-icons';
-import { useAuthenticatedFetch } from '@/components/providers/AuthenticatedFetchProvider';
+import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 
 // Available AI bots
 const AI_BOTS = [
@@ -51,7 +51,7 @@ interface LlmsTxtConfig {
 }
 
 export default function LlmsTxtPage() {
-  const fetch = useAuthenticatedFetch();
+  const { fetch } = useAuthenticatedFetch();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -429,7 +429,6 @@ export default function LlmsTxtPage() {
             onAction: handleDownload,
           },
         ]}
-        large
       >
         <Modal.Section>
           <Box padding="400" background="bg-surface-secondary" borderRadius="200">

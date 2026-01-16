@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/utils/errors';
 import { getShopFromRequest } from '@/lib/shopify/get-shop';
 import { prisma } from '@/lib/db/prisma';
-import { decrypt } from '@/lib/security/encryption';
+import { decryptToken } from '@/lib/security/encryption';
 import {
   getLlmsTxtConfig,
   updateLlmsTxtConfig,
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     let error = null;
 
     try {
-      const accessToken = decrypt(shop.accessToken);
+      const accessToken = decryptToken(shop.accessToken);
       const result = await generateLlmsTxtForShop(shopDomain, accessToken);
       preview = result.content;
     } catch (e) {
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
     let error = null;
 
     try {
-      const accessToken = decrypt(shop.accessToken);
+      const accessToken = decryptToken(shop.accessToken);
       const result = await generateLlmsTxtForShop(shopDomain, accessToken);
       content = result.content;
     } catch (e) {
