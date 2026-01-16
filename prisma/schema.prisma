@@ -35,6 +35,7 @@ model Shop {
   visibilityChecks VisibilityCheck[]
   competitors     Competitor[]
   llmsTxtConfig   LlmsTxtConfig?
+  jsonLdConfig    JsonLdConfig?
 
   @@index([plan])
 }
@@ -155,6 +156,30 @@ model LlmsTxtConfig {
   lastGeneratedAt     DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
+}
+
+// ============================================
+// JSON-LD MODELS - Structured Data Configuration
+// ============================================
+
+model JsonLdConfig {
+  id                      String    @id @default(cuid())
+  shopId                  String    @unique
+  shop                    Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  isEnabled               Boolean   @default(true)
+
+  // Schema inclusion settings
+  includeOrganization     Boolean   @default(true)
+  includeProducts         Boolean   @default(true)
+  includeBreadcrumbs      Boolean   @default(true)
+
+  excludedProductIds      Json      @default("[]")
+  customOrganizationData  Json?     // Custom organization schema overrides
+
+  lastGeneratedAt         DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 }
 
 // ============================================

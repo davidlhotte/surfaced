@@ -356,6 +356,9 @@ export default function Dashboard() {
                     <Link href="/admin/llms-txt">
                       <Button fullWidth variant="secondary">Configure llms.txt</Button>
                     </Link>
+                    <Link href="/admin/json-ld">
+                      <Button fullWidth variant="secondary">JSON-LD Schemas</Button>
+                    </Link>
                     <Link href="/admin/settings">
                       <Button fullWidth variant="secondary">Settings</Button>
                     </Link>
