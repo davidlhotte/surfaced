@@ -16,6 +16,7 @@ import {
 } from '@/lib/shopify/graphql';
 import { runAudit } from '@/lib/services/audit-engine';
 import { logger } from '@/lib/monitoring/logger';
+import { triggerOptimizationApplied } from '@/lib/services/flow-triggers';
 
 /**
  * GET /api/optimize
@@ -383,6 +384,18 @@ export async function PATCH(request: NextRequest) {
       });
     } catch (e) {
       logger.error({ error: e }, 'Failed to re-audit after optimization');
+    }
+
+    // Send Flow triggers for each optimized field
+    for (const entry of historyEntries) {
+      await triggerOptimizationApplied(
+        shopDomain,
+        productId,
+        currentProduct.title,
+        entry.field,
+        scoreBefore,
+        scoreAfter
+      );
     }
 
     return NextResponse.json({

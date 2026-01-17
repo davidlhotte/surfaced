@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { prisma } from '@/lib/db/prisma';
 import { PLAN_LIMITS } from '@/lib/constants/plans';
 import { logger } from '@/lib/monitoring/logger';
+import { triggerABTestCompleted } from '@/lib/services/flow-triggers';
 import type { Plan, ABTestField, ABTestStatus, ABTestWinner, Platform } from '@prisma/client';
 
 const openai = new OpenAI({
@@ -276,6 +277,16 @@ async function runABTestQueries(shopDomain: string, testId: string): Promise<voi
   logger.info(
     { testId, winner, variantAMentions, variantBMentions },
     'A/B test completed'
+  );
+
+  // Send Flow trigger
+  await triggerABTestCompleted(
+    shopDomain,
+    test.name,
+    test.shopifyProductId.toString(),
+    winner,
+    variantAMentions,
+    variantBMentions
   );
 }
 

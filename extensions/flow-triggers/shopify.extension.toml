@@ -1,0 +1,200 @@
+# Surfaced Flow Triggers Extension
+# Provides automation triggers for Shopify Flow
+
+api_version = "2025-01"
+
+[[extensions]]
+name = "Surfaced Flow Triggers"
+handle = "surfaced-flow-triggers"
+type = "flow_trigger"
+
+  [[extensions.settings]]
+  type = "multi_line_text_field"
+  key = "description"
+  name = "Description"
+
+  # Trigger: Product AI Score Changed
+  [[extensions.triggers]]
+  title = "Product AI Score Changed"
+  description = "Triggered when a product's AI readiness score changes significantly"
+
+    [[extensions.triggers.fields]]
+    id = "product_id"
+    name = "Product ID"
+    description = "The Shopify product ID"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "product_title"
+    name = "Product Title"
+    description = "The product title"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "previous_score"
+    name = "Previous Score"
+    description = "The AI score before the change"
+    type = "number"
+    ui_type = "number-field"
+
+    [[extensions.triggers.fields]]
+    id = "new_score"
+    name = "New Score"
+    description = "The AI score after the change"
+    type = "number"
+    ui_type = "number-field"
+
+    [[extensions.triggers.fields]]
+    id = "score_change"
+    name = "Score Change"
+    description = "The difference in score (positive = improvement)"
+    type = "number"
+    ui_type = "number-field"
+
+  # Trigger: Alert Created
+  [[extensions.triggers]]
+  title = "Surfaced Alert Created"
+  description = "Triggered when a new alert is created (score drop, visibility issue, etc.)"
+
+    [[extensions.triggers.fields]]
+    id = "alert_type"
+    name = "Alert Type"
+    description = "The type of alert (score_drop, visibility_issue, critical_issues, competitor_overtake)"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "alert_priority"
+    name = "Alert Priority"
+    description = "The priority level (low, medium, high, critical)"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "alert_title"
+    name = "Alert Title"
+    description = "The alert title"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "alert_message"
+    name = "Alert Message"
+    description = "The alert message"
+    type = "string"
+    ui_type = "text-field"
+
+  # Trigger: Visibility Check Completed
+  [[extensions.triggers]]
+  title = "Visibility Check Completed"
+  description = "Triggered when an AI visibility check completes"
+
+    [[extensions.triggers.fields]]
+    id = "platform"
+    name = "Platform"
+    description = "The AI platform checked (chatgpt, perplexity, gemini, copilot)"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "query"
+    name = "Query"
+    description = "The search query tested"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "is_mentioned"
+    name = "Is Mentioned"
+    description = "Whether the brand was mentioned"
+    type = "boolean"
+    ui_type = "checkbox"
+
+    [[extensions.triggers.fields]]
+    id = "position"
+    name = "Position"
+    description = "Position in recommendations (if mentioned)"
+    type = "number"
+    ui_type = "number-field"
+
+  # Trigger: Optimization Applied
+  [[extensions.triggers]]
+  title = "Product Optimization Applied"
+  description = "Triggered when an AI optimization suggestion is applied to a product"
+
+    [[extensions.triggers.fields]]
+    id = "product_id"
+    name = "Product ID"
+    description = "The Shopify product ID"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "product_title"
+    name = "Product Title"
+    description = "The product title"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "field"
+    name = "Field"
+    description = "The field that was optimized (description, seo_title, etc.)"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "score_before"
+    name = "Score Before"
+    description = "The AI score before optimization"
+    type = "number"
+    ui_type = "number-field"
+
+    [[extensions.triggers.fields]]
+    id = "score_after"
+    name = "Score After"
+    description = "The AI score after optimization"
+    type = "number"
+    ui_type = "number-field"
+
+  # Trigger: A/B Test Completed
+  [[extensions.triggers]]
+  title = "A/B Test Completed"
+  description = "Triggered when an A/B test finishes and determines a winner"
+
+    [[extensions.triggers.fields]]
+    id = "test_name"
+    name = "Test Name"
+    description = "The name of the A/B test"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "product_id"
+    name = "Product ID"
+    description = "The Shopify product ID"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "winner"
+    name = "Winner"
+    description = "The winning variant (A, B, or tie)"
+    type = "string"
+    ui_type = "text-field"
+
+    [[extensions.triggers.fields]]
+    id = "variant_a_mentions"
+    name = "Variant A Mentions"
+    description = "Number of times variant A was mentioned"
+    type = "number"
+    ui_type = "number-field"
+
+    [[extensions.triggers.fields]]
+    id = "variant_b_mentions"
+    name = "Variant B Mentions"
+    description = "Number of times variant B was mentioned"
+    type = "number"
+    ui_type = "number-field"
