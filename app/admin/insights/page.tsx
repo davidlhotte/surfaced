@@ -21,7 +21,6 @@ import {
 } from '@shopify/polaris';
 import {
   RefreshIcon,
-  ChartVerticalFilledIcon,
   AlertTriangleIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
@@ -68,12 +67,6 @@ interface ROIMetrics {
   scoreDistribution: ScoreDistribution;
 }
 
-interface EstimatedROI {
-  visibilityIncrease: string;
-  potentialReachIncrease: string;
-  qualityImprovement: string;
-}
-
 interface Alert {
   id: string;
   type: string;
@@ -115,7 +108,6 @@ export default function InsightsPage() {
 
   // ROI state
   const [metrics, setMetrics] = useState<ROIMetrics | null>(null);
-  const [estimatedROI, setEstimatedROI] = useState<EstimatedROI | null>(null);
 
   // Alerts state
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -138,7 +130,6 @@ export default function InsightsPage() {
       const roiData = await roiResponse.json();
       if (roiData.success) {
         setMetrics(roiData.data.metrics);
-        setEstimatedROI(roiData.data.estimatedROI);
       }
 
       // Load alerts data
@@ -399,41 +390,77 @@ export default function InsightsPage() {
 
                     <Divider />
 
-                    {/* Estimated Impact */}
+                    {/* Next Steps - More actionable than vague impact metrics */}
                     <BlockStack gap="300">
-                      <InlineStack gap="200" blockAlign="center">
-                        <ChartVerticalFilledIcon />
-                        <Text as="h3" variant="headingSm">Your Impact</Text>
-                      </InlineStack>
+                      <Text as="h3" variant="headingSm">Recommended Actions</Text>
+                      <BlockStack gap="200">
+                        {(metrics?.productsWithCriticalIssues ?? 0) > 0 && (
+                          <Box padding="300" background="bg-surface-critical" borderRadius="200">
+                            <InlineStack align="space-between" blockAlign="center">
+                              <BlockStack gap="100">
+                                <Text as="p" fontWeight="semibold">
+                                  {metrics?.productsWithCriticalIssues} products need urgent fixes
+                                </Text>
+                                <Text as="p" variant="bodySm" tone="subdued">
+                                  Missing images or descriptions hurt your AI visibility
+                                </Text>
+                              </BlockStack>
+                              <Link href="/admin/products">
+                                <Button variant="primary">Fix Now</Button>
+                              </Link>
+                            </InlineStack>
+                          </Box>
+                        )}
 
-                      <InlineStack gap="400" align="start">
-                        <Box minWidth="200px" padding="300" background="bg-surface-success" borderRadius="200">
-                          <BlockStack gap="100">
-                            <Text as="p" variant="bodySm" tone="subdued">vs. Average Store</Text>
-                            <Text as="p" variant="headingSm" fontWeight="bold">
-                              {estimatedROI?.visibilityIncrease ?? 'N/A'}
-                            </Text>
-                          </BlockStack>
-                        </Box>
+                        {(metrics?.visibility.totalChecks ?? 0) === 0 && (
+                          <Box padding="300" background="bg-surface-warning" borderRadius="200">
+                            <InlineStack align="space-between" blockAlign="center">
+                              <BlockStack gap="100">
+                                <Text as="p" fontWeight="semibold">
+                                  Check if AI mentions your store
+                                </Text>
+                                <Text as="p" variant="bodySm" tone="subdued">
+                                  See which AI assistants recommend your products
+                                </Text>
+                              </BlockStack>
+                              <Link href="/admin/visibility">
+                                <Button>Check Visibility</Button>
+                              </Link>
+                            </InlineStack>
+                          </Box>
+                        )}
 
-                        <Box minWidth="200px" padding="300" background="bg-surface-info" borderRadius="200">
-                          <BlockStack gap="100">
-                            <Text as="p" variant="bodySm" tone="subdued">AI Recommendations</Text>
-                            <Text as="p" variant="headingSm" fontWeight="bold">
-                              {estimatedROI?.potentialReachIncrease ?? 'N/A'}
-                            </Text>
-                          </BlockStack>
-                        </Box>
+                        {(metrics?.currentScore ?? 0) < 70 && (
+                          <Box padding="300" background="bg-surface-info" borderRadius="200">
+                            <InlineStack align="space-between" blockAlign="center">
+                              <BlockStack gap="100">
+                                <Text as="p" fontWeight="semibold">
+                                  Improve your product content
+                                </Text>
+                                <Text as="p" variant="bodySm" tone="subdued">
+                                  Use AI to suggest better descriptions and SEO
+                                </Text>
+                              </BlockStack>
+                              <Link href="/admin/optimize">
+                                <Button>Optimize Products</Button>
+                              </Link>
+                            </InlineStack>
+                          </Box>
+                        )}
 
-                        <Box minWidth="200px" padding="300" background="bg-surface-warning" borderRadius="200">
-                          <BlockStack gap="100">
-                            <Text as="p" variant="bodySm" tone="subdued">Product Quality</Text>
-                            <Text as="p" variant="headingSm" fontWeight="bold">
-                              {estimatedROI?.qualityImprovement ?? 'N/A'}
-                            </Text>
-                          </BlockStack>
-                        </Box>
-                      </InlineStack>
+                        {(metrics?.currentScore ?? 0) >= 70 && (metrics?.productsWithCriticalIssues ?? 0) === 0 && (
+                          <Box padding="300" background="bg-surface-success" borderRadius="200">
+                            <BlockStack gap="100">
+                              <Text as="p" fontWeight="semibold">
+                                Your store is in good shape!
+                              </Text>
+                              <Text as="p" variant="bodySm" tone="subdued">
+                                Keep monitoring your visibility and continue improving
+                              </Text>
+                            </BlockStack>
+                          </Box>
+                        )}
+                      </BlockStack>
                     </BlockStack>
 
                     <Divider />
@@ -721,32 +748,64 @@ export default function InsightsPage() {
           </Card>
         </Layout.Section>
 
-        {/* Quick Tips */}
+        {/* Quick Tips with Action Buttons */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
               <Text as="h2" variant="headingMd">How to Improve</Text>
               <Divider />
-              <BlockStack gap="200">
-                <Box padding="200" background="bg-surface-secondary" borderRadius="100">
-                  <Text as="p" variant="bodySm">
-                    <strong>Check your products weekly</strong> - Run an analysis to catch new issues early
-                  </Text>
+              <BlockStack gap="300">
+                <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                    <BlockStack gap="100">
+                      <Text as="p" fontWeight="semibold">Check your products regularly</Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        Run an analysis to catch new issues early
+                      </Text>
+                    </BlockStack>
+                    <Link href="/admin/products">
+                      <Button>View Products</Button>
+                    </Link>
+                  </InlineStack>
                 </Box>
-                <Box padding="200" background="bg-surface-secondary" borderRadius="100">
-                  <Text as="p" variant="bodySm">
-                    <strong>Use AI suggestions</strong> - Let AI help you write better product descriptions
-                  </Text>
+                <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                    <BlockStack gap="100">
+                      <Text as="p" fontWeight="semibold">Use AI suggestions</Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        Let AI help you write better product descriptions
+                      </Text>
+                    </BlockStack>
+                    <Link href="/admin/optimize">
+                      <Button>Optimize Now</Button>
+                    </Link>
+                  </InlineStack>
                 </Box>
-                <Box padding="200" background="bg-surface-secondary" borderRadius="100">
-                  <Text as="p" variant="bodySm">
-                    <strong>Monitor visibility</strong> - Check if AI assistants are recommending your store
-                  </Text>
+                <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                    <BlockStack gap="100">
+                      <Text as="p" fontWeight="semibold">Monitor visibility</Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        Check if AI assistants are recommending your store
+                      </Text>
+                    </BlockStack>
+                    <Link href="/admin/visibility">
+                      <Button>Check Visibility</Button>
+                    </Link>
+                  </InlineStack>
                 </Box>
-                <Box padding="200" background="bg-surface-secondary" borderRadius="100">
-                  <Text as="p" variant="bodySm">
-                    <strong>Set up your AI Guide</strong> - Help AI crawlers understand your store better
-                  </Text>
+                <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                    <BlockStack gap="100">
+                      <Text as="p" fontWeight="semibold">Set up your AI Guide</Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        Help AI crawlers understand your store better
+                      </Text>
+                    </BlockStack>
+                    <Link href="/admin/tools">
+                      <Button variant="primary">Configure Tools</Button>
+                    </Link>
+                  </InlineStack>
                 </Box>
               </BlockStack>
             </BlockStack>
