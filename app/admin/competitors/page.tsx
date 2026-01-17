@@ -22,6 +22,7 @@ import {
   ProgressBar,
 } from '@shopify/polaris';
 import { PlusCircleIcon } from '@shopify/polaris-icons';
+import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 
 type Competitor = {
   id: string;
@@ -76,6 +77,7 @@ type CompetitorAnalysis = {
 };
 
 export default function CompetitorsPage() {
+  const { fetch: authenticatedFetch } = useAuthenticatedFetch();
   const [data, setData] = useState<CompetitorsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -91,7 +93,7 @@ export default function CompetitorsPage() {
   const fetchCompetitors = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/competitors');
+      const response = await authenticatedFetch('/api/competitors');
       if (!response.ok) throw new Error('Failed to fetch competitors');
       const result = await response.json();
       if (result.success) {
@@ -104,7 +106,7 @@ export default function CompetitorsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authenticatedFetch]);
 
   useEffect(() => {
     fetchCompetitors();
@@ -116,7 +118,7 @@ export default function CompetitorsPage() {
     try {
       setAdding(true);
       setError(null);
-      const response = await fetch('/api/competitors', {
+      const response = await authenticatedFetch('/api/competitors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -147,7 +149,7 @@ export default function CompetitorsPage() {
   const removeCompetitor = async (id: string) => {
     try {
       setError(null);
-      const response = await fetch(`/api/competitors?id=${id}`, {
+      const response = await authenticatedFetch(`/api/competitors?id=${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
@@ -169,7 +171,7 @@ export default function CompetitorsPage() {
     try {
       setAnalyzing(true);
       setError(null);
-      const response = await fetch('/api/competitors', {
+      const response = await authenticatedFetch('/api/competitors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'analyze' }),

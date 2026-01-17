@@ -18,6 +18,7 @@ import {
   DataTable,
 } from '@shopify/polaris';
 import Link from 'next/link';
+import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 
 type VisibilityCheck = {
   id: string;
@@ -44,6 +45,7 @@ type VisibilityResult = {
 };
 
 export default function VisibilityPage() {
+  const { fetch: authenticatedFetch } = useAuthenticatedFetch();
   const [history, setHistory] = useState<VisibilityCheck[]>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
@@ -54,7 +56,7 @@ export default function VisibilityPage() {
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/visibility');
+      const response = await authenticatedFetch('/api/visibility');
       if (!response.ok) throw new Error('Failed to fetch visibility history');
       const result = await response.json();
       if (result.success) {
@@ -67,7 +69,7 @@ export default function VisibilityPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authenticatedFetch]);
 
   useEffect(() => {
     fetchHistory();
@@ -77,7 +79,7 @@ export default function VisibilityPage() {
     try {
       setChecking(true);
       setError(null);
-      const response = await fetch('/api/visibility', {
+      const response = await authenticatedFetch('/api/visibility', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ queries }),
