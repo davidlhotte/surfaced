@@ -26,6 +26,7 @@ import {
   ViewIcon,
   MagicIcon,
   TargetIcon,
+  ReplayIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
@@ -253,6 +254,13 @@ export default function Dashboard() {
       color: 'bg-fill-critical',
     },
     {
+      title: 'A/B Testing',
+      description: 'Test content variations with AI',
+      icon: ReplayIcon,
+      href: '/admin/ab-tests',
+      color: 'bg-fill-transparent',
+    },
+    {
       title: 'Insights',
       description: 'Track your progress and ROI',
       icon: ChartVerticalFilledIcon,
@@ -389,7 +397,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Quick Access Grid - Responsive */}
-        <ResponsiveGrid columns={{ xs: 1, sm: 2, md: 3, lg: 5 }} gap="base">
+        <ResponsiveGrid columns={{ xs: 1, sm: 2, md: 3, lg: 4 }} gap="base">
           {quickAccessCards.map((card) => (
             <Card key={card.title}>
               <BlockStack gap="300">

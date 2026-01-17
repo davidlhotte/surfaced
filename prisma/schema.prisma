@@ -38,6 +38,7 @@ model Shop {
   llmsTxtConfig         LlmsTxtConfig?
   jsonLdConfig          JsonLdConfig?
   optimizationHistory   ProductOptimizationHistory[]
+  abTests               ABTest[]
 
   @@index([plan])
 }
@@ -294,4 +295,88 @@ enum ResponseQuality {
 enum OptimizationStatus {
   applied   // Change was applied to product
   undone    // Change was reverted
+}
+
+// ============================================
+// A/B TESTING MODELS
+// ============================================
+
+model ABTest {
+  id                  String    @id @default(cuid())
+  shopId              String
+  shop                Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  name                String    // Test name for identification
+  shopifyProductId    BigInt
+  productTitle        String    // Snapshot of product title
+  field               ABTestField
+
+  // Variants
+  variantA            String    @db.Text // Current/control content
+  variantB            String    @db.Text // Test content
+
+  // Test configuration
+  testQueries         Json      @default("[]") // Array of queries to test with
+  queriesPerVariant   Int       @default(5)
+
+  // Results
+  variantAMentions    Int       @default(0)
+  variantBMentions    Int       @default(0)
+  variantAAvgPosition Float?
+  variantBAvgPosition Float?
+  totalChecks         Int       @default(0)
+
+  // Status
+  status              ABTestStatus @default(draft)
+  winner              ABTestWinner?
+  winnerApplied       Boolean   @default(false)
+
+  startedAt           DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Results history
+  testResults         ABTestResult[]
+
+  @@index([shopId])
+  @@index([status])
+}
+
+model ABTestResult {
+  id              String    @id @default(cuid())
+  testId          String
+  test            ABTest    @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  variant         ABTestWinner  // A or B
+  query           String
+  platform        Platform
+
+  isMentioned     Boolean
+  position        Int?
+  context         String?       @db.Text
+
+  testedAt        DateTime  @default(now())
+
+  @@index([testId])
+}
+
+enum ABTestField {
+  description
+  seo_title
+  seo_description
+  tags
+}
+
+enum ABTestStatus {
+  draft       // Not started
+  running     // Test in progress
+  completed   // Test finished
+  cancelled   // User cancelled
+}
+
+enum ABTestWinner {
+  A           // Variant A (control) won
+  B           // Variant B (test) won
+  tie         // No significant difference
 }
