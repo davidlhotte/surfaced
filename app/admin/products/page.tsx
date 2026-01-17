@@ -379,6 +379,11 @@ export default function ProductsPage() {
       }}
       secondaryActions={[
         {
+          content: 'AI Optimizer',
+          icon: MagicIcon,
+          url: '/admin/optimize',
+        },
+        {
           content: 'Refresh',
           icon: RefreshIcon,
           onAction: fetchData,

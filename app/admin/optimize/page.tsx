@@ -667,24 +667,35 @@ export default function OptimizePage() {
                 </Banner>
               ) : (
                 <BlockStack gap="400">
-                  <InlineStack align="space-between" blockAlign="center">
+                  <InlineStack align="space-between" blockAlign="center" wrap>
                     <Text as="p" fontWeight="semibold">
                       {selectedSuggestions.size} of {optimization.suggestions.length} selected
                     </Text>
-                    <Button
-                      size="slim"
-                      onClick={() => {
-                        if (selectedSuggestions.size === optimization.suggestions.length) {
-                          setSelectedSuggestions(new Set());
-                        } else {
-                          const all = new Set<number>();
-                          optimization.suggestions.forEach((_, i) => all.add(i));
-                          setSelectedSuggestions(all);
-                        }
-                      }}
-                    >
-                      {selectedSuggestions.size === optimization.suggestions.length ? 'Deselect All' : 'Select All'}
-                    </Button>
+                    <InlineStack gap="200">
+                      <Button
+                        size="slim"
+                        onClick={() => {
+                          if (selectedSuggestions.size === optimization.suggestions.length) {
+                            setSelectedSuggestions(new Set());
+                          } else {
+                            const all = new Set<number>();
+                            optimization.suggestions.forEach((_, i) => all.add(i));
+                            setSelectedSuggestions(all);
+                          }
+                        }}
+                      >
+                        {selectedSuggestions.size === optimization.suggestions.length ? 'Deselect All' : 'Select All'}
+                      </Button>
+                      <Button
+                        variant="primary"
+                        icon={CheckIcon}
+                        onClick={handleApplySelected}
+                        disabled={selectedSuggestions.size === 0 || applying}
+                        loading={applying}
+                      >
+                        Apply {selectedSuggestions.size} Selected
+                      </Button>
+                    </InlineStack>
                   </InlineStack>
 
                   {optimization.suggestions.map((suggestion, index) => (

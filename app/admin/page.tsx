@@ -24,7 +24,7 @@ import {
   QuestionCircleIcon,
   ProductIcon,
   ViewIcon,
-  AppsIcon,
+  MagicIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
@@ -231,17 +231,17 @@ export default function Dashboard() {
       color: 'bg-fill-info',
     },
     {
+      title: 'AI Optimizer',
+      description: 'Auto-generate and apply content improvements',
+      icon: MagicIcon,
+      href: '/admin/optimize',
+      color: 'bg-fill-success',
+    },
+    {
       title: 'Visibility',
       description: 'See where AI mentions your brand',
       icon: ViewIcon,
       href: '/admin/visibility',
-      color: 'bg-fill-success',
-    },
-    {
-      title: 'Tools',
-      description: 'Help AI crawlers understand your store',
-      icon: AppsIcon,
-      href: '/admin/tools',
       color: 'bg-fill-warning',
     },
     {
