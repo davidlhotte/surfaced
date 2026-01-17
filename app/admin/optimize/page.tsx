@@ -693,7 +693,7 @@ export default function OptimizePage() {
                         disabled={selectedSuggestions.size === 0 || applying}
                         loading={applying}
                       >
-                        Apply {selectedSuggestions.size} Selected
+                        {`Apply ${selectedSuggestions.size} Selected`}
                       </Button>
                     </InlineStack>
                   </InlineStack>
