@@ -87,6 +87,9 @@ interface QuotaInfo {
   available: boolean;
 }
 
+type SortColumn = 'title' | 'score' | 'status';
+type SortDirection = 'asc' | 'desc';
+
 export default function ProductsPage() {
   const [data, setData] = useState<AuditData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,6 +98,8 @@ export default function ProductsPage() {
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [sortColumn, setSortColumn] = useState<SortColumn>('score');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const itemsPerPage = 15;
 
   // Optimization state
@@ -227,6 +232,41 @@ export default function ProductsPage() {
     return labels[field] || field;
   };
 
+  // Sort function
+  const sortProducts = (products: ProductAudit[]) => {
+    return [...products].sort((a, b) => {
+      let comparison = 0;
+      switch (sortColumn) {
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'score':
+          comparison = a.aiScore - b.aiScore;
+          break;
+        case 'status':
+          // Sort by: critical (no image/desc) first, then warning, then good
+          const getStatusPriority = (p: ProductAudit) => {
+            if (!p.hasImages || !p.hasDescription) return 0;
+            if (p.aiScore < 70) return 1;
+            return 2;
+          };
+          comparison = getStatusPriority(a) - getStatusPriority(b);
+          break;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  };
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
   // Filter products
   const filteredProducts = data?.products.filter((product) => {
     if (selectedFilter.length === 0) return true;
@@ -236,12 +276,15 @@ export default function ProductsPage() {
     return false;
   }) || [];
 
-  // Get products needing improvement
-  const productsNeedingWork = data?.products.filter(p => p.aiScore < 70) || [];
+  // Sort filtered products
+  const sortedProducts = sortProducts(filteredProducts);
+
+  // Get products needing improvement (sorted by score, lowest first)
+  const productsNeedingWork = sortProducts(data?.products.filter(p => p.aiScore < 70) || []);
 
   // Pagination
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const paginatedProducts = filteredProducts.slice(
+  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
+  const paginatedProducts = sortedProducts.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -276,11 +319,11 @@ export default function ProductsPage() {
   const warningCount = data?.issues.warning ?? 0;
 
   const tabs = [
-    { id: 'all', content: `All Products (${filteredProducts.length})` },
+    { id: 'all', content: `All Products (${sortedProducts.length})` },
     { id: 'improve', content: `Need Improvement (${productsNeedingWork.length})` },
   ];
 
-  const displayProducts = selectedTab === 0 ? paginatedProducts : productsNeedingWork.slice(0, 10);
+  const displayProducts = selectedTab === 0 ? paginatedProducts : productsNeedingWork.slice(0, 15);
 
   const tableRows = displayProducts.map((product) => [
     <BlockStack key={product.id} gap="100">
@@ -498,7 +541,25 @@ export default function ProductsPage() {
                 <>
                   <DataTable
                     columnContentTypes={['text', 'text', 'text', 'text', 'text']}
-                    headings={['Product', 'Score', 'Status', 'Issues', 'Action']}
+                    headings={[
+                      <InlineStack key="h-product" gap="100" blockAlign="center">
+                        <Button variant="plain" onClick={() => handleSort('title')}>
+                          {`Product ${sortColumn === 'title' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
+                        </Button>
+                      </InlineStack>,
+                      <InlineStack key="h-score" gap="100" blockAlign="center">
+                        <Button variant="plain" onClick={() => handleSort('score')}>
+                          {`Score ${sortColumn === 'score' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
+                        </Button>
+                      </InlineStack>,
+                      <InlineStack key="h-status" gap="100" blockAlign="center">
+                        <Button variant="plain" onClick={() => handleSort('status')}>
+                          {`Status ${sortColumn === 'status' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
+                        </Button>
+                      </InlineStack>,
+                      'Issues',
+                      'Action',
+                    ]}
                     rows={tableRows}
                   />
                   {selectedTab === 0 && totalPages > 1 && (

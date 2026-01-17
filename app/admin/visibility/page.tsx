@@ -329,37 +329,52 @@ export default function VisibilityPage() {
               <Text as="h3" variant="headingMd">How to Get More Mentions</Text>
               <Divider />
               <BlockStack gap="200">
-                <Box padding="200" background="bg-surface-secondary" borderRadius="200">
-                  <InlineStack gap="200" blockAlign="start">
-                    <Badge tone="info">1</Badge>
-                    <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Write detailed product descriptions</Text>
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        AI learns from your content. Better descriptions = more recommendations.
-                      </Text>
-                    </BlockStack>
+                <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                    <InlineStack gap="200" blockAlign="start">
+                      <Badge tone="info">1</Badge>
+                      <BlockStack gap="100">
+                        <Text as="p" fontWeight="semibold">Write detailed product descriptions</Text>
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          AI learns from your content. Better descriptions = more recommendations.
+                        </Text>
+                      </BlockStack>
+                    </InlineStack>
+                    <Link href="/admin/optimize">
+                      <Button>Optimize Products</Button>
+                    </Link>
                   </InlineStack>
                 </Box>
-                <Box padding="200" background="bg-surface-secondary" borderRadius="200">
-                  <InlineStack gap="200" blockAlign="start">
-                    <Badge tone="info">2</Badge>
-                    <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Be consistent with your brand name</Text>
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        Use the same name everywhere so AI can recognize you.
-                      </Text>
-                    </BlockStack>
+                <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                    <InlineStack gap="200" blockAlign="start">
+                      <Badge tone="info">2</Badge>
+                      <BlockStack gap="100">
+                        <Text as="p" fontWeight="semibold">Be consistent with your brand name</Text>
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          Use the same name everywhere so AI can recognize you.
+                        </Text>
+                      </BlockStack>
+                    </InlineStack>
+                    <Link href="/admin/settings">
+                      <Button>Check Settings</Button>
+                    </Link>
                   </InlineStack>
                 </Box>
-                <Box padding="200" background="bg-surface-secondary" borderRadius="200">
-                  <InlineStack gap="200" blockAlign="start">
-                    <Badge tone="info">3</Badge>
-                    <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Set up AI tools</Text>
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        <Link href="/admin/tools">Configure your AI guide</Link> to help AI understand your store.
-                      </Text>
-                    </BlockStack>
+                <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                    <InlineStack gap="200" blockAlign="start">
+                      <Badge tone="info">3</Badge>
+                      <BlockStack gap="100">
+                        <Text as="p" fontWeight="semibold">Set up AI tools</Text>
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          Configure your llms.txt and JSON-LD to help AI understand your store.
+                        </Text>
+                      </BlockStack>
+                    </InlineStack>
+                    <Link href="/admin/tools">
+                      <Button variant="primary">Configure Tools</Button>
+                    </Link>
                   </InlineStack>
                 </Box>
               </BlockStack>
