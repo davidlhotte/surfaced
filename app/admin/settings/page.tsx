@@ -231,11 +231,16 @@ export default function SettingsPage() {
         body: JSON.stringify({ plan }),
       });
 
-      if (response.ok) {
+      const result = await response.json();
+
+      if (response.ok && result.success) {
         setShopInfo((prev) => prev ? { ...prev, plan } : null);
+        setError(null);
+      } else {
+        setError(result.error || `Failed to change plan (${response.status})`);
       }
-    } catch {
-      setError('Failed to change plan');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to change plan');
     }
   };
 
