@@ -34,6 +34,7 @@ model Shop {
   productsAudit         ProductAudit[]
   visibilityChecks      VisibilityCheck[]
   competitors           Competitor[]
+  competitorAnalysisResults CompetitorAnalysisResult[]
   llmsTxtConfig         LlmsTxtConfig?
   jsonLdConfig          JsonLdConfig?
   optimizationHistory   ProductOptimizationHistory[]
@@ -130,8 +131,39 @@ model Competitor {
 
   createdAt   DateTime  @default(now())
 
+  // Historical tracking
+  analysisResults CompetitorAnalysisResult[]
+
   @@unique([shopId, domain])
   @@index([shopId])
+}
+
+model CompetitorAnalysisResult {
+  id              String    @id @default(cuid())
+  shopId          String
+  shop            Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  competitorId    String?
+  competitor      Competitor? @relation(fields: [competitorId], references: [id], onDelete: SetNull)
+
+  // Results
+  brandMentionRate    Int       // Your mention rate (0-100)
+  competitorMentionRate Int?    // Competitor's mention rate if this is for a competitor
+  competitorDomain    String?   // Denormalized for history when competitor is deleted
+  competitorName      String?   // Denormalized name
+
+  // Query details
+  queriesRun          Int       @default(0)
+  queriesMentioned    Int       @default(0)
+
+  // Position data
+  avgPosition         Float?
+  bestPosition        Int?
+  worstPosition       Int?
+
+  analyzedAt          DateTime  @default(now())
+
+  @@index([shopId, analyzedAt(sort: Desc)])
+  @@index([competitorId])
 }
 
 // ============================================

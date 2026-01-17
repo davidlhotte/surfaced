@@ -7,7 +7,8 @@ export type AlertType =
   | 'visibility_issue'     // Not mentioned in AI search
   | 'weekly_report'        // Weekly summary
   | 'critical_issues'      // Products have critical issues
-  | 'optimization_tip';    // Suggestion for improvement
+  | 'optimization_tip'     // Suggestion for improvement
+  | 'competitor_overtake'; // A competitor now has higher visibility
 
 export type AlertPriority = 'low' | 'medium' | 'high' | 'critical';
 
@@ -325,6 +326,90 @@ export async function generateWeeklyReport(shopDomain: string): Promise<{
 }
 
 /**
+ * Check for competitor overtaking you in AI visibility
+ */
+export async function checkForCompetitorOvertakes(shopDomain: string): Promise<Alert[]> {
+  const shop = await prisma.shop.findUnique({
+    where: { shopDomain },
+    select: { id: true },
+  });
+
+  if (!shop) {
+    return [];
+  }
+
+  const alerts: Alert[] = [];
+
+  // Get recent competitor analysis results (last 2 analyses)
+  const recentAnalyses = await prisma.competitorAnalysisResult.findMany({
+    where: {
+      shopId: shop.id,
+      competitorId: { not: null },
+    },
+    orderBy: { analyzedAt: 'desc' },
+    take: 100, // Get enough to find previous analysis
+    select: {
+      brandMentionRate: true,
+      competitorMentionRate: true,
+      competitorName: true,
+      competitorDomain: true,
+      analyzedAt: true,
+    },
+  });
+
+  if (recentAnalyses.length < 2) {
+    return alerts;
+  }
+
+  // Group by competitor and analyze trends
+  const competitorTrends: Record<string, { current: number | null; previous: number | null; name: string }> = {};
+
+  for (const analysis of recentAnalyses) {
+    const key = analysis.competitorDomain || 'unknown';
+    if (!competitorTrends[key]) {
+      competitorTrends[key] = {
+        current: analysis.competitorMentionRate,
+        previous: null,
+        name: analysis.competitorName || key,
+      };
+    } else if (competitorTrends[key].previous === null) {
+      competitorTrends[key].previous = analysis.competitorMentionRate;
+    }
+  }
+
+  // Get your current mention rate
+  const yourCurrentRate = recentAnalyses[0]?.brandMentionRate ?? 0;
+  const yourPreviousRate = recentAnalyses.length > 1 ? recentAnalyses[Math.floor(recentAnalyses.length / 2)]?.brandMentionRate ?? 0 : yourCurrentRate;
+
+  // Check for overtakes
+  for (const [, trend] of Object.entries(competitorTrends)) {
+    if (trend.current !== null && trend.previous !== null) {
+      // Competitor was behind you, now they're ahead
+      if (trend.previous <= yourPreviousRate && trend.current > yourCurrentRate) {
+        alerts.push({
+          id: `competitor_overtake_${Date.now()}`,
+          type: 'competitor_overtake',
+          priority: trend.current - yourCurrentRate > 20 ? 'critical' : 'high',
+          title: `${trend.name} Overtook You`,
+          message: `${trend.name} now has ${trend.current}% AI mention rate vs your ${yourCurrentRate}%. They were previously at ${trend.previous}%.`,
+          actionUrl: '/admin/competitors',
+          actionLabel: 'View Analysis',
+          metadata: {
+            competitorName: trend.name,
+            competitorRate: trend.current,
+            yourRate: yourCurrentRate,
+            previousCompetitorRate: trend.previous,
+          },
+          createdAt: new Date(),
+        });
+      }
+    }
+  }
+
+  return alerts;
+}
+
+/**
  * Get all active alerts for a shop
  */
 export async function getActiveAlerts(shopDomain: string): Promise<Alert[]> {
@@ -334,8 +419,9 @@ export async function getActiveAlerts(shopDomain: string): Promise<Alert[]> {
   const scoreAlerts = await checkForScoreDrops(shopDomain);
   const visibilityAlerts = await checkForVisibilityIssues(shopDomain);
   const criticalAlerts = await checkForCriticalIssues(shopDomain);
+  const competitorAlerts = await checkForCompetitorOvertakes(shopDomain);
 
-  alerts.push(...scoreAlerts, ...visibilityAlerts, ...criticalAlerts);
+  alerts.push(...scoreAlerts, ...visibilityAlerts, ...criticalAlerts, ...competitorAlerts);
 
   // Sort by priority and date
   const priorityOrder: Record<AlertPriority, number> = {

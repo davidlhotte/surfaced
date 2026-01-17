@@ -322,6 +322,47 @@ export async function runCompetitorAnalysis(
     },
   });
 
+  // Save historical analysis results for trend tracking
+  // Save your brand's result
+  const yourPositions = comparisons
+    .filter((c) => c.yourBrand.position)
+    .map((c) => c.yourBrand.position as number);
+
+  await prisma.competitorAnalysisResult.create({
+    data: {
+      shopId: shop.id,
+      brandMentionRate: yourMentionRate,
+      queriesRun: comparisons.length,
+      queriesMentioned: comparisons.filter((c) => c.yourBrand.isMentioned).length,
+      avgPosition: yourPositions.length > 0
+        ? yourPositions.reduce((a, b) => a + b, 0) / yourPositions.length
+        : null,
+      bestPosition: yourPositions.length > 0 ? Math.min(...yourPositions) : null,
+      worstPosition: yourPositions.length > 0 ? Math.max(...yourPositions) : null,
+    },
+  });
+
+  // Save each competitor's results
+  for (const compStat of competitorStats) {
+    const dbCompetitor = shop.competitors.find((c) => c.domain === compStat.domain);
+
+    await prisma.competitorAnalysisResult.create({
+      data: {
+        shopId: shop.id,
+        competitorId: dbCompetitor?.id,
+        brandMentionRate: yourMentionRate,
+        competitorMentionRate: compStat.mentionRate,
+        competitorDomain: compStat.domain,
+        competitorName: compStat.name,
+        queriesRun: comparisons.length,
+        queriesMentioned: comparisons.filter((c) =>
+          c.competitors.some((cc) => cc.domain === compStat.domain && cc.isMentioned)
+        ).length,
+        avgPosition: compStat.averagePosition,
+      },
+    });
+  }
+
   logger.info(
     { shopDomain, yourMentionRate, bestCompetitorRate },
     'Competitor analysis completed'
@@ -445,5 +486,163 @@ export async function getCompetitors(shopDomain: string) {
     })),
     limit: planLimits.competitorsTracked,
     remaining: Math.max(0, planLimits.competitorsTracked - shop.competitors.length),
+  };
+}
+
+export type CompetitorTrendData = {
+  dates: string[];
+  yourBrand: {
+    mentionRates: number[];
+    avgPositions: (number | null)[];
+  };
+  competitors: {
+    domain: string;
+    name: string | null;
+    mentionRates: number[];
+    avgPositions: (number | null)[];
+  }[];
+};
+
+/**
+ * Get historical trend data for competitor analysis
+ */
+export async function getCompetitorTrends(
+  shopDomain: string,
+  days: number = 30
+): Promise<CompetitorTrendData> {
+  const shop = await prisma.shop.findUnique({
+    where: { shopDomain },
+    select: { id: true },
+  });
+
+  if (!shop) {
+    throw new Error('Shop not found');
+  }
+
+  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  // Get all analysis results for the time period
+  const results = await prisma.competitorAnalysisResult.findMany({
+    where: {
+      shopId: shop.id,
+      analyzedAt: { gte: startDate },
+    },
+    orderBy: { analyzedAt: 'asc' },
+    select: {
+      brandMentionRate: true,
+      competitorMentionRate: true,
+      competitorDomain: true,
+      competitorName: true,
+      avgPosition: true,
+      analyzedAt: true,
+    },
+  });
+
+  // Group by date
+  const dateGroups: Record<string, typeof results> = {};
+  for (const result of results) {
+    const dateKey = result.analyzedAt.toISOString().split('T')[0];
+    if (!dateGroups[dateKey]) {
+      dateGroups[dateKey] = [];
+    }
+    dateGroups[dateKey].push(result);
+  }
+
+  const dates = Object.keys(dateGroups).sort();
+  const yourBrand: CompetitorTrendData['yourBrand'] = {
+    mentionRates: [],
+    avgPositions: [],
+  };
+
+  const competitorData: Record<string, {
+    domain: string;
+    name: string | null;
+    mentionRates: number[];
+    avgPositions: (number | null)[];
+  }> = {};
+
+  for (const date of dates) {
+    const dayResults = dateGroups[date];
+
+    // Get your brand's data (entries without competitorId)
+    const brandResult = dayResults.find((r) => !r.competitorDomain);
+    if (brandResult) {
+      yourBrand.mentionRates.push(brandResult.brandMentionRate);
+      yourBrand.avgPositions.push(brandResult.avgPosition);
+    } else if (yourBrand.mentionRates.length > 0) {
+      // Use previous value if no data for this day
+      yourBrand.mentionRates.push(yourBrand.mentionRates[yourBrand.mentionRates.length - 1]);
+      yourBrand.avgPositions.push(yourBrand.avgPositions[yourBrand.avgPositions.length - 1]);
+    }
+
+    // Get competitor data
+    const competitorResults = dayResults.filter((r) => r.competitorDomain);
+    for (const compResult of competitorResults) {
+      const key = compResult.competitorDomain!;
+      if (!competitorData[key]) {
+        competitorData[key] = {
+          domain: key,
+          name: compResult.competitorName,
+          mentionRates: [],
+          avgPositions: [],
+        };
+      }
+      competitorData[key].mentionRates.push(compResult.competitorMentionRate ?? 0);
+      competitorData[key].avgPositions.push(compResult.avgPosition);
+    }
+  }
+
+  return {
+    dates,
+    yourBrand,
+    competitors: Object.values(competitorData),
+  };
+}
+
+/**
+ * Get the last analysis result for a shop
+ */
+export async function getLastAnalysisResult(shopDomain: string) {
+  const shop = await prisma.shop.findUnique({
+    where: { shopDomain },
+    select: { id: true },
+  });
+
+  if (!shop) {
+    return null;
+  }
+
+  const lastResult = await prisma.competitorAnalysisResult.findFirst({
+    where: {
+      shopId: shop.id,
+      competitorDomain: null, // Get the brand's own result
+    },
+    orderBy: { analyzedAt: 'desc' },
+  });
+
+  if (!lastResult) {
+    return null;
+  }
+
+  // Get competitor results from the same analysis
+  const competitorResults = await prisma.competitorAnalysisResult.findMany({
+    where: {
+      shopId: shop.id,
+      analyzedAt: lastResult.analyzedAt,
+      competitorDomain: { not: null },
+    },
+  });
+
+  return {
+    analyzedAt: lastResult.analyzedAt.toISOString(),
+    yourMentionRate: lastResult.brandMentionRate,
+    queriesRun: lastResult.queriesRun,
+    avgPosition: lastResult.avgPosition,
+    competitors: competitorResults.map((c) => ({
+      domain: c.competitorDomain,
+      name: c.competitorName,
+      mentionRate: c.competitorMentionRate,
+      avgPosition: c.avgPosition,
+    })),
   };
 }

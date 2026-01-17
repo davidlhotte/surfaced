@@ -6,17 +6,32 @@ import {
   addCompetitor,
   removeCompetitor,
   runCompetitorAnalysis,
+  getCompetitorTrends,
+  getLastAnalysisResult,
 } from '@/lib/services/competitor-intelligence';
 
 export async function GET(request: NextRequest) {
   try {
     const shopDomain = await getShopFromRequest(request, { rateLimit: false });
+    const { searchParams } = new URL(request.url);
+    const includeTrends = searchParams.get('trends') === 'true';
+    const days = parseInt(searchParams.get('days') || '30', 10);
 
     const result = await getCompetitors(shopDomain);
+    const lastAnalysis = await getLastAnalysisResult(shopDomain);
+
+    let trends = null;
+    if (includeTrends) {
+      trends = await getCompetitorTrends(shopDomain, days);
+    }
 
     return NextResponse.json({
       success: true,
-      data: result,
+      data: {
+        ...result,
+        lastAnalysis,
+        trends,
+      },
     });
   } catch (error) {
     return handleApiError(error);
