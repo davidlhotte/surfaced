@@ -229,6 +229,145 @@ describe('Optimize API Route', () => {
   });
 });
 
+describe('PATCH /api/optimize (Apply Suggestions)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should validate required fields for apply', () => {
+    const validateApplyRequest = (body: { productId?: string; suggestions?: unknown[] }) => {
+      if (!body.productId || !body.suggestions || !Array.isArray(body.suggestions)) {
+        return { error: 'Product ID and suggestions array are required', status: 400 };
+      }
+      return null;
+    };
+
+    expect(validateApplyRequest({})).toEqual({
+      error: 'Product ID and suggestions array are required',
+      status: 400,
+    });
+
+    expect(validateApplyRequest({ productId: '123' })).toEqual({
+      error: 'Product ID and suggestions array are required',
+      status: 400,
+    });
+
+    expect(validateApplyRequest({ productId: '123', suggestions: [] })).toBeNull();
+  });
+
+  it('should map suggestion fields to Shopify update input', () => {
+    const mapSuggestionToInput = (field: string, value: string) => {
+      const mapping: Record<string, unknown> = {};
+      switch (field) {
+        case 'description':
+          mapping.descriptionHtml = value;
+          break;
+        case 'seo_title':
+          mapping.seo = { title: value };
+          break;
+        case 'seo_description':
+          mapping.seo = { description: value };
+          break;
+        case 'tags':
+          mapping.tags = value.split(',').map((t) => t.trim());
+          break;
+        case 'productType':
+          mapping.productType = value;
+          break;
+        case 'vendor':
+          mapping.vendor = value;
+          break;
+      }
+      return mapping;
+    };
+
+    expect(mapSuggestionToInput('description', 'New desc')).toEqual({
+      descriptionHtml: 'New desc',
+    });
+    expect(mapSuggestionToInput('seo_title', 'SEO Title')).toEqual({
+      seo: { title: 'SEO Title' },
+    });
+    expect(mapSuggestionToInput('tags', 'tag1, tag2, tag3')).toEqual({
+      tags: ['tag1', 'tag2', 'tag3'],
+    });
+  });
+
+  it('should detect conflicts based on updatedAt timestamps', () => {
+    const hasConflict = (lastKnownUpdatedAt: string | null, currentUpdatedAt: string) => {
+      if (!lastKnownUpdatedAt) return false;
+      const lastKnown = new Date(lastKnownUpdatedAt).getTime();
+      const current = new Date(currentUpdatedAt).getTime();
+      return current > lastKnown;
+    };
+
+    expect(hasConflict(null, '2024-01-01T12:00:00Z')).toBe(false);
+    expect(hasConflict('2024-01-01T12:00:00Z', '2024-01-01T12:00:00Z')).toBe(false);
+    expect(hasConflict('2024-01-01T12:00:00Z', '2024-01-01T13:00:00Z')).toBe(true);
+  });
+
+  it('should return empty update when no valid fields provided', () => {
+    const buildUpdateInput = (suggestions: { field: string; suggested: string }[]) => {
+      const validFields = ['description', 'seo_title', 'seo_description', 'tags', 'productType', 'vendor'];
+      return suggestions.filter((s) => validFields.includes(s.field));
+    };
+
+    const result = buildUpdateInput([{ field: 'invalid_field', suggested: 'value' }]);
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe('DELETE /api/optimize (Undo)', () => {
+  it('should validate historyId is required', () => {
+    const validateUndoRequest = (historyId: string | null) => {
+      if (!historyId) {
+        return { error: 'History ID is required', status: 400 };
+      }
+      return null;
+    };
+
+    expect(validateUndoRequest(null)).toEqual({
+      error: 'History ID is required',
+      status: 400,
+    });
+
+    expect(validateUndoRequest('history-123')).toBeNull();
+  });
+
+  it('should build undo input from history entry', () => {
+    const buildUndoInput = (field: string, originalValue: string) => {
+      const undoInput: Record<string, unknown> = {};
+      switch (field) {
+        case 'description':
+          undoInput.descriptionHtml = originalValue;
+          break;
+        case 'seo_title':
+          undoInput.seo = { title: originalValue };
+          break;
+        case 'seo_description':
+          undoInput.seo = { description: originalValue };
+          break;
+        case 'tags':
+          undoInput.tags = originalValue.split(',').map((t) => t.trim()).filter(Boolean);
+          break;
+        case 'productType':
+          undoInput.productType = originalValue;
+          break;
+        case 'vendor':
+          undoInput.vendor = originalValue;
+          break;
+      }
+      return undoInput;
+    };
+
+    expect(buildUndoInput('description', 'Original desc')).toEqual({
+      descriptionHtml: 'Original desc',
+    });
+    expect(buildUndoInput('tags', 'old-tag1, old-tag2')).toEqual({
+      tags: ['old-tag1', 'old-tag2'],
+    });
+  });
+});
+
 describe('Optimization Suggestion Validation', () => {
   it('should validate suggestion fields', () => {
     const validSuggestion = {

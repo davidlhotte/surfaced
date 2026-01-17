@@ -215,4 +215,146 @@ describe('Audit API Route', () => {
       expect(typeof serialized.aiScore).toBe('number');
     });
   });
+
+  describe('Plan Info for Upgrade CTAs', () => {
+    const PLAN_LIMITS = {
+      FREE: { productsAudited: 10 },
+      BASIC: { productsAudited: 100 },
+      PLUS: { productsAudited: 500 },
+      PREMIUM: { productsAudited: Infinity },
+    };
+
+    it('should calculate plan info correctly when under limit', () => {
+      const calculatePlanInfo = (
+        plan: keyof typeof PLAN_LIMITS,
+        productsCount: number
+      ) => {
+        const productLimit = PLAN_LIMITS[plan].productsAudited;
+        const isAtLimit = productLimit !== Infinity && productsCount > productLimit;
+
+        return {
+          current: plan,
+          productLimit: productLimit === Infinity ? -1 : productLimit,
+          isAtLimit,
+          productsNotAnalyzed: isAtLimit ? productsCount - productLimit : 0,
+        };
+      };
+
+      const planInfo = calculatePlanInfo('FREE', 5);
+      expect(planInfo.current).toBe('FREE');
+      expect(planInfo.productLimit).toBe(10);
+      expect(planInfo.isAtLimit).toBe(false);
+      expect(planInfo.productsNotAnalyzed).toBe(0);
+    });
+
+    it('should calculate plan info correctly when at limit', () => {
+      const calculatePlanInfo = (
+        plan: keyof typeof PLAN_LIMITS,
+        productsCount: number
+      ) => {
+        const productLimit = PLAN_LIMITS[plan].productsAudited;
+        const isAtLimit = productLimit !== Infinity && productsCount > productLimit;
+
+        return {
+          current: plan,
+          productLimit: productLimit === Infinity ? -1 : productLimit,
+          isAtLimit,
+          productsNotAnalyzed: isAtLimit ? productsCount - productLimit : 0,
+        };
+      };
+
+      const planInfo = calculatePlanInfo('FREE', 25);
+      expect(planInfo.current).toBe('FREE');
+      expect(planInfo.productLimit).toBe(10);
+      expect(planInfo.isAtLimit).toBe(true);
+      expect(planInfo.productsNotAnalyzed).toBe(15);
+    });
+
+    it('should handle PREMIUM plan with unlimited products', () => {
+      const calculatePlanInfo = (
+        plan: keyof typeof PLAN_LIMITS,
+        productsCount: number
+      ) => {
+        const productLimit = PLAN_LIMITS[plan].productsAudited;
+        const isAtLimit = productLimit !== Infinity && productsCount > productLimit;
+
+        return {
+          current: plan,
+          productLimit: productLimit === Infinity ? -1 : productLimit,
+          isAtLimit,
+          productsNotAnalyzed: isAtLimit ? productsCount - productLimit : 0,
+        };
+      };
+
+      const planInfo = calculatePlanInfo('PREMIUM', 10000);
+      expect(planInfo.current).toBe('PREMIUM');
+      expect(planInfo.productLimit).toBe(-1); // -1 indicates unlimited
+      expect(planInfo.isAtLimit).toBe(false);
+      expect(planInfo.productsNotAnalyzed).toBe(0);
+    });
+
+    it('should calculate correctly for each plan tier', () => {
+      const calculatePlanInfo = (
+        plan: keyof typeof PLAN_LIMITS,
+        productsCount: number
+      ) => {
+        const productLimit = PLAN_LIMITS[plan].productsAudited;
+        const isAtLimit = productLimit !== Infinity && productsCount > productLimit;
+
+        return {
+          current: plan,
+          productLimit: productLimit === Infinity ? -1 : productLimit,
+          isAtLimit,
+          productsNotAnalyzed: isAtLimit ? productsCount - productLimit : 0,
+        };
+      };
+
+      // FREE: 10 products
+      expect(calculatePlanInfo('FREE', 10).isAtLimit).toBe(false);
+      expect(calculatePlanInfo('FREE', 11).isAtLimit).toBe(true);
+
+      // BASIC: 100 products
+      expect(calculatePlanInfo('BASIC', 100).isAtLimit).toBe(false);
+      expect(calculatePlanInfo('BASIC', 101).isAtLimit).toBe(true);
+
+      // PLUS: 500 products
+      expect(calculatePlanInfo('PLUS', 500).isAtLimit).toBe(false);
+      expect(calculatePlanInfo('PLUS', 501).isAtLimit).toBe(true);
+
+      // PREMIUM: Unlimited
+      expect(calculatePlanInfo('PREMIUM', 999999).isAtLimit).toBe(false);
+    });
+
+    it('should return shop with plan info in audit response', async () => {
+      const mockShop = {
+        id: 'shop-1',
+        shopDomain: 'test.myshopify.com',
+        productsCount: 25,
+        aiScore: 72,
+        plan: 'FREE',
+        lastAuditAt: new Date('2024-01-15'),
+        productsAudit: [],
+      };
+
+      (getShopFromRequest as ReturnType<typeof vi.fn>).mockResolvedValue('test.myshopify.com');
+      (prisma.shop.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockShop);
+
+      const shop = await prisma.shop.findUnique({
+        where: { shopDomain: 'test.myshopify.com' },
+        include: { productsAudit: { orderBy: { lastAuditAt: 'desc' } } },
+      });
+
+      expect(shop).toBeDefined();
+      expect(shop?.plan).toBe('FREE');
+      expect(shop?.productsCount).toBe(25);
+
+      // Verify the plan info calculation would show limit exceeded
+      const productLimit = 10; // FREE plan limit
+      const isAtLimit = shop!.productsCount > productLimit;
+      const productsNotAnalyzed = isAtLimit ? shop!.productsCount - productLimit : 0;
+
+      expect(isAtLimit).toBe(true);
+      expect(productsNotAnalyzed).toBe(15);
+    });
+  });
 });

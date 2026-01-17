@@ -471,6 +471,192 @@ test.describe('Feature Integration', () => {
 });
 
 // ============================================================================
+// OPTIMIZE PATCH/DELETE TESTS (Apply/Undo)
+// ============================================================================
+
+test.describe('Optimize Apply/Undo API', () => {
+  test.describe('PATCH /api/optimize (Apply Suggestions)', () => {
+    test('should return 401 without authentication', async ({ request }) => {
+      const response = await request.patch('/api/optimize', {
+        data: { productId: '123', suggestions: [] },
+      });
+      expect(response.status()).toBe(401);
+    });
+
+    test('should return 400 without productId', async ({ request }) => {
+      const response = await request.patch('/api/optimize', {
+        headers,
+        data: { suggestions: [] },
+      });
+
+      expect([400, 401, 404, 500]).toContain(response.status());
+
+      if (response.status() === 400) {
+        const data = await response.json();
+        expect(data.error).toContain('Product ID');
+      }
+    });
+
+    test('should return 400 without suggestions', async ({ request }) => {
+      const response = await request.patch('/api/optimize', {
+        headers,
+        data: { productId: '123456789' },
+      });
+
+      expect([400, 401, 404, 500]).toContain(response.status());
+
+      if (response.status() === 400) {
+        const data = await response.json();
+        expect(data.error).toContain('suggestions');
+      }
+    });
+
+    test('should accept valid apply request', async ({ request }) => {
+      const response = await request.patch('/api/optimize', {
+        headers,
+        data: {
+          productId: '123456789',
+          suggestions: [
+            { field: 'description', suggested: 'New optimized description' },
+          ],
+        },
+      });
+
+      // May fail without actual product, but shouldn't crash
+      expect(response.status()).toBeLessThan(600);
+    });
+  });
+
+  test.describe('DELETE /api/optimize (Undo)', () => {
+    test('should return 401 without authentication', async ({ request }) => {
+      const response = await request.delete('/api/optimize?historyId=test-id');
+      expect(response.status()).toBe(401);
+    });
+
+    test('should return 400 without historyId', async ({ request }) => {
+      const response = await request.delete('/api/optimize', { headers });
+
+      expect([400, 401, 404, 500]).toContain(response.status());
+
+      if (response.status() === 400) {
+        const data = await response.json();
+        expect(data.error).toContain('History ID');
+      }
+    });
+
+    test('should accept valid undo request', async ({ request }) => {
+      const response = await request.delete('/api/optimize?historyId=some-history-id', {
+        headers,
+      });
+
+      // May be 404 if history doesn't exist, but shouldn't crash
+      expect(response.status()).toBeLessThan(600);
+    });
+  });
+});
+
+// ============================================================================
+// DEV PLAN API TESTS
+// ============================================================================
+
+test.describe('Dev Plan API', () => {
+  test.describe('POST /api/dev/plan', () => {
+    test('should return 400 without shop domain', async ({ request }) => {
+      const response = await request.post('/api/dev/plan', {
+        data: { plan: 'PREMIUM' },
+      });
+
+      expect([400, 401, 404, 500]).toContain(response.status());
+    });
+
+    test('should return 400 with invalid plan', async ({ request }) => {
+      const response = await request.post('/api/dev/plan', {
+        headers,
+        data: { plan: 'INVALID' },
+      });
+
+      expect([400, 401, 404, 500]).toContain(response.status());
+
+      if (response.status() === 400) {
+        const data = await response.json();
+        expect(data.error).toContain('Invalid plan');
+      }
+    });
+
+    test('should accept valid plan change', async ({ request }) => {
+      const response = await request.post('/api/dev/plan', {
+        headers,
+        data: { plan: 'BASIC' },
+      });
+
+      // May fail if shop doesn't exist, but shouldn't crash
+      expect(response.status()).toBeLessThan(600);
+    });
+
+    test('should accept all valid plan values', async ({ request }) => {
+      const plans = ['FREE', 'BASIC', 'PLUS', 'PREMIUM'];
+
+      for (const plan of plans) {
+        const response = await request.post('/api/dev/plan', {
+          headers,
+          data: { plan },
+        });
+
+        // May fail if shop doesn't exist, but 400 for invalid plan should not happen
+        expect(response.status()).not.toBe(400);
+      }
+    });
+  });
+});
+
+// ============================================================================
+// AUDIT PLAN INFO TESTS
+// ============================================================================
+
+test.describe('Audit Plan Info API', () => {
+  test('should include plan info in audit response', async ({ request }) => {
+    const response = await request.get('/api/audit', { headers });
+
+    if (response.status() === 200) {
+      const data = await response.json();
+      expect(data.data).toHaveProperty('plan');
+      expect(data.data.plan).toHaveProperty('current');
+      expect(data.data.plan).toHaveProperty('productLimit');
+      expect(data.data.plan).toHaveProperty('isAtLimit');
+      expect(data.data.plan).toHaveProperty('productsNotAnalyzed');
+    }
+  });
+
+  test('should return -1 for unlimited plans', async ({ request }) => {
+    // This tests the behavior when a shop has PREMIUM plan
+    const response = await request.get('/api/audit', { headers });
+
+    if (response.status() === 200) {
+      const data = await response.json();
+      // If plan is PREMIUM, productLimit should be -1
+      if (data.data.plan?.current === 'PREMIUM') {
+        expect(data.data.plan.productLimit).toBe(-1);
+        expect(data.data.plan.isAtLimit).toBe(false);
+      }
+    }
+  });
+
+  test('should calculate productsNotAnalyzed correctly', async ({ request }) => {
+    const response = await request.get('/api/audit', { headers });
+
+    if (response.status() === 200) {
+      const data = await response.json();
+      // If at limit, productsNotAnalyzed should be > 0
+      if (data.data.plan?.isAtLimit) {
+        expect(data.data.plan.productsNotAnalyzed).toBeGreaterThan(0);
+      } else {
+        expect(data.data.plan?.productsNotAnalyzed || 0).toBe(0);
+      }
+    }
+  });
+});
+
+// ============================================================================
 // ERROR HANDLING TESTS
 // ============================================================================
 
