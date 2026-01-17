@@ -1,0 +1,180 @@
+/* Global Admin Styles for Surfaced */
+
+/* Fix scroll behavior for embedded Shopify apps */
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* Ensure proper scrolling in embedded iframe */
+.Polaris-Frame {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Fix modal scroll issues */
+.Polaris-Modal-Dialog__Modal {
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.Polaris-Modal-Dialog__Container {
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
+}
+
+/* Responsive card grid fallback */
+@media (max-width: 768px) {
+  .Polaris-InlineStack {
+    flex-wrap: wrap !important;
+  }
+
+  .Polaris-InlineStack > * {
+    min-width: unset !important;
+  }
+}
+
+/* Better table scroll on mobile */
+@media (max-width: 600px) {
+  .Polaris-DataTable {
+    overflow-x: auto;
+  }
+
+  .Polaris-DataTable__Table {
+    min-width: 600px;
+  }
+}
+
+/* Smooth scrolling for page sections */
+.admin-section {
+  scroll-margin-top: 20px;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive grid system */
+.responsive-grid {
+  display: grid !important;
+  gap: 16px;
+}
+
+@media (max-width: 500px) {
+  .responsive-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 500px) and (max-width: 768px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* Stat card responsive sizing */
+.stat-card {
+  min-width: 0 !important;
+  flex: 1 1 200px;
+}
+
+@media (max-width: 600px) {
+  .stat-card {
+    flex: 1 1 100%;
+  }
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 768px) {
+  .Polaris-Button {
+    min-height: 44px;
+  }
+
+  .Polaris-Checkbox__Input + .Polaris-Checkbox__Backdrop {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Animation for score circle */
+@keyframes scoreReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.score-circle {
+  animation: scoreReveal 0.5s ease-out;
+}
+
+/* Card hover effects */
+.interactive-card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.interactive-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Loading skeleton pulse */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.skeleton {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: #e4e5e7;
+  border-radius: 4px;
+}
+
+/* Hide horizontal overflow on page wrapper */
+.Polaris-Page {
+  overflow-x: hidden;
+}
+
+/* Ensure full width on mobile */
+@media (max-width: 768px) {
+  .Polaris-Page__Content {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}

@@ -11,6 +11,7 @@ import {
   BlockStack,
 } from '@shopify/polaris';
 import '@shopify/polaris/build/esm/styles.css';
+import './admin.css';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { ShopProvider } from '@/components/providers/ShopProvider';

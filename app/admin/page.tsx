@@ -10,7 +10,6 @@ import {
   InlineStack,
   Button,
   Box,
-  ProgressBar,
   Badge,
   Spinner,
   Banner,
@@ -18,15 +17,18 @@ import {
   Tooltip,
 } from '@shopify/polaris';
 import {
-  SearchIcon,
   CheckCircleIcon,
   AlertTriangleIcon,
   ChartVerticalFilledIcon,
   SettingsIcon,
   QuestionCircleIcon,
+  ProductIcon,
+  ViewIcon,
+  AppsIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { ResponsiveGrid } from '@/components/admin/ResponsiveGrid';
 
 type DashboardData = {
   shop: {
@@ -119,14 +121,14 @@ export default function Dashboard() {
     }
   };
 
-  // Loading state - friendly message
+  // Loading state
   if (loading || shopLoading) {
     return (
       <Page title="Home">
         <Layout>
           <Layout.Section>
             <Card>
-              <Box padding="1000">
+              <Box padding="800">
                 <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
                   <Text as="p" variant="bodyLg">
@@ -141,7 +143,7 @@ export default function Dashboard() {
     );
   }
 
-  // Error state - helpful message
+  // Error state
   if (error) {
     return (
       <Page title="Home">
@@ -163,19 +165,18 @@ export default function Dashboard() {
   const hasAnalyzed = (data?.audit.auditedProducts ?? 0) > 0;
   const criticalCount = data?.audit.issues.critical ?? 0;
   const warningCount = data?.audit.issues.warning ?? 0;
-  const totalIssues = criticalCount + warningCount;
 
-  // Score interpretation in human terms
-  const getScoreMessage = (s: number) => {
-    if (s >= 80) return { text: 'Excellent', tone: 'success' as const, emoji: '🎉' };
-    if (s >= 60) return { text: 'Good', tone: 'success' as const, emoji: '👍' };
-    if (s >= 40) return { text: 'Needs work', tone: 'warning' as const, emoji: '🔧' };
-    return { text: 'Needs attention', tone: 'critical' as const, emoji: '⚠️' };
+  // Score interpretation
+  const getScoreInfo = (s: number) => {
+    if (s >= 80) return { text: 'Excellent', tone: 'success' as const, color: '#108043' };
+    if (s >= 60) return { text: 'Good', tone: 'success' as const, color: '#108043' };
+    if (s >= 40) return { text: 'Needs work', tone: 'warning' as const, color: '#B98900' };
+    return { text: 'Needs attention', tone: 'critical' as const, color: '#D82C0D' };
   };
 
-  const scoreInfo = getScoreMessage(score);
+  const scoreInfo = getScoreInfo(score);
 
-  // Determine the next best action for the user
+  // Determine next action
   const getNextAction = () => {
     if (!hasAnalyzed) {
       return {
@@ -220,6 +221,38 @@ export default function Dashboard() {
 
   const nextAction = getNextAction();
 
+  // Quick access cards data
+  const quickAccessCards = [
+    {
+      title: 'Products',
+      description: 'Analyze and improve your product content',
+      icon: ProductIcon,
+      href: '/admin/products',
+      color: 'bg-fill-info',
+    },
+    {
+      title: 'Visibility',
+      description: 'See where AI mentions your brand',
+      icon: ViewIcon,
+      href: '/admin/visibility',
+      color: 'bg-fill-success',
+    },
+    {
+      title: 'Tools',
+      description: 'Help AI crawlers understand your store',
+      icon: AppsIcon,
+      href: '/admin/tools',
+      color: 'bg-fill-warning',
+    },
+    {
+      title: 'Insights',
+      description: 'Track your progress and ROI',
+      icon: ChartVerticalFilledIcon,
+      href: '/admin/insights',
+      color: 'bg-fill-magic',
+    },
+  ];
+
   return (
     <Page
       title={`Welcome${data?.shop.name ? `, ${data.shop.name}` : ''}`}
@@ -231,241 +264,172 @@ export default function Dashboard() {
         },
       ]}
     >
-      <Layout>
-        {/* Hero: Your Score */}
-        <Layout.Section>
-          <Card>
-            <Box padding="600">
-              <BlockStack gap="600">
-                {/* Score Display */}
-                <InlineStack gap="600" align="space-between" blockAlign="start" wrap={false}>
+      <BlockStack gap="500">
+        {/* Hero: AI Score */}
+        <Card>
+          <Box padding="500">
+            <BlockStack gap="400">
+              <InlineStack gap="200" blockAlign="center">
+                <Text as="h2" variant="headingMd">Your AI Score</Text>
+                <Tooltip content="How likely AI assistants are to recommend your products">
+                  <Icon source={QuestionCircleIcon} tone="subdued" />
+                </Tooltip>
+              </InlineStack>
+
+              {hasAnalyzed ? (
+                <InlineStack gap="600" align="start" blockAlign="center" wrap>
+                  {/* Score circle */}
+                  <div style={{
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    background: `conic-gradient(${scoreInfo.color} ${score * 3.6}deg, #E4E5E7 0deg)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <div style={{
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '50%',
+                      backgroundColor: 'white',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <span style={{ fontSize: '32px', fontWeight: 700, color: scoreInfo.color }}>
+                        {score}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#6D7175' }}>/ 100</span>
+                    </div>
+                  </div>
+
+                  {/* Score details */}
                   <BlockStack gap="300">
                     <InlineStack gap="200" blockAlign="center">
-                      <Text as="h2" variant="headingLg">
-                        Your AI Score
-                      </Text>
-                      <Tooltip content="How likely AI assistants are to recommend your products">
-                        <Icon source={QuestionCircleIcon} tone="subdued" />
-                      </Tooltip>
+                      <Badge tone={scoreInfo.tone}>{scoreInfo.text}</Badge>
+                      {data?.shop.lastAuditAt && (
+                        <Text as="span" variant="bodySm" tone="subdued">
+                          Updated {new Date(data.shop.lastAuditAt).toLocaleDateString()}
+                        </Text>
+                      )}
                     </InlineStack>
 
-                    {hasAnalyzed ? (
-                      <BlockStack gap="200">
-                        <InlineStack gap="300" blockAlign="center">
-                          <Text as="p" variant="heading3xl" fontWeight="bold">
-                            {score}
-                          </Text>
-                          <Badge tone={scoreInfo.tone}>{scoreInfo.text}</Badge>
+                    <BlockStack gap="100">
+                      <Text as="p" variant="bodySm">
+                        <strong>{data?.audit.auditedProducts}</strong> products analyzed
+                      </Text>
+                      {criticalCount > 0 && (
+                        <InlineStack gap="100" blockAlign="center">
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#D82C0D' }} />
+                          <Text as="span" variant="bodySm">{criticalCount} need urgent fixes</Text>
                         </InlineStack>
-                        <Box width="250px">
-                          <ProgressBar
-                            progress={score}
-                            tone={score >= 60 ? 'success' : score >= 40 ? 'highlight' : 'critical'}
-                            size="small"
-                          />
-                        </Box>
-                        {data?.shop.lastAuditAt && (
-                          <Text as="p" variant="bodySm" tone="subdued">
-                            Last checked {new Date(data.shop.lastAuditAt).toLocaleDateString()}
-                          </Text>
-                        )}
-                      </BlockStack>
-                    ) : (
-                      <BlockStack gap="200">
-                        <Text as="p" variant="heading3xl" fontWeight="bold" tone="subdued">
-                          --
-                        </Text>
-                        <Text as="p" tone="subdued">
-                          Analyze your products to get your score
-                        </Text>
-                      </BlockStack>
-                    )}
+                      )}
+                      {warningCount > 0 && (
+                        <InlineStack gap="100" blockAlign="center">
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#B98900' }} />
+                          <Text as="span" variant="bodySm">{warningCount} can be improved</Text>
+                        </InlineStack>
+                      )}
+                      {criticalCount === 0 && warningCount === 0 && (
+                        <InlineStack gap="100" blockAlign="center">
+                          <Icon source={CheckCircleIcon} tone="success" />
+                          <Text as="span" variant="bodySm" tone="success">All products look good!</Text>
+                        </InlineStack>
+                      )}
+                    </BlockStack>
                   </BlockStack>
-
-                  {/* Score Breakdown */}
-                  {hasAnalyzed && (
-                    <Box minWidth="200px">
-                      <BlockStack gap="200">
-                        <Text as="p" variant="bodySm" fontWeight="semibold">
-                          {data?.audit.auditedProducts} products analyzed
-                        </Text>
-                        {totalIssues > 0 ? (
-                          <BlockStack gap="100">
-                            {criticalCount > 0 && (
-                              <InlineStack gap="200" blockAlign="center">
-                                <Box width="8px" minHeight="8px" background="bg-fill-critical" borderRadius="full" />
-                                <Text as="p" variant="bodySm">{criticalCount} need urgent fixes</Text>
-                              </InlineStack>
-                            )}
-                            {warningCount > 0 && (
-                              <InlineStack gap="200" blockAlign="center">
-                                <Box width="8px" minHeight="8px" background="bg-fill-warning" borderRadius="full" />
-                                <Text as="p" variant="bodySm">{warningCount} can be improved</Text>
-                              </InlineStack>
-                            )}
-                          </BlockStack>
-                        ) : (
-                          <InlineStack gap="200" blockAlign="center">
-                            <Icon source={CheckCircleIcon} tone="success" />
-                            <Text as="p" variant="bodySm" tone="success">All products look good!</Text>
-                          </InlineStack>
-                        )}
-                      </BlockStack>
-                    </Box>
-                  )}
                 </InlineStack>
+              ) : (
+                <BlockStack gap="300">
+                  <Text as="p" variant="heading3xl" fontWeight="bold" tone="subdued">--</Text>
+                  <Text as="p" tone="subdued">Analyze your products to get your score</Text>
+                </BlockStack>
+              )}
+            </BlockStack>
+          </Box>
+        </Card>
+
+        {/* Next Action CTA */}
+        <Card>
+          <Box
+            padding="400"
+            background={criticalCount > 0 ? 'bg-surface-warning' : 'bg-surface-secondary'}
+            borderRadius="300"
+          >
+            <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
+              <BlockStack gap="100">
+                <InlineStack gap="200" blockAlign="center">
+                  {criticalCount > 0 && <Icon source={AlertTriangleIcon} tone="warning" />}
+                  <Text as="h3" variant="headingMd">{nextAction.title}</Text>
+                </InlineStack>
+                <Text as="p" tone="subdued">{nextAction.description}</Text>
               </BlockStack>
-            </Box>
-          </Card>
-        </Layout.Section>
+              {'action' in nextAction ? (
+                <Button variant="primary" onClick={nextAction.action} loading={nextAction.loading}>
+                  {nextAction.actionLabel}
+                </Button>
+              ) : (
+                <Link href={nextAction.href}>
+                  <Button variant="primary">{nextAction.actionLabel}</Button>
+                </Link>
+              )}
+            </InlineStack>
+          </Box>
+        </Card>
 
-        {/* Next Action - The ONE thing to do */}
-        <Layout.Section>
-          <Card>
-            <Box padding="500" background={criticalCount > 0 ? 'bg-surface-warning' : 'bg-surface-secondary'}>
-              <InlineStack align="space-between" blockAlign="center" gap="400">
-                <BlockStack gap="100">
-                  <InlineStack gap="200" blockAlign="center">
-                    {criticalCount > 0 && <Icon source={AlertTriangleIcon} tone="warning" />}
-                    <Text as="h3" variant="headingMd">{nextAction.title}</Text>
-                  </InlineStack>
-                  <Text as="p" tone="subdued">{nextAction.description}</Text>
-                </BlockStack>
-                {'action' in nextAction ? (
-                  <Button
-                    variant="primary"
-                    onClick={nextAction.action}
-                    loading={nextAction.loading}
-                  >
-                    {nextAction.actionLabel}
-                  </Button>
-                ) : (
-                  <Link href={nextAction.href}>
-                    <Button variant="primary">{nextAction.actionLabel}</Button>
-                  </Link>
-                )}
-              </InlineStack>
-            </Box>
-          </Card>
-        </Layout.Section>
-
-        {/* Quick Access - Simplified to 4 key areas */}
-        <Layout.Section>
-          <InlineStack gap="400" align="start">
-            {/* Products */}
-            <Box minWidth="220px">
-              <Card>
-                <BlockStack gap="300">
-                  <InlineStack gap="200" blockAlign="center">
-                    <Box padding="200" background="bg-fill-info" borderRadius="200">
-                      <Icon source={SearchIcon} tone="base" />
-                    </Box>
-                    <Text as="h3" variant="headingMd">Products</Text>
-                  </InlineStack>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    Analyze and improve your product content
-                  </Text>
-                  <Link href="/admin/products">
-                    <Button fullWidth>View Products</Button>
-                  </Link>
-                </BlockStack>
-              </Card>
-            </Box>
-
-            {/* Visibility */}
-            <Box minWidth="220px">
-              <Card>
-                <BlockStack gap="300">
-                  <InlineStack gap="200" blockAlign="center">
-                    <Box padding="200" background="bg-fill-success" borderRadius="200">
-                      <Icon source={CheckCircleIcon} tone="base" />
-                    </Box>
-                    <Text as="h3" variant="headingMd">Visibility</Text>
-                  </InlineStack>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    See where AI mentions your brand
-                  </Text>
-                  <Link href="/admin/visibility">
-                    <Button fullWidth>Check Now</Button>
-                  </Link>
-                </BlockStack>
-              </Card>
-            </Box>
-
-            {/* Tools */}
-            <Box minWidth="220px">
-              <Card>
-                <BlockStack gap="300">
-                  <InlineStack gap="200" blockAlign="center">
-                    <Box padding="200" background="bg-fill-warning" borderRadius="200">
-                      <Icon source={SettingsIcon} tone="base" />
-                    </Box>
-                    <Text as="h3" variant="headingMd">Tools</Text>
-                  </InlineStack>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    Help AI crawlers understand your store
-                  </Text>
-                  <Link href="/admin/tools">
-                    <Button fullWidth>Open Tools</Button>
-                  </Link>
-                </BlockStack>
-              </Card>
-            </Box>
-
-            {/* Insights */}
-            <Box minWidth="220px">
-              <Card>
-                <BlockStack gap="300">
-                  <InlineStack gap="200" blockAlign="center">
-                    <Box padding="200" background="bg-fill-magic" borderRadius="200">
-                      <Icon source={ChartVerticalFilledIcon} tone="base" />
-                    </Box>
-                    <Text as="h3" variant="headingMd">Insights</Text>
-                  </InlineStack>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    Track your progress and ROI
-                  </Text>
-                  <Link href="/admin/insights">
-                    <Button fullWidth>View Insights</Button>
-                  </Link>
-                </BlockStack>
-              </Card>
-            </Box>
-          </InlineStack>
-        </Layout.Section>
-
-        {/* Tips - Only show if relevant */}
-        {hasAnalyzed && score < 80 && (
-          <Layout.Section>
-            <Card>
+        {/* Quick Access Grid - Responsive */}
+        <ResponsiveGrid columns={{ xs: 1, sm: 2, md: 2, lg: 4 }} gap="base">
+          {quickAccessCards.map((card) => (
+            <Card key={card.title}>
               <BlockStack gap="300">
-                <Text as="h3" variant="headingMd">Quick Tips</Text>
-                <BlockStack gap="200">
-                  {score < 60 && (
-                    <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                      <Text as="p" variant="bodySm">
-                        <strong>Add detailed descriptions</strong> — AI needs text to understand your products. Aim for 150+ words per product.
-                      </Text>
-                    </Box>
-                  )}
-                  {criticalCount > 0 && (
-                    <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                      <Text as="p" variant="bodySm">
-                        <strong>Upload product images</strong> — Products without images are rarely recommended by AI.
-                      </Text>
-                    </Box>
-                  )}
-                  <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                    <Text as="p" variant="bodySm">
-                      <strong>Use specific keywords</strong> — Include materials, sizes, colors, and use cases in your descriptions.
-                    </Text>
+                <InlineStack gap="200" blockAlign="center">
+                  <Box padding="200" background={card.color as 'bg-fill-info'} borderRadius="200">
+                    <Icon source={card.icon} tone="base" />
                   </Box>
-                </BlockStack>
+                  <Text as="h3" variant="headingMd">{card.title}</Text>
+                </InlineStack>
+                <Text as="p" variant="bodySm" tone="subdued">{card.description}</Text>
+                <Link href={card.href}>
+                  <Button fullWidth>View {card.title}</Button>
+                </Link>
               </BlockStack>
             </Card>
-          </Layout.Section>
+          ))}
+        </ResponsiveGrid>
+
+        {/* Tips - Only if needed */}
+        {hasAnalyzed && score < 80 && (
+          <Card>
+            <BlockStack gap="300">
+              <Text as="h3" variant="headingMd">Quick Tips</Text>
+              <BlockStack gap="200">
+                {score < 60 && (
+                  <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                    <Text as="p" variant="bodySm">
+                      <strong>Add detailed descriptions</strong> — AI needs text to understand your products. Aim for 150+ words.
+                    </Text>
+                  </Box>
+                )}
+                {criticalCount > 0 && (
+                  <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                    <Text as="p" variant="bodySm">
+                      <strong>Upload product images</strong> — Products without images are rarely recommended by AI.
+                    </Text>
+                  </Box>
+                )}
+                <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                  <Text as="p" variant="bodySm">
+                    <strong>Use specific keywords</strong> — Include materials, sizes, colors, and use cases.
+                  </Text>
+                </Box>
+              </BlockStack>
+            </BlockStack>
+          </Card>
         )}
-      </Layout>
+      </BlockStack>
     </Page>
   );
 }
