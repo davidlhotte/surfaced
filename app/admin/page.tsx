@@ -25,6 +25,7 @@ import {
   ProductIcon,
   ViewIcon,
   MagicIcon,
+  TargetIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
@@ -245,6 +246,13 @@ export default function Dashboard() {
       color: 'bg-fill-warning',
     },
     {
+      title: 'Competitors',
+      description: 'Compare your AI presence to rivals',
+      icon: TargetIcon,
+      href: '/admin/competitors',
+      color: 'bg-fill-critical',
+    },
+    {
       title: 'Insights',
       description: 'Track your progress and ROI',
       icon: ChartVerticalFilledIcon,
@@ -381,7 +389,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Quick Access Grid - Responsive */}
-        <ResponsiveGrid columns={{ xs: 1, sm: 2, md: 2, lg: 4 }} gap="base">
+        <ResponsiveGrid columns={{ xs: 1, sm: 2, md: 3, lg: 5 }} gap="base">
           {quickAccessCards.map((card) => (
             <Card key={card.title}>
               <BlockStack gap="300">
