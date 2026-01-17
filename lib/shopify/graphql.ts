@@ -435,6 +435,166 @@ export async function fetchCollectionsForLlmsTxt(
   return json.data as LlmsTxtCollectionsResponse;
 }
 
+// Types for product updates
+export type ProductUpdateInput = {
+  title?: string;
+  descriptionHtml?: string;
+  seo?: {
+    title?: string;
+    description?: string;
+  };
+  tags?: string[];
+  productType?: string;
+  vendor?: string;
+};
+
+export type ProductUpdateResponse = {
+  productUpdate: {
+    product: {
+      id: string;
+      title: string;
+      updatedAt: string;
+    } | null;
+    userErrors: {
+      field: string[];
+      message: string;
+    }[];
+  };
+};
+
+export type ProductWithTimestamp = ShopifyProduct & {
+  updatedAt: string;
+};
+
+/**
+ * Fetch a single product by ID with updatedAt for conflict detection
+ */
+export async function fetchProductWithTimestamp(
+  shopDomain: string,
+  accessToken: string,
+  productGid: string
+): Promise<ProductWithTimestamp | null> {
+  const query = `
+    query GetProductWithTimestamp($id: ID!) {
+      product(id: $id) {
+        id
+        title
+        handle
+        descriptionHtml
+        description
+        updatedAt
+        featuredImage {
+          url
+        }
+        images(first: 10) {
+          nodes {
+            url
+            altText
+          }
+        }
+        metafields(first: 20) {
+          nodes {
+            key
+            value
+            namespace
+          }
+        }
+        seo {
+          title
+          description
+        }
+        vendor
+        productType
+        tags
+        status
+      }
+    }
+  `;
+
+  const response = await fetch(
+    `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken,
+      },
+      body: JSON.stringify({ query, variables: { id: productGid } }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`GraphQL request failed: ${response.status}`);
+  }
+
+  const json = await response.json();
+  if (json.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
+  }
+
+  return json.data.product as ProductWithTimestamp | null;
+}
+
+/**
+ * Update a product in Shopify
+ */
+export async function updateProduct(
+  shopDomain: string,
+  accessToken: string,
+  productGid: string,
+  input: ProductUpdateInput
+): Promise<ProductUpdateResponse> {
+  const mutation = `
+    mutation UpdateProduct($input: ProductInput!) {
+      productUpdate(input: $input) {
+        product {
+          id
+          title
+          updatedAt
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const response = await fetch(
+    `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken,
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: {
+          input: {
+            id: productGid,
+            ...input,
+          },
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    logger.error({ shopDomain, status: response.status, error: errorText }, 'Product update failed');
+    throw new Error(`Product update failed: ${response.status}`);
+  }
+
+  const json = await response.json();
+  if (json.errors) {
+    logger.error({ shopDomain, errors: json.errors }, 'Product update GraphQL errors');
+    throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
+  }
+
+  return json.data as ProductUpdateResponse;
+}
+
 /**
  * Fetch a single product by ID (uses accessToken directly)
  */

@@ -18,11 +18,14 @@ import {
   DataTable,
   Modal,
   Spinner,
+  Checkbox,
 } from '@shopify/polaris';
 import {
   RefreshIcon,
   ClipboardIcon,
   MagicIcon,
+  CheckIcon,
+  UndoIcon,
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 
@@ -59,18 +62,40 @@ interface QuotaInfo {
   available: boolean;
 }
 
+interface ApplyResult {
+  applied: number;
+  hadConflict: boolean;
+  scoreBefore: number | null;
+  scoreAfter: number | null;
+  historyIds?: string[];
+}
+
 export default function OptimizePage() {
   const { fetch } = useAuthenticatedFetch();
 
   const [loading, setLoading] = useState(true);
   const [optimizing, setOptimizing] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [products, setProducts] = useState<ProductForOptimization[]>([]);
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductForOptimization | null>(null);
   const [optimization, setOptimization] = useState<ProductOptimization | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Selection state for checkboxes
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
+
+  // Apply confirmation state
+  const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [suggestionsToApply, setSuggestionsToApply] = useState<OptimizationSuggestion[]>([]);
+  const [_applyResult, setApplyResult] = useState<ApplyResult | null>(null);
+  const [lastAppliedHistoryIds, setLastAppliedHistoryIds] = useState<string[]>([]);
+
+  // Conflict warning
+  const [hasConflict, setHasConflict] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -104,6 +129,8 @@ export default function OptimizePage() {
       setSelectedProduct(product);
       setShowModal(true);
       setOptimization(null);
+      setSelectedSuggestions(new Set());
+      setApplyResult(null);
 
       const response = await fetch('/api/optimize', {
         method: 'POST',
@@ -116,6 +143,10 @@ export default function OptimizePage() {
       if (data.success) {
         setOptimization(data.data.optimization);
         setQuota(data.data.quota);
+        // Select all suggestions by default
+        const allSelected = new Set<number>();
+        data.data.optimization.suggestions.forEach((_: OptimizationSuggestion, i: number) => allSelected.add(i));
+        setSelectedSuggestions(allSelected);
       } else {
         setError(data.error || 'Failed to generate suggestions');
         setShowModal(false);
@@ -138,6 +169,106 @@ export default function OptimizePage() {
     }
   };
 
+  const toggleSuggestion = (index: number) => {
+    const newSelected = new Set(selectedSuggestions);
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    setSelectedSuggestions(newSelected);
+  };
+
+  const handleApplySingle = (suggestion: OptimizationSuggestion) => {
+    setSuggestionsToApply([suggestion]);
+    setShowApplyConfirm(true);
+  };
+
+  const handleApplySelected = () => {
+    if (!optimization) return;
+    const selected = optimization.suggestions.filter((_, i) => selectedSuggestions.has(i));
+    if (selected.length === 0) {
+      setError('Please select at least one suggestion to apply');
+      return;
+    }
+    setSuggestionsToApply(selected);
+    setShowApplyConfirm(true);
+  };
+
+  const confirmApply = async () => {
+    if (!optimization || suggestionsToApply.length === 0) return;
+
+    try {
+      setApplying(true);
+      setError(null);
+      setHasConflict(false);
+
+      const response = await fetch('/api/optimize', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: optimization.productId,
+          suggestions: suggestionsToApply.map((s) => ({
+            field: s.field,
+            original: s.original,
+            suggested: s.suggested,
+            reasoning: s.reasoning,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setApplyResult(data.data);
+        if (data.data.hadConflict) {
+          setHasConflict(true);
+        }
+        if (data.data.historyIds) {
+          setLastAppliedHistoryIds(data.data.historyIds);
+        }
+        setShowApplyConfirm(false);
+        setSuccess(
+          `Applied ${data.data.applied} change${data.data.applied !== 1 ? 's' : ''}! ` +
+            `Score: ${data.data.scoreBefore ?? '?'} → ${data.data.scoreAfter ?? '?'}`
+        );
+        // Reload data to refresh product list
+        loadData();
+      } else {
+        setError(data.error || 'Failed to apply changes');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to apply');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleUndo = async (historyId: string) => {
+    try {
+      setApplying(true);
+      setError(null);
+
+      const response = await fetch(`/api/optimize?historyId=${historyId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(`Undone: ${data.data.field} restored to original`);
+        setApplyResult(null);
+        loadData();
+      } else {
+        setError(data.error || 'Failed to undo');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to undo');
+    } finally {
+      setApplying(false);
+    }
+  };
+
   const getScoreBadge = (score: number) => {
     if (score >= 90) return <Badge tone="success">Excellent</Badge>;
     if (score >= 70) return <Badge tone="success">Good</Badge>;
@@ -145,7 +276,7 @@ export default function OptimizePage() {
     return <Badge tone="critical">Critical</Badge>;
   };
 
-  const getScoreColor = (score: number): "success" | "highlight" | "critical" => {
+  const getScoreColor = (score: number): 'success' | 'highlight' | 'critical' => {
     if (score >= 70) return 'success';
     if (score >= 40) return 'highlight';
     return 'critical';
@@ -154,9 +285,11 @@ export default function OptimizePage() {
   const getFieldLabel = (field: string) => {
     const labels: Record<string, string> = {
       description: 'Product Description',
-      seoTitle: 'SEO Title',
-      seoDescription: 'SEO Description',
+      seo_title: 'SEO Title',
+      seo_description: 'SEO Description',
       tags: 'Product Tags',
+      productType: 'Product Type',
+      vendor: 'Vendor',
       altText: 'Image Alt Text',
     };
     return labels[field] || field;
@@ -181,18 +314,20 @@ export default function OptimizePage() {
 
   const tableRows = products.map((product) => [
     <BlockStack key={product.id} gap="100">
-      <Text as="p" fontWeight="semibold" truncate>{product.title}</Text>
-      <Text as="p" variant="bodySm" tone="subdued">/{product.handle}</Text>
+      <Text as="p" fontWeight="semibold" truncate>
+        {product.title}
+      </Text>
+      <Text as="p" variant="bodySm" tone="subdued">
+        /{product.handle}
+      </Text>
     </BlockStack>,
     <InlineStack key={`score-${product.id}`} gap="200" blockAlign="center">
       <Box width="60px">
-        <ProgressBar
-          progress={product.aiScore}
-          tone={getScoreColor(product.aiScore)}
-          size="small"
-        />
+        <ProgressBar progress={product.aiScore} tone={getScoreColor(product.aiScore)} size="small" />
       </Box>
-      <Text as="p" fontWeight="semibold">{product.aiScore}</Text>
+      <Text as="p" fontWeight="semibold">
+        {product.aiScore}
+      </Text>
     </InlineStack>,
     getScoreBadge(product.aiScore),
     <Text key={`issues-${product.id}`} as="p" tone="subdued">
@@ -224,8 +359,28 @@ export default function OptimizePage() {
       <Layout>
         {error && (
           <Layout.Section>
-            <Banner tone="warning" onDismiss={() => setError(null)}>
+            <Banner tone="critical" onDismiss={() => setError(null)}>
               {error}
+            </Banner>
+          </Layout.Section>
+        )}
+
+        {success && (
+          <Layout.Section>
+            <Banner tone="success" onDismiss={() => setSuccess(null)}>
+              <InlineStack gap="400" blockAlign="center">
+                <Text as="p">{success}</Text>
+                {lastAppliedHistoryIds.length > 0 && (
+                  <Button
+                    icon={UndoIcon}
+                    size="slim"
+                    onClick={() => handleUndo(lastAppliedHistoryIds[0])}
+                    loading={applying}
+                  >
+                    Undo
+                  </Button>
+                )}
+              </InlineStack>
             </Banner>
           </Layout.Section>
         )}
@@ -317,7 +472,9 @@ export default function OptimizePage() {
                   <InlineStack gap="200" blockAlign="start">
                     <Badge tone="info">1</Badge>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Select a product</Text>
+                      <Text as="p" fontWeight="semibold">
+                        Select a product
+                      </Text>
                       <Text as="p" variant="bodySm" tone="subdued">
                         Choose a product with a low AI score that needs improvement.
                       </Text>
@@ -328,20 +485,24 @@ export default function OptimizePage() {
                   <InlineStack gap="200" blockAlign="start">
                     <Badge tone="info">2</Badge>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">AI generates suggestions</Text>
+                      <Text as="p" fontWeight="semibold">
+                        Review suggestions
+                      </Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Our AI analyzes your product and creates optimized descriptions, SEO content, and tags.
+                        AI generates optimized descriptions, SEO content, and tags. Select the ones you want.
                       </Text>
                     </BlockStack>
                   </InlineStack>
                 </Box>
-                <Box padding="200" background="bg-surface-secondary" borderRadius="200">
+                <Box padding="200" background="bg-surface-success" borderRadius="200">
                   <InlineStack gap="200" blockAlign="start">
-                    <Badge tone="info">3</Badge>
+                    <Badge tone="success">3</Badge>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Copy and apply</Text>
+                      <Text as="p" fontWeight="semibold">
+                        Apply with one click
+                      </Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Review the suggestions, copy the content you like, and paste it into your Shopify product editor.
+                        Click Apply to update your product directly. You can always undo if needed.
                       </Text>
                     </BlockStack>
                   </InlineStack>
@@ -358,13 +519,23 @@ export default function OptimizePage() {
         onClose={() => setShowModal(false)}
         title={selectedProduct ? `Optimize: ${selectedProduct.title}` : 'Optimization'}
         primaryAction={
-          optimization
+          optimization && optimization.suggestions.length > 0
             ? {
-                content: 'Done',
-                onAction: () => setShowModal(false),
+                content: `Apply ${selectedSuggestions.size} Selected`,
+                icon: CheckIcon,
+                onAction: handleApplySelected,
+                disabled: selectedSuggestions.size === 0 || applying,
+                loading: applying,
               }
             : undefined
         }
+        secondaryActions={[
+          {
+            content: 'Close',
+            onAction: () => setShowModal(false),
+          },
+        ]}
+        size="large"
       >
         <Modal.Section>
           {optimizing ? (
@@ -382,11 +553,14 @@ export default function OptimizePage() {
               {/* Score improvement */}
               <Box padding="400" background="bg-surface-success" borderRadius="200">
                 <InlineStack align="space-between" blockAlign="center">
-                  <Text as="p" fontWeight="semibold">Estimated Score Improvement</Text>
+                  <Text as="p" fontWeight="semibold">
+                    Estimated Score Improvement
+                  </Text>
                   <InlineStack gap="200">
                     <Badge tone="critical">{String(optimization.currentScore)}</Badge>
                     <Text as="p">→</Text>
                     <Badge tone="success">{String(optimization.estimatedNewScore)}</Badge>
+                    <Badge tone="info">{`+${optimization.estimatedNewScore - optimization.currentScore}`}</Badge>
                   </InlineStack>
                 </InlineStack>
               </Box>
@@ -400,56 +574,163 @@ export default function OptimizePage() {
                   </Text>
                 </Banner>
               ) : (
-                optimization.suggestions.map((suggestion, index) => (
-                  <Card key={index}>
-                    <BlockStack gap="300">
-                      <InlineStack align="space-between" blockAlign="center">
-                        <Badge tone="info">{getFieldLabel(suggestion.field)}</Badge>
-                        <Badge tone="success">{suggestion.improvement}</Badge>
-                      </InlineStack>
+                <BlockStack gap="400">
+                  <InlineStack align="space-between" blockAlign="center">
+                    <Text as="p" fontWeight="semibold">
+                      {selectedSuggestions.size} of {optimization.suggestions.length} selected
+                    </Text>
+                    <Button
+                      size="slim"
+                      onClick={() => {
+                        if (selectedSuggestions.size === optimization.suggestions.length) {
+                          setSelectedSuggestions(new Set());
+                        } else {
+                          const all = new Set<number>();
+                          optimization.suggestions.forEach((_, i) => all.add(i));
+                          setSelectedSuggestions(all);
+                        }
+                      }}
+                    >
+                      {selectedSuggestions.size === optimization.suggestions.length ? 'Deselect All' : 'Select All'}
+                    </Button>
+                  </InlineStack>
 
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        {suggestion.reasoning}
-                      </Text>
-
-                      <Divider />
-
-                      {suggestion.original && (
-                        <BlockStack gap="100">
-                          <Text as="p" variant="bodySm" fontWeight="semibold">Original:</Text>
-                          <Box padding="200" background="bg-surface-secondary" borderRadius="100">
-                            <Text as="p" variant="bodySm">
-                              {suggestion.original.length > 200
-                                ? `${suggestion.original.substring(0, 200)}...`
-                                : suggestion.original || '(empty)'}
-                            </Text>
-                          </Box>
-                        </BlockStack>
-                      )}
-
-                      <BlockStack gap="100">
+                  {optimization.suggestions.map((suggestion, index) => (
+                    <Card key={index}>
+                      <BlockStack gap="300">
                         <InlineStack align="space-between" blockAlign="center">
-                          <Text as="p" variant="bodySm" fontWeight="semibold">Suggested:</Text>
-                          <Button
-                            icon={ClipboardIcon}
-                            size="slim"
-                            onClick={() => handleCopy(suggestion.suggested, suggestion.field)}
-                          >
-                            {copied === suggestion.field ? 'Copied!' : 'Copy'}
-                          </Button>
+                          <InlineStack gap="300" blockAlign="center">
+                            <Checkbox
+                              label=""
+                              labelHidden
+                              checked={selectedSuggestions.has(index)}
+                              onChange={() => toggleSuggestion(index)}
+                            />
+                            <Badge tone="info">{getFieldLabel(suggestion.field)}</Badge>
+                            <Badge tone="success">{suggestion.improvement}</Badge>
+                          </InlineStack>
+                          <InlineStack gap="200">
+                            <Button
+                              icon={ClipboardIcon}
+                              size="slim"
+                              onClick={() => handleCopy(suggestion.suggested, suggestion.field)}
+                            >
+                              {copied === suggestion.field ? 'Copied!' : 'Copy'}
+                            </Button>
+                            <Button
+                              icon={CheckIcon}
+                              size="slim"
+                              variant="primary"
+                              onClick={() => handleApplySingle(suggestion)}
+                              loading={applying}
+                            >
+                              Apply
+                            </Button>
+                          </InlineStack>
                         </InlineStack>
-                        <Box padding="200" background="bg-surface-success" borderRadius="100">
-                          <Text as="p" variant="bodySm">
-                            {suggestion.suggested}
-                          </Text>
-                        </Box>
+
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          {suggestion.reasoning}
+                        </Text>
+
+                        <Divider />
+
+                        <InlineStack gap="400" align="start">
+                          {/* Before */}
+                          <Box minWidth="45%">
+                            <BlockStack gap="100">
+                              <Text as="p" variant="bodySm" fontWeight="semibold">
+                                Before:
+                              </Text>
+                              <Box padding="200" background="bg-surface-secondary" borderRadius="100">
+                                <Text as="p" variant="bodySm">
+                                  {suggestion.original
+                                    ? suggestion.original.length > 150
+                                      ? `${suggestion.original.substring(0, 150)}...`
+                                      : suggestion.original
+                                    : '(empty)'}
+                                </Text>
+                              </Box>
+                            </BlockStack>
+                          </Box>
+
+                          {/* After */}
+                          <Box minWidth="45%">
+                            <BlockStack gap="100">
+                              <Text as="p" variant="bodySm" fontWeight="semibold">
+                                After:
+                              </Text>
+                              <Box padding="200" background="bg-surface-success" borderRadius="100">
+                                <Text as="p" variant="bodySm">
+                                  {suggestion.suggested.length > 150
+                                    ? `${suggestion.suggested.substring(0, 150)}...`
+                                    : suggestion.suggested}
+                                </Text>
+                              </Box>
+                            </BlockStack>
+                          </Box>
+                        </InlineStack>
                       </BlockStack>
-                    </BlockStack>
-                  </Card>
-                ))
+                    </Card>
+                  ))}
+                </BlockStack>
               )}
             </BlockStack>
           ) : null}
+        </Modal.Section>
+      </Modal>
+
+      {/* Apply Confirmation Modal */}
+      <Modal
+        open={showApplyConfirm}
+        onClose={() => setShowApplyConfirm(false)}
+        title="Apply Changes"
+        primaryAction={{
+          content: hasConflict ? 'Apply Anyway' : 'Confirm & Apply',
+          onAction: confirmApply,
+          loading: applying,
+          destructive: hasConflict,
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setShowApplyConfirm(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <BlockStack gap="400">
+            {hasConflict && (
+              <Banner tone="warning" title="Product was recently modified">
+                <Text as="p">
+                  This product was modified after you generated these suggestions. The changes will still be applied,
+                  but you may want to review the current product content first.
+                </Text>
+              </Banner>
+            )}
+
+            <Text as="p">
+              You are about to apply {suggestionsToApply.length} change{suggestionsToApply.length !== 1 ? 's' : ''} to
+              your product:
+            </Text>
+
+            <BlockStack gap="200">
+              {suggestionsToApply.map((s, i) => (
+                <Box key={i} padding="200" background="bg-surface-secondary" borderRadius="100">
+                  <InlineStack gap="200">
+                    <Badge>{getFieldLabel(s.field)}</Badge>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {s.improvement}
+                    </Text>
+                  </InlineStack>
+                </Box>
+              ))}
+            </BlockStack>
+
+            <Text as="p" tone="subdued" variant="bodySm">
+              You can undo these changes at any time.
+            </Text>
+          </BlockStack>
         </Modal.Section>
       </Modal>
     </Page>

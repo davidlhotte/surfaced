@@ -29,13 +29,14 @@ model Shop {
   updatedAt       DateTime  @updatedAt
 
   // Relations
-  settings        Settings?
-  auditLogs       AuditLog[]
-  productsAudit   ProductAudit[]
-  visibilityChecks VisibilityCheck[]
-  competitors     Competitor[]
-  llmsTxtConfig   LlmsTxtConfig?
-  jsonLdConfig    JsonLdConfig?
+  settings              Settings?
+  auditLogs             AuditLog[]
+  productsAudit         ProductAudit[]
+  visibilityChecks      VisibilityCheck[]
+  competitors           Competitor[]
+  llmsTxtConfig         LlmsTxtConfig?
+  jsonLdConfig          JsonLdConfig?
+  optimizationHistory   ProductOptimizationHistory[]
 
   @@index([plan])
 }
@@ -183,6 +184,39 @@ model JsonLdConfig {
 }
 
 // ============================================
+// OPTIMIZATION HISTORY - Track Applied Changes
+// ============================================
+
+model ProductOptimizationHistory {
+  id                  String    @id @default(cuid())
+  shopId              String
+  shop                Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  shopifyProductId    BigInt
+  productTitle        String    // Snapshot of product title at time of change
+
+  field               String    // description, seo_title, seo_description, tags, etc.
+  originalValue       String    @db.Text
+  appliedValue        String    @db.Text
+  reasoning           String?   // AI reasoning for the suggestion
+
+  // Score tracking
+  scoreBefore         Int?
+  scoreAfter          Int?
+
+  // Status
+  status              OptimizationStatus @default(applied)
+  undoneAt            DateTime?
+
+  appliedAt           DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+
+  @@index([shopId])
+  @@index([shopifyProductId])
+  @@index([appliedAt(sort: Desc)])
+}
+
+// ============================================
 // LOGGING
 // ============================================
 
@@ -223,4 +257,9 @@ enum ResponseQuality {
   good      // Brand clearly mentioned with context
   partial   // Brand mentioned but vaguely
   none      // Not mentioned
+}
+
+enum OptimizationStatus {
+  applied   // Change was applied to product
+  undone    // Change was reverted
 }
