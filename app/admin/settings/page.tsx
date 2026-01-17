@@ -14,7 +14,13 @@ import {
   Spinner,
   Box,
   Divider,
+  ProgressBar,
+  Icon,
 } from '@shopify/polaris';
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+} from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 
 interface ShopInfo {
@@ -23,9 +29,15 @@ interface ShopInfo {
   installedAt: string;
 }
 
+interface UsageInfo {
+  productsAudited: number;
+  visibilityChecks: number;
+  aiOptimizations: number;
+}
+
 const isDev = process.env.NODE_ENV === 'development';
 
-// Plan hierarchy for comparison (lower index = lower tier)
+// Plan hierarchy for comparison
 const PLAN_ORDER = ['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const;
 
 const getPlanIndex = (plan: string): number => {
@@ -33,55 +45,110 @@ const getPlanIndex = (plan: string): number => {
   return index === -1 ? 0 : index;
 };
 
-// TODO: Customize these plan features for your app
+// Real plan features matching the landing page
 const PLAN_FEATURES = {
   FREE: {
     name: 'Free',
-    price: '$0/month',
+    price: 0,
+    priceLabel: 'Free forever',
+    description: 'Perfect for getting started',
+    limits: {
+      products: 25,
+      visibilityChecks: 5,
+      aiOptimizations: 0,
+      competitors: 0,
+    },
     features: [
-      'Basic features',
-      // Add your free tier features
-    ],
-    limitations: [
-      // Add features not included in free tier
+      { name: 'AI readiness audit', included: true },
+      { name: 'Up to 25 products', included: true },
+      { name: '5 visibility checks/month', included: true },
+      { name: 'AI Guide generator', included: true },
+      { name: 'Basic recommendations', included: true },
+      { name: 'AI content suggestions', included: false },
+      { name: 'Structured data', included: false },
+      { name: 'Weekly reports', included: false },
+      { name: 'Competitor tracking', included: false },
+      { name: 'Priority support', included: false },
     ],
   },
   BASIC: {
     name: 'Starter',
-    price: '$4.99/month',
+    price: 4.99,
+    priceLabel: '$4.99/month',
+    description: 'For growing stores',
+    limits: {
+      products: 100,
+      visibilityChecks: 25,
+      aiOptimizations: 10,
+      competitors: 0,
+    },
     features: [
-      'Everything in Free',
-      // Add your starter tier features
-    ],
-    limitations: [
-      // Add features not included
+      { name: 'AI readiness audit', included: true },
+      { name: 'Up to 100 products', included: true },
+      { name: '25 visibility checks/month', included: true },
+      { name: 'AI Guide generator', included: true },
+      { name: 'Detailed recommendations', included: true },
+      { name: '10 AI content suggestions/month', included: true },
+      { name: 'Structured data export', included: true },
+      { name: 'Weekly reports', included: false },
+      { name: 'Competitor tracking', included: false },
+      { name: 'Priority support', included: false },
     ],
   },
   PLUS: {
     name: 'Pro',
-    price: '$9.99/month',
+    price: 9.99,
+    priceLabel: '$9.99/month',
+    description: 'For serious sellers',
+    popular: true,
+    limits: {
+      products: 500,
+      visibilityChecks: 100,
+      aiOptimizations: 50,
+      competitors: 3,
+    },
     features: [
-      'Everything in Starter',
-      // Add your pro tier features
-    ],
-    limitations: [
-      // Add features not included
+      { name: 'AI readiness audit', included: true },
+      { name: 'Up to 500 products', included: true },
+      { name: '100 visibility checks/month', included: true },
+      { name: 'AI Guide generator', included: true },
+      { name: 'Advanced recommendations', included: true },
+      { name: '50 AI content suggestions/month', included: true },
+      { name: 'Structured data export', included: true },
+      { name: 'Weekly reports', included: true },
+      { name: 'Track 3 competitors', included: true },
+      { name: 'Priority support', included: false },
     ],
   },
   PREMIUM: {
     name: 'Business',
-    price: '$24.99/month',
+    price: 24.99,
+    priceLabel: '$24.99/month',
+    description: 'For high-volume stores',
+    limits: {
+      products: -1, // Unlimited
+      visibilityChecks: -1,
+      aiOptimizations: -1,
+      competitors: 10,
+    },
     features: [
-      'Everything in Pro',
-      'Priority support',
-      // Add your business tier features
+      { name: 'AI readiness audit', included: true },
+      { name: 'Unlimited products', included: true },
+      { name: 'Unlimited visibility checks', included: true },
+      { name: 'AI Guide generator', included: true },
+      { name: 'Premium recommendations', included: true },
+      { name: 'Unlimited AI content suggestions', included: true },
+      { name: 'Structured data export', included: true },
+      { name: 'Daily reports', included: true },
+      { name: 'Track 10 competitors', included: true },
+      { name: 'Priority support', included: true },
     ],
-    limitations: [],
   },
 };
 
 export default function SettingsPage() {
   const [shopInfo, setShopInfo] = useState<ShopInfo | null>(null);
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { fetch: authFetch } = useAuthenticatedFetch();
@@ -98,6 +165,12 @@ export default function SettingsPage() {
             plan: result.data.plan,
             installedAt: result.data.createdAt,
           });
+          // Mock usage data - in production this would come from the API
+          setUsage({
+            productsAudited: result.data.productsAudited || 12,
+            visibilityChecks: result.data.visibilityChecks || 3,
+            aiOptimizations: result.data.aiOptimizations || 0,
+          });
         }
       } else {
         // Fallback for development
@@ -106,9 +179,14 @@ export default function SettingsPage() {
           plan: 'FREE',
           installedAt: new Date().toISOString(),
         });
+        setUsage({
+          productsAudited: 12,
+          visibilityChecks: 3,
+          aiOptimizations: 0,
+        });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load shop info');
+      setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
       setLoading(false);
     }
@@ -129,17 +207,16 @@ export default function SettingsPage() {
       const result = await response.json();
 
       if (response.ok && result.data?.confirmationUrl) {
-        // Redirect to Shopify's billing confirmation page
         window.open(result.data.confirmationUrl, '_top');
       } else {
-        setError(result.error || 'Failed to initiate upgrade. Please try reinstalling the app.');
+        setError(result.error || 'Failed to initiate upgrade');
       }
     } catch {
       setError('Failed to initiate upgrade');
     }
   };
 
-  // DEV ONLY: Change plan directly in database for testing
+  // DEV ONLY: Change plan directly for testing
   const handleDevPlanChange = async (plan: string) => {
     try {
       const response = await authFetch('/api/dev/plan', {
@@ -150,7 +227,6 @@ export default function SettingsPage() {
 
       if (response.ok) {
         setShopInfo((prev) => prev ? { ...prev, plan } : null);
-        alert(`Plan changed to ${plan} for testing!`);
       }
     } catch {
       setError('Failed to change plan');
@@ -159,13 +235,16 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <Page title="Settings" backAction={{ content: 'Dashboard', url: '/admin' }}>
+      <Page title="Your Plan" backAction={{ content: 'Dashboard', url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
-              <div style={{ padding: '40px', textAlign: 'center' }}>
-                <Spinner size="large" />
-              </div>
+              <Box padding="800">
+                <BlockStack gap="400" inlineAlign="center">
+                  <Spinner size="large" />
+                  <Text as="p">Loading your plan...</Text>
+                </BlockStack>
+              </Box>
             </Card>
           </Layout.Section>
         </Layout>
@@ -175,9 +254,19 @@ export default function SettingsPage() {
 
   const currentPlan = shopInfo?.plan || 'FREE';
   const planInfo = PLAN_FEATURES[currentPlan as keyof typeof PLAN_FEATURES];
+  const limits = planInfo.limits;
+
+  // Calculate usage percentages
+  const productUsage = limits.products === -1 ? 0 : ((usage?.productsAudited || 0) / limits.products) * 100;
+  const visibilityUsage = limits.visibilityChecks === -1 ? 0 : ((usage?.visibilityChecks || 0) / limits.visibilityChecks) * 100;
+  const optimizationUsage = limits.aiOptimizations <= 0 ? 0 : ((usage?.aiOptimizations || 0) / limits.aiOptimizations) * 100;
 
   return (
-    <Page title="Settings" backAction={{ content: 'Dashboard', url: '/admin' }}>
+    <Page
+      title="Your Plan"
+      subtitle="Manage your subscription and see what's included"
+      backAction={{ content: 'Dashboard', url: '/admin' }}
+    >
       <Layout>
         {error && (
           <Layout.Section>
@@ -192,85 +281,151 @@ export default function SettingsPage() {
             <Banner tone="warning">
               <BlockStack gap="300">
                 <Text as="p" fontWeight="bold">
-                  DEV MODE: Simulate different plans
+                  Dev Mode: Test different plans
                 </Text>
                 <InlineStack gap="200">
-                  {['FREE', 'BASIC', 'PLUS', 'PREMIUM'].map((plan) => (
+                  {(['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const).map((plan) => (
                     <Button
                       key={plan}
                       size="slim"
                       variant={currentPlan === plan ? 'primary' : 'secondary'}
                       onClick={() => handleDevPlanChange(plan)}
                     >
-                      {plan}
+                      {PLAN_FEATURES[plan].name}
                     </Button>
                   ))}
                 </InlineStack>
-                <Text as="p" variant="bodySm" tone="subdued">
-                  Click a plan to test its features. This only works in development mode.
-                </Text>
               </BlockStack>
             </Banner>
           </Layout.Section>
         )}
 
+        {/* Current Plan Overview */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <InlineStack align="space-between">
-                <Text as="h2" variant="headingMd">
-                  Current Plan
-                </Text>
-                <Badge tone={currentPlan === 'FREE' ? 'info' : 'success'}>
-                  {planInfo.name}
-                </Badge>
+              <InlineStack align="space-between" blockAlign="center">
+                <BlockStack gap="100">
+                  <InlineStack gap="200" blockAlign="center">
+                    <Text as="h2" variant="headingLg">{planInfo.name}</Text>
+                    {currentPlan !== 'FREE' && (
+                      <Badge tone="success">Active</Badge>
+                    )}
+                  </InlineStack>
+                  <Text as="p" tone="subdued">{planInfo.description}</Text>
+                </BlockStack>
+                <BlockStack gap="100" inlineAlign="end">
+                  <Text as="p" variant="headingXl" fontWeight="bold">
+                    {planInfo.price === 0 ? 'Free' : `$${planInfo.price}`}
+                  </Text>
+                  {planInfo.price > 0 && (
+                    <Text as="p" variant="bodySm" tone="subdued">per month</Text>
+                  )}
+                </BlockStack>
               </InlineStack>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
 
-              <Text as="p" variant="bodyLg" fontWeight="bold">
-                {planInfo.price}
-              </Text>
-
+        {/* Usage This Month */}
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <Text as="h2" variant="headingMd">Your Usage This Month</Text>
               <Divider />
 
+              {/* Products */}
               <BlockStack gap="200">
-                <Text as="h3" variant="headingSm">
-                  Included features:
-                </Text>
+                <InlineStack align="space-between">
+                  <Text as="p">Products audited</Text>
+                  <Text as="p" fontWeight="semibold">
+                    {usage?.productsAudited || 0} / {limits.products === -1 ? '∞' : limits.products}
+                  </Text>
+                </InlineStack>
+                {limits.products !== -1 && (
+                  <ProgressBar
+                    progress={Math.min(productUsage, 100)}
+                    tone={productUsage > 80 ? 'critical' : 'highlight'}
+                    size="small"
+                  />
+                )}
+              </BlockStack>
+
+              {/* Visibility Checks */}
+              <BlockStack gap="200">
+                <InlineStack align="space-between">
+                  <Text as="p">Visibility checks</Text>
+                  <Text as="p" fontWeight="semibold">
+                    {usage?.visibilityChecks || 0} / {limits.visibilityChecks === -1 ? '∞' : limits.visibilityChecks}
+                  </Text>
+                </InlineStack>
+                {limits.visibilityChecks !== -1 && (
+                  <ProgressBar
+                    progress={Math.min(visibilityUsage, 100)}
+                    tone={visibilityUsage > 80 ? 'critical' : 'highlight'}
+                    size="small"
+                  />
+                )}
+              </BlockStack>
+
+              {/* AI Optimizations */}
+              <BlockStack gap="200">
+                <InlineStack align="space-between">
+                  <Text as="p">AI content suggestions</Text>
+                  <Text as="p" fontWeight="semibold">
+                    {usage?.aiOptimizations || 0} / {limits.aiOptimizations === -1 ? '∞' : limits.aiOptimizations === 0 ? 'Not included' : limits.aiOptimizations}
+                  </Text>
+                </InlineStack>
+                {limits.aiOptimizations > 0 && (
+                  <ProgressBar
+                    progress={Math.min(optimizationUsage, 100)}
+                    tone={optimizationUsage > 80 ? 'critical' : 'highlight'}
+                    size="small"
+                  />
+                )}
+              </BlockStack>
+
+              {(productUsage > 80 || visibilityUsage > 80) && currentPlan !== 'PREMIUM' && (
+                <Banner tone="warning">
+                  <Text as="p">
+                    You&apos;re approaching your plan limits. Upgrade to continue growing.
+                  </Text>
+                </Banner>
+              )}
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+
+        {/* Features Included */}
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <Text as="h2" variant="headingMd">What&apos;s Included</Text>
+              <Divider />
+
+              <BlockStack gap="300">
                 {planInfo.features.map((feature, i) => (
-                  <InlineStack key={i} gap="200">
-                    <Text as="span" tone="success">
-                      +
+                  <InlineStack key={i} gap="200" blockAlign="center">
+                    <Box width="20px">
+                      <Icon
+                        source={feature.included ? CheckCircleIcon : XCircleIcon}
+                        tone={feature.included ? 'success' : 'subdued'}
+                      />
+                    </Box>
+                    <Text as="span" tone={feature.included ? undefined : 'subdued'}>
+                      {feature.name}
                     </Text>
-                    <Text as="span">{feature}</Text>
                   </InlineStack>
                 ))}
               </BlockStack>
 
-              {planInfo.limitations.length > 0 && (
-                <BlockStack gap="200">
-                  <Text as="h3" variant="headingSm">
-                    Not included:
-                  </Text>
-                  {planInfo.limitations.map((limitation, i) => (
-                    <InlineStack key={i} gap="200">
-                      <Text as="span" tone="subdued">
-                        -
-                      </Text>
-                      <Text as="span" tone="subdued">
-                        {limitation}
-                      </Text>
-                    </InlineStack>
-                  ))}
-                </BlockStack>
-              )}
-
               {currentPlan !== 'PREMIUM' && (
-                <Box paddingBlockStart="400">
+                <Box paddingBlockStart="200">
                   <Button
                     variant="primary"
                     onClick={() => isDev ? handleDevPlanChange('PREMIUM') : handleUpgrade('PREMIUM')}
                   >
-                    Upgrade Plan
+                    Unlock All Features
                   </Button>
                 </Box>
               )}
@@ -278,68 +433,102 @@ export default function SettingsPage() {
           </Card>
         </Layout.Section>
 
+        {/* Compare All Plans */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">
-                All Plans
+              <Text as="h2" variant="headingMd">Compare Plans</Text>
+              <Text as="p" tone="subdued">
+                Choose the plan that fits your store
               </Text>
+              <Divider />
 
-              <BlockStack gap="400">
-                {Object.entries(PLAN_FEATURES).map(([key, plan]) => (
-                  <Box
-                    key={key}
-                    padding="400"
-                    background={key === currentPlan ? 'bg-surface-secondary' : 'bg-surface'}
-                    borderRadius="200"
-                    borderWidth="025"
-                    borderColor="border"
-                  >
-                    <InlineStack align="space-between" blockAlign="center">
-                      <BlockStack gap="100">
-                        <InlineStack gap="200" blockAlign="center">
-                          <Text as="h3" variant="headingSm">{plan.name}</Text>
-                          {key === currentPlan && <Badge tone="success">Current</Badge>}
+              <BlockStack gap="300">
+                {(Object.entries(PLAN_FEATURES) as [keyof typeof PLAN_FEATURES, typeof PLAN_FEATURES[keyof typeof PLAN_FEATURES]][]).map(([key, plan]) => {
+                  const isCurrentPlan = key === currentPlan;
+                  const isUpgrade = getPlanIndex(key) > getPlanIndex(currentPlan);
+                  const isDowngrade = getPlanIndex(key) < getPlanIndex(currentPlan);
+                  const isPopular = 'popular' in plan && plan.popular;
+
+                  return (
+                    <Box
+                      key={key}
+                      padding="400"
+                      background={isCurrentPlan ? 'bg-surface-success' : isPopular ? 'bg-surface-warning' : 'bg-surface-secondary'}
+                      borderRadius="200"
+                    >
+                      <InlineStack align="space-between" blockAlign="center" wrap={false}>
+                        <BlockStack gap="100">
+                          <InlineStack gap="200" blockAlign="center">
+                            <Text as="h3" variant="headingSm" fontWeight="bold">
+                              {plan.name}
+                            </Text>
+                            {isCurrentPlan && <Badge tone="success">Current</Badge>}
+                            {isPopular && !isCurrentPlan && <Badge tone="attention">Popular</Badge>}
+                          </InlineStack>
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            {plan.description}
+                          </Text>
+                          <Text as="p" fontWeight="bold">
+                            {plan.price === 0 ? 'Free' : `$${plan.price}/mo`}
+                          </Text>
+                        </BlockStack>
+
+                        {!isCurrentPlan && key !== 'FREE' && (
+                          <Button
+                            variant={isUpgrade ? 'primary' : 'secondary'}
+                            onClick={() => isDev ? handleDevPlanChange(key) : handleUpgrade(key)}
+                          >
+                            {isUpgrade ? 'Upgrade' : isDowngrade ? 'Downgrade' : 'Select'}
+                          </Button>
+                        )}
+                      </InlineStack>
+
+                      {/* Key limits summary */}
+                      <Box paddingBlockStart="300">
+                        <InlineStack gap="400" wrap>
+                          <Text as="span" variant="bodySm" tone="subdued">
+                            {plan.limits.products === -1 ? 'Unlimited' : plan.limits.products} products
+                          </Text>
+                          <Text as="span" variant="bodySm" tone="subdued">
+                            {plan.limits.visibilityChecks === -1 ? 'Unlimited' : plan.limits.visibilityChecks} checks/mo
+                          </Text>
+                          {plan.limits.aiOptimizations > 0 && (
+                            <Text as="span" variant="bodySm" tone="subdued">
+                              {plan.limits.aiOptimizations === -1 ? 'Unlimited' : plan.limits.aiOptimizations} AI suggestions/mo
+                            </Text>
+                          )}
                         </InlineStack>
-                        <Text as="p" variant="bodyMd" fontWeight="bold">{plan.price}</Text>
-                      </BlockStack>
-                      {key !== currentPlan && key !== 'FREE' && (
-                        <Button
-                          variant={getPlanIndex(key) > getPlanIndex(currentPlan) ? 'primary' : 'secondary'}
-                          onClick={() => isDev ? handleDevPlanChange(key) : handleUpgrade(key)}
-                        >
-                          {getPlanIndex(key) > getPlanIndex(currentPlan) ? 'Upgrade' : 'Downgrade'}
-                        </Button>
-                      )}
-                    </InlineStack>
-                  </Box>
-                ))}
+                      </Box>
+                    </Box>
+                  );
+                })}
               </BlockStack>
             </BlockStack>
           </Card>
         </Layout.Section>
 
+        {/* Shop Info */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">
-                Shop Information
-              </Text>
+              <Text as="h2" variant="headingMd">Your Store</Text>
+              <Divider />
 
               <BlockStack gap="200">
                 <InlineStack gap="200">
-                  <Text as="span" fontWeight="bold">
-                    Shop:
-                  </Text>
-                  <Text as="span">{shopInfo?.shopDomain}</Text>
+                  <Text as="span" fontWeight="semibold" variant="bodySm">Store:</Text>
+                  <Text as="span" variant="bodySm">{shopInfo?.shopDomain}</Text>
                 </InlineStack>
                 <InlineStack gap="200">
-                  <Text as="span" fontWeight="bold">
-                    Installed:
-                  </Text>
-                  <Text as="span">
+                  <Text as="span" fontWeight="semibold" variant="bodySm">Member since:</Text>
+                  <Text as="span" variant="bodySm">
                     {shopInfo?.installedAt
-                      ? new Date(shopInfo.installedAt).toLocaleDateString()
+                      ? new Date(shopInfo.installedAt).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })
                       : 'N/A'}
                   </Text>
                 </InlineStack>
@@ -348,21 +537,17 @@ export default function SettingsPage() {
           </Card>
         </Layout.Section>
 
+        {/* Help */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">
-                Support
+              <Text as="h2" variant="headingMd">Need Help?</Text>
+              <Text as="p" tone="subdued">
+                Questions about your plan or billing? We&apos;re here to help.
               </Text>
-
-              <Text as="p">
-                Need help? Contact our support team.
-              </Text>
-
               <InlineStack gap="200">
-                <Button variant="plain" url="mailto:support@example.com">
-                  Contact Support
-                </Button>
+                <Button url="mailto:support@surfaced.app">Contact Support</Button>
+                <Button variant="plain" url="/admin">Back to Dashboard</Button>
               </InlineStack>
             </BlockStack>
           </Card>

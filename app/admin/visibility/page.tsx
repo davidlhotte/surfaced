@@ -137,15 +137,15 @@ export default function VisibilityPage() {
 
   if (loading) {
     return (
-      <Page title="AI Visibility Check" backAction={{ content: 'Dashboard', url: '/admin' }}>
+      <Page title="Check Your Visibility" backAction={{ content: 'Home', url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
               <Box padding="800">
-                <InlineStack align="center" blockAlign="center">
+                <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
-                  <Text as="p">Loading visibility data...</Text>
-                </InlineStack>
+                  <Text as="p">Loading your visibility data...</Text>
+                </BlockStack>
               </Box>
             </Card>
           </Layout.Section>
@@ -164,10 +164,11 @@ export default function VisibilityPage() {
 
   return (
     <Page
-      title="AI Visibility Check"
-      backAction={{ content: 'Dashboard', url: '/admin' }}
+      title="Check Your Visibility"
+      subtitle="See if AI assistants recommend your store"
+      backAction={{ content: 'Home', url: '/admin' }}
       primaryAction={{
-        content: 'Run Check',
+        content: 'Check Now',
         onAction: () => runCheck(),
         loading: checking,
       }}
@@ -260,10 +261,10 @@ export default function VisibilityPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h3" variant="headingMd">Custom Query Check</Text>
+              <Text as="h3" variant="headingMd">Test a Question</Text>
               <Divider />
               <Text as="p" tone="subdued">
-                Test a specific query to see if ChatGPT mentions your brand.
+                Type a question shoppers might ask and see if AI mentions your store.
               </Text>
               <InlineStack gap="200" blockAlign="end">
                 <Box minWidth="400px">
@@ -292,17 +293,20 @@ export default function VisibilityPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h3" variant="headingMd">Check History</Text>
+              <Text as="h3" variant="headingMd">Recent Checks</Text>
               <Divider />
               {history.length === 0 ? (
                 <Box padding="400">
                   <BlockStack gap="200" inlineAlign="center">
+                    <Text as="p" variant="headingMd">No checks yet</Text>
                     <Text as="p" tone="subdued">
-                      No visibility checks yet.
+                      See if AI assistants are talking about your store.
                     </Text>
-                    <Button onClick={() => runCheck()} loading={checking}>
-                      Run Your First Check
-                    </Button>
+                    <Box paddingBlockStart="200">
+                      <Button variant="primary" onClick={() => runCheck()} loading={checking}>
+                        Check Now
+                      </Button>
+                    </Box>
                   </BlockStack>
                 </Box>
               ) : (
@@ -320,7 +324,7 @@ export default function VisibilityPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h3" variant="headingMd">How to Improve AI Visibility</Text>
+              <Text as="h3" variant="headingMd">How to Get More Mentions</Text>
               <Divider />
               <BlockStack gap="200">
                 <Box padding="200" background="bg-surface-secondary" borderRadius="200">
@@ -329,7 +333,7 @@ export default function VisibilityPage() {
                     <BlockStack gap="100">
                       <Text as="p" fontWeight="semibold">Write detailed product descriptions</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        AI models learn from your content. Rich descriptions = better recommendations.
+                        AI learns from your content. Better descriptions = more recommendations.
                       </Text>
                     </BlockStack>
                   </InlineStack>
@@ -338,9 +342,9 @@ export default function VisibilityPage() {
                   <InlineStack gap="200" blockAlign="start">
                     <Badge tone="info">2</Badge>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Use clear brand identity</Text>
+                      <Text as="p" fontWeight="semibold">Be consistent with your brand name</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Consistent brand name across your store helps AI recognize you.
+                        Use the same name everywhere so AI can recognize you.
                       </Text>
                     </BlockStack>
                   </InlineStack>
@@ -349,9 +353,9 @@ export default function VisibilityPage() {
                   <InlineStack gap="200" blockAlign="start">
                     <Badge tone="info">3</Badge>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Enable llms.txt</Text>
+                      <Text as="p" fontWeight="semibold">Set up AI tools</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        <Link href="/admin/llms-txt">Configure llms.txt</Link> to help AI crawlers understand your store.
+                        <Link href="/admin/tools">Configure your AI guide</Link> to help AI understand your store.
                       </Text>
                     </BlockStack>
                   </InlineStack>

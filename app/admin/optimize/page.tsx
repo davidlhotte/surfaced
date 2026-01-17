@@ -384,9 +384,9 @@ export default function OptimizePage() {
                 <InlineStack align="space-between" blockAlign="center">
                   <Text as="p" fontWeight="semibold">Estimated Score Improvement</Text>
                   <InlineStack gap="200">
-                    <Badge tone="critical">{optimization.currentScore}</Badge>
+                    <Badge tone="critical">{String(optimization.currentScore)}</Badge>
                     <Text as="p">→</Text>
-                    <Badge tone="success">{optimization.estimatedNewScore}</Badge>
+                    <Badge tone="success">{String(optimization.estimatedNewScore)}</Badge>
                   </InlineStack>
                 </InlineStack>
               </Box>

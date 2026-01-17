@@ -19,7 +19,7 @@ import {
 } from '@shopify/polaris';
 import {
   RefreshIcon,
-  AlertCircleIcon,
+  AlertTriangleIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
@@ -200,12 +200,12 @@ export default function AlertsPage() {
             <BlockStack gap="400">
               <InlineStack align="space-between" blockAlign="center">
                 <InlineStack gap="200" blockAlign="center">
-                  <AlertCircleIcon />
+                  <AlertTriangleIcon />
                   <Text as="h2" variant="headingMd">
                     Active Alerts
                   </Text>
                 </InlineStack>
-                <Badge>{alerts.length}</Badge>
+                <Badge>{String(alerts.length)}</Badge>
               </InlineStack>
 
               <Divider />
@@ -286,7 +286,7 @@ export default function AlertsPage() {
                           </Text>
                           {report.metrics.scoreChange !== 0 && (
                             <Badge tone={report.metrics.scoreChange > 0 ? 'success' : 'critical'}>
-                              {report.metrics.scoreChange > 0 ? '+' : ''}{report.metrics.scoreChange}
+                              {(report.metrics.scoreChange > 0 ? '+' : '') + report.metrics.scoreChange}
                             </Badge>
                           )}
                         </InlineStack>
@@ -345,7 +345,7 @@ export default function AlertsPage() {
                       {report.topIssues.map((issue) => (
                         <InlineStack key={issue.code} align="space-between">
                           <Text as="p" tone="subdued">{getIssueLabel(issue.code)}</Text>
-                          <Badge>{issue.count} products</Badge>
+                          <Badge>{`${issue.count} products`}</Badge>
                         </InlineStack>
                       ))}
                     </BlockStack>

@@ -18,7 +18,7 @@ import {
 } from '@shopify/polaris';
 import {
   RefreshIcon,
-  TrendingUpIcon,
+  ChartVerticalFilledIcon,
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 
@@ -197,7 +197,7 @@ export default function ROIDashboardPage() {
                     </Text>
                     {metrics && metrics.scoreImprovement !== 0 && (
                       <Badge tone={metrics.scoreImprovement > 0 ? 'success' : 'critical'}>
-                        {metrics.scoreImprovement > 0 ? '+' : ''}{metrics.scoreImprovement}
+                        {(metrics.scoreImprovement > 0 ? '+' : '') + metrics.scoreImprovement}
                       </Badge>
                     )}
                   </InlineStack>
@@ -264,7 +264,7 @@ export default function ROIDashboardPage() {
           <Card>
             <BlockStack gap="400">
               <InlineStack gap="200" blockAlign="center">
-                <TrendingUpIcon />
+                <ChartVerticalFilledIcon />
                 <Text as="h2" variant="headingMd">Estimated Impact</Text>
               </InlineStack>
 
@@ -356,7 +356,7 @@ export default function ROIDashboardPage() {
                       <InlineStack align="space-between">
                         <Text as="p">{getPlatformLabel(platform.platform)}</Text>
                         <Badge tone={platform.rate >= 50 ? 'success' : platform.rate >= 30 ? 'warning' : 'critical'}>
-                          {platform.rate}%
+                          {`${platform.rate}%`}
                         </Badge>
                       </InlineStack>
                       <Box width="100%">

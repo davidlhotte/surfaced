@@ -430,7 +430,7 @@ export async function logAlertSent(
     data: {
       shopId: shop.id,
       action: `alert_${alertType}`,
-      details: details ?? {},
+      details: (details ?? {}) as Record<string, string | number | boolean | null>,
     },
   });
 

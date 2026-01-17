@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
         productType: productData.productType || undefined,
         vendor: productData.vendor || undefined,
         tags: productData.tags || [],
-        imageAltTexts: productData.images?.nodes?.map((img: { altText?: string }) => img.altText || '') || [],
+        imageAltTexts: productData.images?.nodes?.map((img: { altText: string | null }) => img.altText || '') || [],
       }
     );
 
