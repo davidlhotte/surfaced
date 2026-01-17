@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Page,
   Layout,
@@ -35,7 +36,8 @@ interface UsageInfo {
   aiOptimizations: number;
 }
 
-const isDev = process.env.NODE_ENV === 'development';
+// Dev mode secret - allows plan changes without billing
+const DEV_SECRET = 'surfaced';
 
 // Plan hierarchy for comparison
 const PLAN_ORDER = ['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const;
@@ -147,11 +149,15 @@ const PLAN_FEATURES = {
 };
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
   const [shopInfo, setShopInfo] = useState<ShopInfo | null>(null);
   const [usage, setUsage] = useState<UsageInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { fetch: authFetch } = useAuthenticatedFetch();
+
+  // Check if dev mode is enabled via query param ?dev=surfaced
+  const isDevMode = searchParams.get('dev') === DEV_SECRET || process.env.NODE_ENV === 'development';
 
   const fetchShopInfo = useCallback(async () => {
     try {
@@ -276,12 +282,15 @@ export default function SettingsPage() {
           </Layout.Section>
         )}
 
-        {isDev && (
+        {isDevMode && (
           <Layout.Section>
             <Banner tone="warning">
               <BlockStack gap="300">
                 <Text as="p" fontWeight="bold">
-                  Dev Mode: Test different plans
+                  Dev Mode: Test different plans (no billing)
+                </Text>
+                <Text as="p" variant="bodySm" tone="subdued">
+                  Click a plan to switch instantly without being charged.
                 </Text>
                 <InlineStack gap="200">
                   {(['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const).map((plan) => (
@@ -423,7 +432,7 @@ export default function SettingsPage() {
                 <Box paddingBlockStart="200">
                   <Button
                     variant="primary"
-                    onClick={() => isDev ? handleDevPlanChange('PREMIUM') : handleUpgrade('PREMIUM')}
+                    onClick={() => isDevMode ? handleDevPlanChange('PREMIUM') : handleUpgrade('PREMIUM')}
                   >
                     Unlock All Features
                   </Button>
@@ -477,7 +486,7 @@ export default function SettingsPage() {
                         {!isCurrentPlan && key !== 'FREE' && (
                           <Button
                             variant={isUpgrade ? 'primary' : 'secondary'}
-                            onClick={() => isDev ? handleDevPlanChange(key) : handleUpgrade(key)}
+                            onClick={() => isDevMode ? handleDevPlanChange(key) : handleUpgrade(key)}
                           >
                             {isUpgrade ? 'Upgrade' : isDowngrade ? 'Downgrade' : 'Select'}
                           </Button>

@@ -50,6 +50,13 @@ type ProductAudit = {
   lastAuditAt: string;
 };
 
+type PlanInfo = {
+  current: string;
+  productLimit: number;
+  isAtLimit: boolean;
+  productsNotAnalyzed: number;
+};
+
 type AuditData = {
   totalProducts: number;
   auditedProducts: number;
@@ -61,6 +68,7 @@ type AuditData = {
     info: number;
   };
   products: ProductAudit[];
+  plan?: PlanInfo;
 };
 
 interface OptimizationSuggestion {
@@ -386,6 +394,29 @@ export default function ProductsPage() {
           </Layout.Section>
         )}
 
+        {/* Plan Limit Banner */}
+        {data?.plan?.isAtLimit && (
+          <Layout.Section>
+            <Banner tone="warning" title="Plan Limit Reached">
+              <BlockStack gap="200">
+                <Text as="p">
+                  Your {data.plan.current} plan allows analyzing up to{' '}
+                  <strong>{data.plan.productLimit} products</strong>.
+                  You have {data.plan.productsNotAnalyzed} more products that aren&apos;t being analyzed.
+                </Text>
+                <InlineStack gap="200">
+                  <Button url="/admin/settings" variant="primary">
+                    Upgrade Your Plan
+                  </Button>
+                  <Text as="span" tone="subdued" variant="bodySm">
+                    to analyze all {data.totalProducts} products
+                  </Text>
+                </InlineStack>
+              </BlockStack>
+            </Banner>
+          </Layout.Section>
+        )}
+
         {/* Summary Stats */}
         <Layout.Section>
           <InlineStack gap="400" align="start">
@@ -419,9 +450,18 @@ export default function ProductsPage() {
                   <Text as="p" variant="heading2xl" fontWeight="bold">
                     {data?.auditedProducts ?? 0}
                   </Text>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    of {data?.totalProducts ?? 0} total
+                  <Text as="p" variant="bodySm" tone={data?.plan?.isAtLimit ? 'critical' : 'subdued'}>
+                    {data?.plan?.isAtLimit ? (
+                      <>of {data?.plan?.productLimit} (plan limit)</>
+                    ) : (
+                      <>of {data?.totalProducts ?? 0} total</>
+                    )}
                   </Text>
+                  {data?.plan?.isAtLimit && (
+                    <Button size="slim" url="/admin/settings">
+                      Upgrade
+                    </Button>
+                  )}
                 </BlockStack>
               </Card>
             </Box>

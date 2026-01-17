@@ -2,24 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { Plan } from '@prisma/client';
 
-// DEV/ADMIN: Change plan directly for testing
+// DEV/ADMIN: Change plan directly for testing (no billing)
+// Access via ?dev=surfaced query param on settings page
 export async function POST(request: NextRequest) {
-  // Allow in development OR with admin secret
-  const adminSecret = request.headers.get('x-admin-secret');
-  const isAuthorized =
-    process.env.NODE_ENV === 'development' ||
-    (adminSecret && adminSecret === process.env.CRON_SECRET);
-
-  if (!isAuthorized) {
-    return NextResponse.json(
-      { success: false, error: 'Not authorized' },
-      { status: 403 }
-    );
-  }
-
   try {
     const body = await request.json();
-    const { plan, shop } = body;
+    const { plan } = body;
+
+    // Get shop from header (set by authenticatedFetch)
+    const shopDomain = request.headers.get('x-shopify-shop-domain');
+
+    if (!shopDomain) {
+      return NextResponse.json(
+        { success: false, error: 'Shop not found' },
+        { status: 400 }
+      );
+    }
 
     // Validate plan
     if (!['FREE', 'BASIC', 'PLUS', 'PREMIUM'].includes(plan)) {
@@ -29,16 +27,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const targetShop = shop || 'locateus-2.myshopify.com';
-
     await prisma.shop.update({
-      where: { shopDomain: targetShop },
+      where: { shopDomain },
       data: { plan: plan as Plan },
     });
 
     return NextResponse.json({
       success: true,
-      data: { plan },
+      data: { plan, shop: shopDomain },
     });
   } catch (error) {
     console.error('Dev plan change error:', error);

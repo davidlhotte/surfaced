@@ -3,6 +3,8 @@ import { handleApiError } from '@/lib/utils/errors';
 import { getShopFromRequest } from '@/lib/shopify/get-shop';
 import { runAudit } from '@/lib/services/audit-engine';
 import { logger } from '@/lib/monitoring/logger';
+import { PLAN_LIMITS } from '@/lib/constants/plans';
+import type { Plan } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,6 +51,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get plan limits
+    const planLimits = PLAN_LIMITS[shop.plan as Plan];
+    const productLimit = planLimits.productsAudited;
+    const isAtLimit = productLimit !== Infinity && shop.productsCount > productLimit;
+
     const auditStats = {
       totalProducts: shop.productsCount,
       auditedProducts: shop.productsAudit.length,
@@ -72,6 +79,13 @@ export async function GET(request: NextRequest) {
         descriptionLength: p.descriptionLength,
         lastAuditAt: p.lastAuditAt.toISOString(),
       })),
+      // Plan info for upgrade CTAs
+      plan: {
+        current: shop.plan,
+        productLimit: productLimit === Infinity ? -1 : productLimit,
+        isAtLimit,
+        productsNotAnalyzed: isAtLimit ? shop.productsCount - productLimit : 0,
+      },
     };
 
     return NextResponse.json({
