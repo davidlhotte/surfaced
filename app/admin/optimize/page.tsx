@@ -70,6 +70,20 @@ interface ApplyResult {
   historyIds?: string[];
 }
 
+interface HistoryEntry {
+  id: string;
+  shopifyProductId: string;
+  productTitle: string;
+  field: string;
+  originalValue: string;
+  appliedValue: string;
+  scoreBefore: number | null;
+  scoreAfter: number | null;
+  status: 'applied' | 'undone';
+  createdAt: string;
+  undoneAt: string | null;
+}
+
 export default function OptimizePage() {
   const { fetch } = useAuthenticatedFetch();
 
@@ -78,12 +92,14 @@ export default function OptimizePage() {
   const [applying, setApplying] = useState(false);
   const [products, setProducts] = useState<ProductForOptimization[]>([]);
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductForOptimization | null>(null);
   const [optimization, setOptimization] = useState<ProductOptimization | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Selection state for checkboxes
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
@@ -108,6 +124,7 @@ export default function OptimizePage() {
       if (data.success) {
         setProducts(data.data.products);
         setQuota(data.data.quota);
+        setHistory(data.data.history || []);
       } else {
         setError(data.error || 'Failed to load data');
       }
@@ -458,6 +475,81 @@ export default function OptimizePage() {
             </BlockStack>
           </Card>
         </Layout.Section>
+
+        {/* History Section */}
+        {history.length > 0 && (
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400">
+                <InlineStack align="space-between" blockAlign="center">
+                  <BlockStack gap="100">
+                    <Text as="h2" variant="headingMd">
+                      Optimization History
+                    </Text>
+                    <Text as="p" tone="subdued">
+                      {history.filter((h) => h.status === 'applied').length} active changes
+                    </Text>
+                  </BlockStack>
+                  <Button
+                    onClick={() => setShowHistory(!showHistory)}
+                    disclosure={showHistory ? 'up' : 'down'}
+                  >
+                    {showHistory ? 'Hide' : 'Show'} History
+                  </Button>
+                </InlineStack>
+
+                {showHistory && (
+                  <>
+                    <Divider />
+                    <BlockStack gap="300">
+                      {history.slice(0, 20).map((entry) => (
+                        <Box
+                          key={entry.id}
+                          padding="300"
+                          background={entry.status === 'applied' ? 'bg-surface-success' : 'bg-surface-secondary'}
+                          borderRadius="200"
+                        >
+                          <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
+                            <BlockStack gap="100">
+                              <InlineStack gap="200" blockAlign="center">
+                                <Text as="p" fontWeight="semibold">{entry.productTitle}</Text>
+                                <Badge tone={entry.status === 'applied' ? 'success' : 'info'}>
+                                  {entry.status === 'applied' ? 'Active' : 'Undone'}
+                                </Badge>
+                              </InlineStack>
+                              <InlineStack gap="200">
+                                <Badge>{getFieldLabel(entry.field)}</Badge>
+                                <Text as="span" variant="bodySm" tone="subdued">
+                                  {new Date(entry.createdAt).toLocaleDateString()} at{' '}
+                                  {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </Text>
+                                {entry.scoreBefore !== null && entry.scoreAfter !== null && (
+                                  <Text as="span" variant="bodySm">
+                                    Score: {entry.scoreBefore} → {entry.scoreAfter}
+                                  </Text>
+                                )}
+                              </InlineStack>
+                            </BlockStack>
+                            {entry.status === 'applied' && (
+                              <Button
+                                icon={UndoIcon}
+                                size="slim"
+                                onClick={() => handleUndo(entry.id)}
+                                loading={applying}
+                              >
+                                Undo
+                              </Button>
+                            )}
+                          </InlineStack>
+                        </Box>
+                      ))}
+                    </BlockStack>
+                  </>
+                )}
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+        )}
 
         {/* How it works */}
         <Layout.Section>

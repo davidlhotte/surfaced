@@ -19,7 +19,7 @@ import { logger } from '@/lib/monitoring/logger';
 
 /**
  * GET /api/optimize
- * Get products that need optimization and quota info
+ * Get products that need optimization, quota info, and history
  */
 export async function GET(request: NextRequest) {
   try {
@@ -31,6 +31,36 @@ export async function GET(request: NextRequest) {
     // Get products that need optimization
     const products = await getProductsForOptimization(shopDomain, 20);
 
+    // Get recent optimization history
+    const history = await prisma.productOptimizationHistory.findMany({
+      where: {
+        shop: { shopDomain },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        shopifyProductId: true,
+        productTitle: true,
+        field: true,
+        originalValue: true,
+        appliedValue: true,
+        scoreBefore: true,
+        scoreAfter: true,
+        status: true,
+        createdAt: true,
+        undoneAt: true,
+      },
+    });
+
+    // Serialize BigInt
+    const serializedHistory = history.map((h) => ({
+      ...h,
+      shopifyProductId: h.shopifyProductId.toString(),
+      createdAt: h.createdAt.toISOString(),
+      undoneAt: h.undoneAt?.toISOString() || null,
+    }));
+
     return NextResponse.json({
       success: true,
       data: {
@@ -41,6 +71,7 @@ export async function GET(request: NextRequest) {
           available: quota.available,
         },
         products,
+        history: serializedHistory,
       },
     });
   } catch (error) {
