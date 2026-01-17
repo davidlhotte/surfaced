@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import {
   Page,
   Layout,
@@ -38,6 +37,42 @@ interface UsageInfo {
 
 // Dev mode secret - allows plan changes without billing
 const DEV_SECRET = 'surfaced';
+
+// Check if dev mode is enabled from multiple sources (embedded apps lose URL params)
+function checkDevMode(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  // Check current URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('dev') === DEV_SECRET) {
+    // Store in sessionStorage for persistence
+    try { sessionStorage.setItem('surfaced_dev_mode', 'true'); } catch {}
+    return true;
+  }
+
+  // Check parent URL (for embedded apps) via referrer
+  try {
+    const referrer = document.referrer;
+    if (referrer && referrer.includes(`dev=${DEV_SECRET}`)) {
+      sessionStorage.setItem('surfaced_dev_mode', 'true');
+      return true;
+    }
+  } catch {}
+
+  // Check sessionStorage (persisted from previous detection)
+  try {
+    if (sessionStorage.getItem('surfaced_dev_mode') === 'true') {
+      return true;
+    }
+  } catch {}
+
+  // Check if we're in development environment
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+
+  return false;
+}
 
 // Plan hierarchy for comparison
 const PLAN_ORDER = ['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const;
@@ -149,15 +184,28 @@ const PLAN_FEATURES = {
 };
 
 export default function SettingsPage() {
-  const searchParams = useSearchParams();
   const [shopInfo, setShopInfo] = useState<ShopInfo | null>(null);
   const [usage, setUsage] = useState<UsageInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDevMode, setIsDevMode] = useState(false);
+  const [devClicks, setDevClicks] = useState(0);
   const { fetch: authFetch } = useAuthenticatedFetch();
 
-  // Check if dev mode is enabled via query param ?dev=surfaced
-  const isDevMode = searchParams.get('dev') === DEV_SECRET || process.env.NODE_ENV === 'development';
+  // Check dev mode on mount (client-side only)
+  useEffect(() => {
+    setIsDevMode(checkDevMode());
+  }, []);
+
+  // Hidden dev mode activation: click "Your Store" 5 times
+  const handleDevClick = useCallback(() => {
+    const newClicks = devClicks + 1;
+    setDevClicks(newClicks);
+    if (newClicks >= 5 && !isDevMode) {
+      setIsDevMode(true);
+      try { sessionStorage.setItem('surfaced_dev_mode', 'true'); } catch {}
+    }
+  }, [devClicks, isDevMode]);
 
   const fetchShopInfo = useCallback(async () => {
     try {
@@ -526,7 +574,11 @@ export default function SettingsPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">Your Store</Text>
+              <div onClick={handleDevClick} style={{ cursor: 'default' }}>
+                <Text as="h2" variant="headingMd">
+                  Your Store {devClicks > 0 && devClicks < 5 ? `(${5 - devClicks})` : ''}
+                </Text>
+              </div>
               <Divider />
 
               <BlockStack gap="200">
