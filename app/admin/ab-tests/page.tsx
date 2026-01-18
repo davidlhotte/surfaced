@@ -22,7 +22,8 @@ import {
   Modal,
 } from '@shopify/polaris';
 import { PlusCircleIcon } from '@shopify/polaris-icons';
-import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
 type ABTest = {
   id: string;
@@ -49,6 +50,7 @@ type Quota = {
 
 export default function ABTestsPage() {
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
+  const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
   const [tests, setTests] = useState<ABTest[]>([]);
   const [quota, setQuota] = useState<Quota | null>(null);
   const [loading, setLoading] = useState(true);
@@ -205,7 +207,12 @@ export default function ABTestsPage() {
     );
   };
 
-  if (loading) {
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
+
+  if (loading || shopLoading) {
     return (
       <Page title="A/B Testing" backAction={{ content: 'Dashboard', url: '/admin' }}>
         <Layout>

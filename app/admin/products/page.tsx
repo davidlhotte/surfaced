@@ -28,6 +28,7 @@ import {
   MagicIcon,
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
 type ProductIssue = {
   code: string;
@@ -119,7 +120,7 @@ export default function ProductsPage() {
   const [copied, setCopied] = useState<string | null>(null);
 
   const { fetch: authFetch } = useAuthenticatedFetch();
-  const { isLoading: shopLoading, isAuthenticated } = useShopContext();
+  const { isLoading: shopLoading, isAuthenticated, shopDetectionFailed, error: shopError } = useShopContext();
 
   const fetchData = useCallback(async () => {
     try {
@@ -301,6 +302,11 @@ export default function ProductsPage() {
     setSelectedFilter(selected);
     setCurrentPage(1);
   };
+
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
 
   // Loading state
   if (loading || shopLoading) {

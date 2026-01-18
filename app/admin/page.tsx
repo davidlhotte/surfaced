@@ -31,6 +31,7 @@ import {
 import Link from 'next/link';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { ResponsiveGrid } from '@/components/admin/ResponsiveGrid';
+import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
 type DashboardData = {
   shop: {
@@ -75,7 +76,7 @@ export default function Dashboard() {
   const [auditing, setAuditing] = useState(false);
 
   const { fetch: authFetch } = useAuthenticatedFetch();
-  const { isLoading: shopLoading, error: shopError, isAuthenticated } = useShopContext();
+  const { isLoading: shopLoading, error: shopError, isAuthenticated, shopDetectionFailed } = useShopContext();
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -122,6 +123,11 @@ export default function Dashboard() {
       setAuditing(false);
     }
   };
+
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
 
   // Loading state
   if (loading || shopLoading) {

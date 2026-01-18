@@ -7,6 +7,8 @@ interface ShopContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
+  /** True when shop detection exhausted all retry attempts */
+  shopDetectionFailed: boolean;
 }
 
 const ShopContext = createContext<ShopContextType>({
@@ -14,6 +16,7 @@ const ShopContext = createContext<ShopContextType>({
   isLoading: true,
   isAuthenticated: false,
   error: null,
+  shopDetectionFailed: false,
 });
 
 // Global shop storage (survives component re-mounts)
@@ -37,6 +40,7 @@ export function ShopProvider({ children }: ShopProviderProps) {
   const [isLoading, setIsLoading] = useState(!globalShop);
   const [isAuthenticated, setIsAuthenticated] = useState(isTokenExchanged);
   const [error, setError] = useState<string | null>(null);
+  const [shopDetectionFailed, setShopDetectionFailed] = useState(false);
 
   useEffect(() => {
     debugLog('ShopProvider mounted');
@@ -222,7 +226,8 @@ export function ShopProvider({ children }: ShopProviderProps) {
         setTimeout(tryAgain, attempts[attemptIndex]);
       } else {
         debugLog('All retry attempts exhausted');
-        setError('Could not detect shop from Shopify');
+        setError('Could not detect shop from Shopify. Please open this app from your Shopify admin panel.');
+        setShopDetectionFailed(true);
         setIsLoading(false);
       }
     };
@@ -230,7 +235,10 @@ export function ShopProvider({ children }: ShopProviderProps) {
     setTimeout(tryAgain, attempts[0]);
   }, []);
 
-  const value = useMemo(() => ({ shop, isLoading, isAuthenticated, error }), [shop, isLoading, isAuthenticated, error]);
+  const value = useMemo(
+    () => ({ shop, isLoading, isAuthenticated, error, shopDetectionFailed }),
+    [shop, isLoading, isAuthenticated, error, shopDetectionFailed]
+  );
 
   return (
     <ShopContext.Provider value={value}>

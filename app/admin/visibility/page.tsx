@@ -20,7 +20,8 @@ import {
   Scrollable,
 } from '@shopify/polaris';
 import Link from 'next/link';
-import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
 type VisibilityCheck = {
   id: string;
@@ -49,6 +50,7 @@ type VisibilityResult = {
 
 export default function VisibilityPage() {
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
+  const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
   const [history, setHistory] = useState<VisibilityCheck[]>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
@@ -162,7 +164,12 @@ export default function VisibilityPage() {
   const totalChecks = history.length;
   const mentionRate = totalChecks > 0 ? Math.round((mentionedCount / totalChecks) * 100) : 0;
 
-  if (loading) {
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
+
+  if (loading || shopLoading) {
     return (
       <Page title="Check Your Visibility" backAction={{ content: 'Home', url: '/admin' }}>
         <Layout>

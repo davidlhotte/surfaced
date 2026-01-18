@@ -27,7 +27,8 @@ import {
   CheckIcon,
   UndoIcon,
 } from '@shopify/polaris-icons';
-import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
 interface ProductForOptimization {
   id: string;
@@ -86,6 +87,7 @@ interface HistoryEntry {
 
 export default function OptimizePage() {
   const { fetch } = useAuthenticatedFetch();
+  const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
 
   const [loading, setLoading] = useState(true);
   const [optimizing, setOptimizing] = useState(false);
@@ -312,7 +314,12 @@ export default function OptimizePage() {
     return labels[field] || field;
   };
 
-  if (loading) {
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
+
+  if (loading || shopLoading) {
     return (
       <Page title="AI Content Optimizer" backAction={{ content: 'Dashboard', url: '/admin' }}>
         <Layout>

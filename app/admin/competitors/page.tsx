@@ -22,7 +22,8 @@ import {
   ProgressBar,
 } from '@shopify/polaris';
 import { PlusCircleIcon } from '@shopify/polaris-icons';
-import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
 type Competitor = {
   id: string;
@@ -78,6 +79,7 @@ type CompetitorAnalysis = {
 
 export default function CompetitorsPage() {
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
+  const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
   const [data, setData] = useState<CompetitorsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -202,7 +204,12 @@ export default function CompetitorsPage() {
     return tones[type] || 'info';
   };
 
-  if (loading) {
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
+
+  if (loading || shopLoading) {
     return (
       <Page title="Competitor Intelligence" backAction={{ content: 'Dashboard', url: '/admin' }}>
         <Layout>

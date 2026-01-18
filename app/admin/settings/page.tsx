@@ -21,7 +21,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from '@shopify/polaris-icons';
-import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
 interface ShopInfo {
   shopDomain: string;
@@ -82,26 +83,29 @@ const getPlanIndex = (plan: string): number => {
   return index === -1 ? 0 : index;
 };
 
-// Real plan features matching the landing page
+// Import plan limits from the central constants to stay in sync
+import { PLAN_LIMITS, PLAN_PRICES, PLAN_NAMES } from '@/lib/constants/plans';
+
+// Real plan features matching lib/constants/plans.ts
 const PLAN_FEATURES = {
   FREE: {
-    name: 'Free',
+    name: 'Free Trial',
     price: 0,
     priceLabel: 'Free forever',
     description: 'Perfect for getting started',
     limits: {
-      products: 25,
-      visibilityChecks: 5,
-      aiOptimizations: 0,
-      competitors: 0,
+      products: PLAN_LIMITS.FREE.productsAudited,
+      visibilityChecks: PLAN_LIMITS.FREE.visibilityChecksPerMonth,
+      aiOptimizations: PLAN_LIMITS.FREE.aiOptimizationsPerMonth,
+      competitors: PLAN_LIMITS.FREE.competitorsTracked,
     },
     features: [
       { name: 'AI readiness audit', included: true },
-      { name: 'Up to 25 products', included: true },
-      { name: '5 visibility checks/month', included: true },
+      { name: `Up to ${PLAN_LIMITS.FREE.productsAudited} products`, included: true },
+      { name: `${PLAN_LIMITS.FREE.visibilityChecksPerMonth} visibility checks/month`, included: true },
       { name: 'AI Guide generator', included: true },
       { name: 'Basic recommendations', included: true },
-      { name: 'AI content suggestions', included: false },
+      { name: `${PLAN_LIMITS.FREE.aiOptimizationsPerMonth} AI content suggestions/month`, included: PLAN_LIMITS.FREE.aiOptimizationsPerMonth > 0 },
       { name: 'Structured data', included: false },
       { name: 'Weekly reports', included: false },
       { name: 'Competitor tracking', included: false },
@@ -110,74 +114,74 @@ const PLAN_FEATURES = {
   },
   BASIC: {
     name: 'Starter',
-    price: 4.99,
-    priceLabel: '$4.99/month',
+    price: PLAN_PRICES.BASIC,
+    priceLabel: `$${PLAN_PRICES.BASIC}/month`,
     description: 'For growing stores',
     limits: {
-      products: 100,
-      visibilityChecks: 25,
-      aiOptimizations: 10,
-      competitors: 0,
+      products: PLAN_LIMITS.BASIC.productsAudited,
+      visibilityChecks: PLAN_LIMITS.BASIC.visibilityChecksPerMonth,
+      aiOptimizations: PLAN_LIMITS.BASIC.aiOptimizationsPerMonth,
+      competitors: PLAN_LIMITS.BASIC.competitorsTracked,
     },
     features: [
       { name: 'AI readiness audit', included: true },
-      { name: 'Up to 100 products', included: true },
-      { name: '25 visibility checks/month', included: true },
+      { name: `Up to ${PLAN_LIMITS.BASIC.productsAudited} products`, included: true },
+      { name: `${PLAN_LIMITS.BASIC.visibilityChecksPerMonth} visibility checks/month`, included: true },
       { name: 'AI Guide generator', included: true },
       { name: 'Detailed recommendations', included: true },
-      { name: '10 AI content suggestions/month', included: true },
+      { name: `${PLAN_LIMITS.BASIC.aiOptimizationsPerMonth} AI content suggestions/month`, included: true },
       { name: 'Structured data export', included: true },
       { name: 'Weekly reports', included: false },
-      { name: 'Competitor tracking', included: false },
+      { name: `Track ${PLAN_LIMITS.BASIC.competitorsTracked} competitor${PLAN_LIMITS.BASIC.competitorsTracked !== 1 ? 's' : ''}`, included: PLAN_LIMITS.BASIC.competitorsTracked > 0 },
       { name: 'Priority support', included: false },
     ],
   },
   PLUS: {
-    name: 'Pro',
-    price: 9.99,
-    priceLabel: '$9.99/month',
+    name: 'Growth',
+    price: PLAN_PRICES.PLUS,
+    priceLabel: `$${PLAN_PRICES.PLUS}/month`,
     description: 'For serious sellers',
     popular: true,
     limits: {
-      products: 500,
-      visibilityChecks: 100,
-      aiOptimizations: 50,
-      competitors: 3,
+      products: PLAN_LIMITS.PLUS.productsAudited,
+      visibilityChecks: PLAN_LIMITS.PLUS.visibilityChecksPerMonth,
+      aiOptimizations: PLAN_LIMITS.PLUS.aiOptimizationsPerMonth,
+      competitors: PLAN_LIMITS.PLUS.competitorsTracked,
     },
     features: [
       { name: 'AI readiness audit', included: true },
-      { name: 'Up to 500 products', included: true },
-      { name: '100 visibility checks/month', included: true },
+      { name: `Up to ${PLAN_LIMITS.PLUS.productsAudited} products`, included: true },
+      { name: `${PLAN_LIMITS.PLUS.visibilityChecksPerMonth} visibility checks/month`, included: true },
       { name: 'AI Guide generator', included: true },
       { name: 'Advanced recommendations', included: true },
-      { name: '50 AI content suggestions/month', included: true },
+      { name: `${PLAN_LIMITS.PLUS.aiOptimizationsPerMonth} AI content suggestions/month`, included: true },
       { name: 'Structured data export', included: true },
       { name: 'Weekly reports', included: true },
-      { name: 'Track 3 competitors', included: true },
+      { name: `Track ${PLAN_LIMITS.PLUS.competitorsTracked} competitors`, included: true },
       { name: 'Priority support', included: false },
     ],
   },
   PREMIUM: {
-    name: 'Business',
-    price: 24.99,
-    priceLabel: '$24.99/month',
+    name: 'Scale',
+    price: PLAN_PRICES.PREMIUM,
+    priceLabel: `$${PLAN_PRICES.PREMIUM}/month`,
     description: 'For high-volume stores',
     limits: {
-      products: -1, // Unlimited
-      visibilityChecks: -1,
-      aiOptimizations: -1,
-      competitors: 10,
+      products: -1, // Infinity becomes -1 for UI
+      visibilityChecks: PLAN_LIMITS.PREMIUM.visibilityChecksPerMonth,
+      aiOptimizations: PLAN_LIMITS.PREMIUM.aiOptimizationsPerMonth,
+      competitors: PLAN_LIMITS.PREMIUM.competitorsTracked,
     },
     features: [
       { name: 'AI readiness audit', included: true },
       { name: 'Unlimited products', included: true },
-      { name: 'Unlimited visibility checks', included: true },
+      { name: `${PLAN_LIMITS.PREMIUM.visibilityChecksPerMonth} visibility checks/month`, included: true },
       { name: 'AI Guide generator', included: true },
       { name: 'Premium recommendations', included: true },
-      { name: 'Unlimited AI content suggestions', included: true },
+      { name: `${PLAN_LIMITS.PREMIUM.aiOptimizationsPerMonth} AI content suggestions/month`, included: true },
       { name: 'Structured data export', included: true },
       { name: 'Daily reports', included: true },
-      { name: 'Track 10 competitors', included: true },
+      { name: `Track ${PLAN_LIMITS.PREMIUM.competitorsTracked} competitors`, included: true },
       { name: 'Priority support', included: true },
     ],
   },
@@ -191,6 +195,7 @@ export default function SettingsPage() {
   const [isDevMode, setIsDevMode] = useState(false);
   const [devClicks, setDevClicks] = useState(0);
   const { fetch: authFetch } = useAuthenticatedFetch();
+  const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
 
   // Check dev mode on mount (client-side only)
   useEffect(() => {
@@ -292,7 +297,12 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading) {
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
+
+  if (loading || shopLoading) {
     return (
       <Page title="Your Plan" backAction={{ content: 'Dashboard', url: '/admin' }}>
         <Layout>
@@ -315,10 +325,14 @@ export default function SettingsPage() {
   const planInfo = PLAN_FEATURES[currentPlan as keyof typeof PLAN_FEATURES];
   const limits = planInfo.limits;
 
-  // Calculate usage percentages
-  const productUsage = limits.products === -1 ? 0 : ((usage?.productsAudited || 0) / limits.products) * 100;
-  const visibilityUsage = limits.visibilityChecks === -1 ? 0 : ((usage?.visibilityChecks || 0) / limits.visibilityChecks) * 100;
-  const optimizationUsage = limits.aiOptimizations <= 0 ? 0 : ((usage?.aiOptimizations || 0) / limits.aiOptimizations) * 100;
+  // Calculate usage percentages (cast to number to handle both finite and -1/Infinity cases)
+  const productsLimit = limits.products as number;
+  const visibilityLimit = limits.visibilityChecks as number;
+  const optimizationLimit = limits.aiOptimizations as number;
+
+  const productUsage = productsLimit < 0 || productsLimit === Infinity ? 0 : ((usage?.productsAudited || 0) / productsLimit) * 100;
+  const visibilityUsage = visibilityLimit < 0 || visibilityLimit === Infinity ? 0 : ((usage?.visibilityChecks || 0) / visibilityLimit) * 100;
+  const optimizationUsage = optimizationLimit <= 0 ? 0 : ((usage?.aiOptimizations || 0) / optimizationLimit) * 100;
 
   return (
     <Page
@@ -401,10 +415,10 @@ export default function SettingsPage() {
                 <InlineStack align="space-between">
                   <Text as="p">Products audited</Text>
                   <Text as="p" fontWeight="semibold">
-                    {usage?.productsAudited || 0} / {limits.products === -1 ? '∞' : limits.products}
+                    {usage?.productsAudited || 0} / {productsLimit < 0 || productsLimit === Infinity ? '∞' : productsLimit}
                   </Text>
                 </InlineStack>
-                {limits.products !== -1 && (
+                {productsLimit > 0 && productsLimit !== Infinity && (
                   <ProgressBar
                     progress={Math.min(productUsage, 100)}
                     tone={productUsage > 80 ? 'critical' : 'highlight'}
@@ -418,10 +432,10 @@ export default function SettingsPage() {
                 <InlineStack align="space-between">
                   <Text as="p">Visibility checks</Text>
                   <Text as="p" fontWeight="semibold">
-                    {usage?.visibilityChecks || 0} / {limits.visibilityChecks === -1 ? '∞' : limits.visibilityChecks}
+                    {usage?.visibilityChecks || 0} / {visibilityLimit < 0 || visibilityLimit === Infinity ? '∞' : visibilityLimit}
                   </Text>
                 </InlineStack>
-                {limits.visibilityChecks !== -1 && (
+                {visibilityLimit > 0 && visibilityLimit !== Infinity && (
                   <ProgressBar
                     progress={Math.min(visibilityUsage, 100)}
                     tone={visibilityUsage > 80 ? 'critical' : 'highlight'}
@@ -435,10 +449,10 @@ export default function SettingsPage() {
                 <InlineStack align="space-between">
                   <Text as="p">AI content suggestions</Text>
                   <Text as="p" fontWeight="semibold">
-                    {usage?.aiOptimizations || 0} / {limits.aiOptimizations === -1 ? '∞' : limits.aiOptimizations === 0 ? 'Not included' : limits.aiOptimizations}
+                    {usage?.aiOptimizations || 0} / {optimizationLimit < 0 || optimizationLimit === Infinity ? '∞' : optimizationLimit === 0 ? 'Not included' : optimizationLimit}
                   </Text>
                 </InlineStack>
-                {limits.aiOptimizations > 0 && (
+                {optimizationLimit > 0 && (
                   <ProgressBar
                     progress={Math.min(optimizationUsage, 100)}
                     tone={optimizationUsage > 80 ? 'critical' : 'highlight'}
@@ -550,14 +564,14 @@ export default function SettingsPage() {
                       <Box paddingBlockStart="300">
                         <InlineStack gap="400" wrap>
                           <Text as="span" variant="bodySm" tone="subdued">
-                            {plan.limits.products === -1 ? 'Unlimited' : plan.limits.products} products
+                            {(plan.limits.products as number) < 0 || plan.limits.products === Infinity ? 'Unlimited' : plan.limits.products} products
                           </Text>
                           <Text as="span" variant="bodySm" tone="subdued">
-                            {plan.limits.visibilityChecks === -1 ? 'Unlimited' : plan.limits.visibilityChecks} checks/mo
+                            {(plan.limits.visibilityChecks as number) < 0 || plan.limits.visibilityChecks === Infinity ? 'Unlimited' : plan.limits.visibilityChecks} checks/mo
                           </Text>
-                          {plan.limits.aiOptimizations > 0 && (
+                          {(plan.limits.aiOptimizations as number) > 0 && (
                             <Text as="span" variant="bodySm" tone="subdued">
-                              {plan.limits.aiOptimizations === -1 ? 'Unlimited' : plan.limits.aiOptimizations} AI suggestions/mo
+                              {(plan.limits.aiOptimizations as number) < 0 || plan.limits.aiOptimizations === Infinity ? 'Unlimited' : plan.limits.aiOptimizations} AI suggestions/mo
                             </Text>
                           )}
                         </InlineStack>
