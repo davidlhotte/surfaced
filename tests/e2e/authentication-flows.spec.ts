@@ -20,8 +20,8 @@ test.describe('Direct Access Handling (No Shop Context)', () => {
     // Access the admin directly without shop parameter
     await page.goto('/admin');
 
-    // Wait for the page to fully load and detect shop
-    await page.waitForTimeout(3000);
+    // Wait for shop detection to exhaust all retries (5 retries * ~1s each + processing time)
+    await page.waitForTimeout(8000);
 
     // Should either show NotAuthenticated component OR loading state that leads to auth message
     const bodyContent = await page.locator('body').textContent();
