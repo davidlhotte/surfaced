@@ -43,6 +43,7 @@ model Shop {
   jsonLdConfig          JsonLdConfig?
   optimizationHistory   ProductOptimizationHistory[]
   abTests               ABTest[]
+  apiKeys               ApiKey[]
 
   @@index([plan])
   @@index([organizationId])
@@ -130,6 +131,57 @@ enum OrgRole {
   admin       // Can manage stores and members
   editor      // Can make changes
   viewer      // Read-only access
+}
+
+// ============================================
+// PUBLIC API MODELS
+// ============================================
+
+model ApiKey {
+  id              String    @id @default(cuid())
+  shopId          String
+  shop            Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  name            String    // Friendly name for the key
+  keyHash         String    @unique // SHA-256 hash of the actual key
+  keyPrefix       String    // First 8 chars for identification (e.g., "sk_live_abc...")
+
+  // Permissions
+  scopes          Json      @default("[\"read\"]") // ["read", "write", "audit", "optimize"]
+
+  // Rate limiting
+  rateLimit       Int       @default(100) // Requests per minute
+  requestCount    Int       @default(0)   // Total requests made
+  lastUsedAt      DateTime?
+
+  // Status
+  isActive        Boolean   @default(true)
+  expiresAt       DateTime?
+
+  createdAt       DateTime  @default(now())
+  revokedAt       DateTime?
+
+  // Usage logs
+  usageLogs       ApiUsageLog[]
+
+  @@index([shopId])
+  @@index([keyHash])
+}
+
+model ApiUsageLog {
+  id              String    @id @default(cuid())
+  apiKeyId        String
+  apiKey          ApiKey    @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  endpoint        String    // e.g., "/v1/audit"
+  method          String    // GET, POST, etc.
+  statusCode      Int
+  responseTimeMs  Int
+  ipAddress       String?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([apiKeyId, createdAt(sort: Desc)])
 }
 
 // ============================================
