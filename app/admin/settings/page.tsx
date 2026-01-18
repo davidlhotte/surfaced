@@ -509,14 +509,152 @@ export default function SettingsPage() {
           </Card>
         </Layout.Section>
 
-        {/* Compare All Plans */}
+        {/* Compare All Plans - Full Comparison Table */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">Compare Plans</Text>
+              <Text as="h2" variant="headingMd">Compare All Plans</Text>
               <Text as="p" tone="subdued">
                 Choose the plan that fits your store
               </Text>
+              <Divider />
+
+              {/* Comparison Table */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--p-color-border)' }}>
+                      <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600 }}>Feature</th>
+                      {(['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const).map((planKey) => {
+                        const plan = PLAN_FEATURES[planKey];
+                        const isCurrent = planKey === currentPlan;
+                        const isPopular = 'popular' in plan && plan.popular;
+                        return (
+                          <th
+                            key={planKey}
+                            style={{
+                              padding: '12px 8px',
+                              textAlign: 'center',
+                              fontWeight: 600,
+                              backgroundColor: isCurrent ? 'var(--p-color-bg-fill-success)' : isPopular ? 'var(--p-color-bg-fill-warning)' : undefined,
+                              borderRadius: '8px 8px 0 0',
+                            }}
+                          >
+                            <BlockStack gap="100" inlineAlign="center">
+                              <Text as="span" variant="headingSm">{plan.name}</Text>
+                              {isCurrent && <Badge tone="success" size="small">Current</Badge>}
+                              {isPopular && !isCurrent && <Badge tone="attention" size="small">Popular</Badge>}
+                              <Text as="span" variant="bodyLg" fontWeight="bold">
+                                {plan.price === 0 ? 'Free' : `$${plan.price}`}
+                              </Text>
+                              {plan.price > 0 && <Text as="span" variant="bodySm" tone="subdued">/month</Text>}
+                            </BlockStack>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Products */}
+                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
+                      <td style={{ padding: '10px 8px' }}>Products Audited</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.productsAudited}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.productsAudited}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.productsAudited}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 600 }}>Unlimited</td>
+                    </tr>
+                    {/* Visibility Checks */}
+                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
+                      <td style={{ padding: '10px 8px' }}>Visibility Checks/month</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.visibilityChecksPerMonth}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.visibilityChecksPerMonth}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.visibilityChecksPerMonth}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.visibilityChecksPerMonth}</td>
+                    </tr>
+                    {/* AI Optimizations */}
+                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
+                      <td style={{ padding: '10px 8px' }}>AI Optimizations/month</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.aiOptimizationsPerMonth}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.aiOptimizationsPerMonth}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.aiOptimizationsPerMonth}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.aiOptimizationsPerMonth}</td>
+                    </tr>
+                    {/* Competitors */}
+                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
+                      <td style={{ padding: '10px 8px' }}>Competitors Tracked</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.competitorsTracked || '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.competitorsTracked}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.competitorsTracked}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.competitorsTracked}</td>
+                    </tr>
+                    {/* History */}
+                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
+                      <td style={{ padding: '10px 8px' }}>History Retention</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.historyDays} days</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.historyDays} days</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.historyDays} days</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.historyDays} days</td>
+                    </tr>
+                    {/* Export CSV */}
+                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
+                      <td style={{ padding: '10px 8px' }}>Export CSV</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.exportCsv ? '✓' : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.exportCsv ? '✓' : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.exportCsv ? '✓' : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.exportCsv ? '✓' : '-'}</td>
+                    </tr>
+                    {/* API Access */}
+                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
+                      <td style={{ padding: '10px 8px' }}>API Access</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.apiAccess ? '✓' : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.apiAccess ? '✓' : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.apiAccess ? '✓' : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.apiAccess ? '✓' : '-'}</td>
+                    </tr>
+                    {/* Priority Support */}
+                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
+                      <td style={{ padding: '10px 8px' }}>Priority Support</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.prioritySupport ? '✓' : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.prioritySupport ? '✓' : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.prioritySupport ? '✓' : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.prioritySupport ? '✓' : '-'}</td>
+                    </tr>
+                    {/* Action Row */}
+                    <tr>
+                      <td style={{ padding: '16px 8px' }}></td>
+                      {(['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const).map((planKey) => {
+                        const isCurrent = planKey === currentPlan;
+                        const isUpgrade = getPlanIndex(planKey) > getPlanIndex(currentPlan);
+                        const isDowngrade = getPlanIndex(planKey) < getPlanIndex(currentPlan);
+                        return (
+                          <td key={planKey} style={{ padding: '16px 8px', textAlign: 'center' }}>
+                            {isCurrent ? (
+                              <Badge tone="success">Current Plan</Badge>
+                            ) : planKey === 'FREE' ? null : (
+                              <Button
+                                size="slim"
+                                variant={isUpgrade ? 'primary' : 'secondary'}
+                                onClick={() => isDevMode ? handleDevPlanChange(planKey) : handleUpgrade(planKey)}
+                              >
+                                {isUpgrade ? 'Upgrade' : isDowngrade ? 'Downgrade' : 'Select'}
+                              </Button>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+
+        {/* Quick Plan Cards for Mobile */}
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <Text as="h2" variant="headingMd">Quick Plan Overview</Text>
               <Divider />
 
               <BlockStack gap="300">
