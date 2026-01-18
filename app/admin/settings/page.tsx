@@ -472,43 +472,6 @@ export default function SettingsPage() {
           </Card>
         </Layout.Section>
 
-        {/* Features Included */}
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">What&apos;s Included</Text>
-              <Divider />
-
-              <BlockStack gap="300">
-                {planInfo.features.map((feature, i) => (
-                  <InlineStack key={i} gap="200" blockAlign="center">
-                    <Box width="20px">
-                      <Icon
-                        source={feature.included ? CheckCircleIcon : XCircleIcon}
-                        tone={feature.included ? 'success' : 'subdued'}
-                      />
-                    </Box>
-                    <Text as="span" tone={feature.included ? undefined : 'subdued'}>
-                      {feature.name}
-                    </Text>
-                  </InlineStack>
-                ))}
-              </BlockStack>
-
-              {currentPlan !== 'PREMIUM' && (
-                <Box paddingBlockStart="200">
-                  <Button
-                    variant="primary"
-                    onClick={() => isDevMode ? handleDevPlanChange('PREMIUM') : handleUpgrade('PREMIUM')}
-                  >
-                    Unlock All Features
-                  </Button>
-                </Box>
-              )}
-            </BlockStack>
-          </Card>
-        </Layout.Section>
-
         {/* Compare All Plans - Full Comparison Table */}
         <Layout.Section>
           <Card>
@@ -646,78 +609,6 @@ export default function SettingsPage() {
                   </tbody>
                 </table>
               </div>
-            </BlockStack>
-          </Card>
-        </Layout.Section>
-
-        {/* Quick Plan Cards for Mobile */}
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">Quick Plan Overview</Text>
-              <Divider />
-
-              <BlockStack gap="300">
-                {(Object.entries(PLAN_FEATURES) as [keyof typeof PLAN_FEATURES, typeof PLAN_FEATURES[keyof typeof PLAN_FEATURES]][]).map(([key, plan]) => {
-                  const isCurrentPlan = key === currentPlan;
-                  const isUpgrade = getPlanIndex(key) > getPlanIndex(currentPlan);
-                  const isDowngrade = getPlanIndex(key) < getPlanIndex(currentPlan);
-                  const isPopular = 'popular' in plan && plan.popular;
-
-                  return (
-                    <Box
-                      key={key}
-                      padding="400"
-                      background={isCurrentPlan ? 'bg-surface-success' : isPopular ? 'bg-surface-warning' : 'bg-surface-secondary'}
-                      borderRadius="200"
-                    >
-                      <InlineStack align="space-between" blockAlign="center" wrap={false}>
-                        <BlockStack gap="100">
-                          <InlineStack gap="200" blockAlign="center">
-                            <Text as="h3" variant="headingSm" fontWeight="bold">
-                              {plan.name}
-                            </Text>
-                            {isCurrentPlan && <Badge tone="success">Current</Badge>}
-                            {isPopular && !isCurrentPlan && <Badge tone="attention">Popular</Badge>}
-                          </InlineStack>
-                          <Text as="p" variant="bodySm" tone="subdued">
-                            {plan.description}
-                          </Text>
-                          <Text as="p" fontWeight="bold">
-                            {plan.price === 0 ? 'Free' : `$${plan.price}/mo`}
-                          </Text>
-                        </BlockStack>
-
-                        {!isCurrentPlan && key !== 'FREE' && (
-                          <Button
-                            variant={isUpgrade ? 'primary' : 'secondary'}
-                            onClick={() => isDevMode ? handleDevPlanChange(key) : handleUpgrade(key)}
-                          >
-                            {isUpgrade ? 'Upgrade' : isDowngrade ? 'Downgrade' : 'Select'}
-                          </Button>
-                        )}
-                      </InlineStack>
-
-                      {/* Key limits summary */}
-                      <Box paddingBlockStart="300">
-                        <InlineStack gap="400" wrap>
-                          <Text as="span" variant="bodySm" tone="subdued">
-                            {(plan.limits.products as number) < 0 || plan.limits.products === Infinity ? 'Unlimited' : plan.limits.products} products
-                          </Text>
-                          <Text as="span" variant="bodySm" tone="subdued">
-                            {(plan.limits.visibilityChecks as number) < 0 || plan.limits.visibilityChecks === Infinity ? 'Unlimited' : plan.limits.visibilityChecks} checks/mo
-                          </Text>
-                          {(plan.limits.aiOptimizations as number) > 0 && (
-                            <Text as="span" variant="bodySm" tone="subdued">
-                              {(plan.limits.aiOptimizations as number) < 0 || plan.limits.aiOptimizations === Infinity ? 'Unlimited' : plan.limits.aiOptimizations} AI suggestions/mo
-                            </Text>
-                          )}
-                        </InlineStack>
-                      </Box>
-                    </Box>
-                  );
-                })}
-              </BlockStack>
             </BlockStack>
           </Card>
         </Layout.Section>
