@@ -481,31 +481,30 @@ Renommez vos fichiers avant upload :
         content: `
 ### Vue d'ensemble
 
-| Fonctionnalité | Gratuit | Starter | Pro | Business |
-|----------------|---------|---------|-----|----------|
-| Prix | 0€ | 4.99€/mois | 9.99€/mois | 24.99€/mois |
-| Produits analysés | 25 | 100 | 500 | Illimité |
-| Vérifications visibilité | 5/mois | 25/mois | 100/mois | Illimité |
-| Optimisations IA | 0 | 10/mois | 50/mois | Illimité |
-| Concurrents | 0 | 0 | 3 | 10 |
+| Fonctionnalité | Free Trial | Starter | Growth | Scale |
+|----------------|------------|---------|--------|-------|
+| Prix | 0$ | 49$/mois | 99$/mois | 199$/mois |
+| Produits analysés | 10 | 100 | 500 | Illimité |
+| Vérifications visibilité | 3/mois | 10/mois | 50/mois | 200/mois |
+| Optimisations IA | 3/mois | 20/mois | 100/mois | 500/mois |
+| Concurrents | 0 | 1 | 3 | 10 |
 | llms.txt | ✅ | ✅ | ✅ | ✅ |
 | JSON-LD | ❌ | ✅ | ✅ | ✅ |
 | Tests A/B | ❌ | ❌ | ✅ | ✅ |
-| Shopify Flow | ❌ | ❌ | ✅ | ✅ |
-| Rapports | Basiques | Détaillés | Hebdo | Quotidiens |
+| Export CSV | ❌ | ❌ | ✅ | ✅ |
+| Historique | 7 jours | 30 jours | 90 jours | 1 an |
 | API | ❌ | ❌ | ❌ | ✅ |
-| Multi-boutiques | ❌ | ❌ | ❌ | ✅ |
-| Support | Email | Email | Priorité | Priorité |
+| Support | Email | Email | Email | Priorité |
 
 ### Quel plan choisir ?
 
-**Gratuit** : Parfait pour découvrir Surfaced et comprendre votre score IA.
+**Free Trial** : Parfait pour découvrir Surfaced et comprendre votre score IA.
 
 **Starter** : Pour les petites boutiques (<100 produits) qui veulent commencer à optimiser.
 
-**Pro** : Notre plan le plus populaire. Pour les boutiques sérieuses qui veulent des résultats.
+**Growth** : Notre plan le plus populaire. Pour les boutiques sérieuses qui veulent des résultats.
 
-**Business** : Pour les catalogues importants et les agences avec plusieurs boutiques.
+**Scale** : Pour les catalogues importants avec accès API et support prioritaire.
         `,
       },
       {
