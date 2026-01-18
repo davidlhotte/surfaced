@@ -16,6 +16,8 @@ import {
   Divider,
   TextField,
   DataTable,
+  Modal,
+  Scrollable,
 } from '@shopify/polaris';
 import Link from 'next/link';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
@@ -29,6 +31,7 @@ type VisibilityCheck = {
   position: number | null;
   competitorsFound: { name: string; url?: string }[];
   responseQuality: string | null;
+  rawResponse: string | null;
   checkedAt: string;
 };
 
@@ -52,6 +55,8 @@ export default function VisibilityPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<VisibilityResult | null>(null);
   const [customQuery, setCustomQuery] = useState('');
+  const [selectedCheck, setSelectedCheck] = useState<VisibilityCheck | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -132,6 +137,26 @@ export default function VisibilityPage() {
     return <Badge tone="info">Found</Badge>;
   };
 
+  const openResponseModal = (check: VisibilityCheck) => {
+    setSelectedCheck(check);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedCheck(null);
+  };
+
+  const getPlatformIcon = (platform: string) => {
+    const icons: Record<string, string> = {
+      chatgpt: '🤖',
+      perplexity: '🔍',
+      gemini: '✨',
+      copilot: '💻',
+    };
+    return icons[platform] || '🤖';
+  };
+
   // Calculate summary stats
   const mentionedCount = history.filter((c) => c.isMentioned).length;
   const totalChecks = history.length;
@@ -162,6 +187,14 @@ export default function VisibilityPage() {
     getQualityBadge(check.responseQuality, check.isMentioned),
     check.position ? `#${check.position}` : '-',
     new Date(check.checkedAt).toLocaleDateString(),
+    <Button
+      key={`view-${check.id}`}
+      size="slim"
+      onClick={() => openResponseModal(check)}
+      disabled={!check.rawResponse}
+    >
+      View Response
+    </Button>,
   ]);
 
   return (
@@ -313,8 +346,8 @@ export default function VisibilityPage() {
                 </Box>
               ) : (
                 <DataTable
-                  columnContentTypes={['text', 'text', 'text', 'text', 'text']}
-                  headings={['Platform', 'Query', 'Result', 'Position', 'Date']}
+                  columnContentTypes={['text', 'text', 'text', 'text', 'text', 'text']}
+                  headings={['Platform', 'Query', 'Result', 'Position', 'Date', 'AI Response']}
                   rows={tableRows}
                 />
               )}
@@ -382,6 +415,105 @@ export default function VisibilityPage() {
           </Card>
         </Layout.Section>
       </Layout>
+
+      {/* AI Response Modal */}
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        title={
+          selectedCheck
+            ? `${getPlatformIcon(selectedCheck.platform)} ${selectedCheck.platform.toUpperCase()} Response`
+            : 'AI Response'
+        }
+        size="large"
+      >
+        <Modal.Section>
+          {selectedCheck && (
+            <BlockStack gap="400">
+              {/* Query */}
+              <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                <BlockStack gap="200">
+                  <Text as="h4" variant="headingSm" tone="subdued">
+                    Query
+                  </Text>
+                  <Text as="p" fontWeight="semibold">
+                    &quot;{selectedCheck.query}&quot;
+                  </Text>
+                </BlockStack>
+              </Box>
+
+              {/* Result Summary */}
+              <InlineStack gap="300" align="start">
+                <Box>
+                  <BlockStack gap="100">
+                    <Text as="span" variant="bodySm" tone="subdued">Status</Text>
+                    {getQualityBadge(selectedCheck.responseQuality, selectedCheck.isMentioned)}
+                  </BlockStack>
+                </Box>
+                {selectedCheck.position && (
+                  <Box>
+                    <BlockStack gap="100">
+                      <Text as="span" variant="bodySm" tone="subdued">Position</Text>
+                      <Badge tone="info">{`#${selectedCheck.position}`}</Badge>
+                    </BlockStack>
+                  </Box>
+                )}
+                {selectedCheck.competitorsFound && selectedCheck.competitorsFound.length > 0 && (
+                  <Box>
+                    <BlockStack gap="100">
+                      <Text as="span" variant="bodySm" tone="subdued">Competitors Found</Text>
+                      <Text as="p" variant="bodySm">
+                        {selectedCheck.competitorsFound.map(c => c.name).join(', ')}
+                      </Text>
+                    </BlockStack>
+                  </Box>
+                )}
+              </InlineStack>
+
+              {/* Mention Context */}
+              {selectedCheck.isMentioned && selectedCheck.mentionContext && (
+                <Box padding="300" background="bg-surface-success" borderRadius="200">
+                  <BlockStack gap="200">
+                    <InlineStack gap="200" blockAlign="center">
+                      <Badge tone="success">Brand Mentioned</Badge>
+                    </InlineStack>
+                    <Text as="p" variant="bodySm">
+                      &quot;...{selectedCheck.mentionContext}...&quot;
+                    </Text>
+                  </BlockStack>
+                </Box>
+              )}
+
+              <Divider />
+
+              {/* Full AI Response */}
+              <BlockStack gap="200">
+                <Text as="h4" variant="headingSm">
+                  Full AI Response
+                </Text>
+                <Box
+                  padding="400"
+                  background="bg-surface-secondary"
+                  borderRadius="200"
+                  minHeight="200px"
+                  maxWidth="100%"
+                >
+                  <Scrollable style={{ maxHeight: '400px' }}>
+                    <Text as="p" variant="bodyMd">
+                      {selectedCheck.rawResponse || 'No response available'}
+                    </Text>
+                  </Scrollable>
+                </Box>
+              </BlockStack>
+
+              {/* Timestamp */}
+              <Text as="p" variant="bodySm" tone="subdued">
+                Checked on {new Date(selectedCheck.checkedAt).toLocaleString()}
+              </Text>
+            </BlockStack>
+          )}
+        </Modal.Section>
+      </Modal>
     </Page>
   );
 }

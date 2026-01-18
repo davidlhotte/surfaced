@@ -507,6 +507,7 @@ export async function getVisibilityHistory(shopDomain: string) {
     position: c.position,
     competitorsFound: c.competitorsFound,
     responseQuality: c.responseQuality,
+    rawResponse: c.rawResponse,
     checkedAt: c.checkedAt.toISOString(),
   }));
 }
