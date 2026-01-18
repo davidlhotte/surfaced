@@ -21,11 +21,14 @@ import {
   Pagination,
   Modal,
   Tabs,
+  Checkbox,
 } from '@shopify/polaris';
 import {
   RefreshIcon,
   ClipboardIcon,
   MagicIcon,
+  CheckIcon,
+  UndoIcon,
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
@@ -96,6 +99,20 @@ interface QuotaInfo {
   available: boolean;
 }
 
+interface HistoryEntry {
+  id: string;
+  shopifyProductId: string;
+  productTitle: string;
+  field: string;
+  originalValue: string;
+  appliedValue: string;
+  scoreBefore: number | null;
+  scoreAfter: number | null;
+  status: 'applied' | 'undone';
+  createdAt: string;
+  undoneAt: string | null;
+}
+
 type SortColumn = 'title' | 'score' | 'status';
 type SortDirection = 'asc' | 'desc';
 
@@ -104,6 +121,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [auditing, setAuditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -113,11 +131,21 @@ export default function ProductsPage() {
 
   // Optimization state
   const [optimizing, setOptimizing] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<ProductAudit | null>(null);
   const [optimization, setOptimization] = useState<ProductOptimization | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Selection state for checkboxes
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
+
+  // Apply confirmation state
+  const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [suggestionsToApply, setSuggestionsToApply] = useState<OptimizationSuggestion[]>([]);
+  const [lastAppliedHistoryIds, setLastAppliedHistoryIds] = useState<string[]>([]);
 
   const { fetch: authFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, isAuthenticated, shopDetectionFailed, error: shopError } = useShopContext();
@@ -144,6 +172,7 @@ export default function ProductsPage() {
         const optimizeResult = await optimizeResponse.json();
         if (optimizeResult.success) {
           setQuota(optimizeResult.data.quota);
+          setHistory(optimizeResult.data.history || []);
         }
       }
     } catch (err) {
@@ -169,6 +198,7 @@ export default function ProductsPage() {
         throw new Error(errorData.error || 'Analysis failed');
       }
       await fetchData();
+      setSuccess('Products analyzed successfully!');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
     } finally {
@@ -183,6 +213,7 @@ export default function ProductsPage() {
       setSelectedProduct(product);
       setShowModal(true);
       setOptimization(null);
+      setSelectedSuggestions(new Set());
 
       const response = await authFetch('/api/optimize', {
         method: 'POST',
@@ -195,6 +226,10 @@ export default function ProductsPage() {
       if (result.success) {
         setOptimization(result.data.optimization);
         setQuota(result.data.quota);
+        // Select all suggestions by default
+        const allSelected = new Set<number>();
+        result.data.optimization.suggestions.forEach((_: OptimizationSuggestion, i: number) => allSelected.add(i));
+        setSelectedSuggestions(allSelected);
       } else {
         setError(result.error || 'Failed to generate suggestions');
         setShowModal(false);
@@ -217,6 +252,102 @@ export default function ProductsPage() {
     }
   };
 
+  const toggleSuggestion = (index: number) => {
+    const newSelected = new Set(selectedSuggestions);
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    setSelectedSuggestions(newSelected);
+  };
+
+  const handleApplySingle = (suggestion: OptimizationSuggestion) => {
+    setSuggestionsToApply([suggestion]);
+    setShowApplyConfirm(true);
+  };
+
+  const handleApplySelected = () => {
+    if (!optimization) return;
+    const selected = optimization.suggestions.filter((_, i) => selectedSuggestions.has(i));
+    if (selected.length === 0) {
+      setError('Please select at least one suggestion to apply');
+      return;
+    }
+    setSuggestionsToApply(selected);
+    setShowApplyConfirm(true);
+  };
+
+  const confirmApply = async () => {
+    if (!optimization || suggestionsToApply.length === 0) return;
+
+    try {
+      setApplying(true);
+      setError(null);
+
+      const response = await authFetch('/api/optimize', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: optimization.productId,
+          suggestions: suggestionsToApply.map((s) => ({
+            field: s.field,
+            original: s.original,
+            suggested: s.suggested,
+            reasoning: s.reasoning,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (data.data.historyIds) {
+          setLastAppliedHistoryIds(data.data.historyIds);
+        }
+        setShowApplyConfirm(false);
+        setShowModal(false);
+        setSuccess(
+          `Applied ${data.data.applied} change${data.data.applied !== 1 ? 's' : ''}! ` +
+            `Score: ${data.data.scoreBefore ?? '?'} → ${data.data.scoreAfter ?? '?'}`
+        );
+        // Reload data to refresh product list
+        fetchData();
+      } else {
+        setError(data.error || 'Failed to apply changes');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to apply');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleUndo = async (historyId: string) => {
+    try {
+      setApplying(true);
+      setError(null);
+
+      const response = await authFetch(`/api/optimize?historyId=${historyId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(`Change undone: ${data.data.field} restored to original`);
+        setLastAppliedHistoryIds([]);
+        fetchData();
+      } else {
+        setError(data.error || 'Failed to undo');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to undo');
+    } finally {
+      setApplying(false);
+    }
+  };
+
   const getScoreBadge = (score: number) => {
     if (score >= 90) return <Badge tone="success">Excellent</Badge>;
     if (score >= 70) return <Badge tone="success">Good</Badge>;
@@ -233,10 +364,14 @@ export default function ProductsPage() {
   const getFieldLabel = (field: string) => {
     const labels: Record<string, string> = {
       description: 'Description',
-      seoTitle: 'Page Title',
-      seoDescription: 'Page Description',
+      seo_title: 'SEO Title',
+      seoTitle: 'SEO Title',
+      seo_description: 'SEO Description',
+      seoDescription: 'SEO Description',
       tags: 'Tags',
-      altText: 'Image Description',
+      altText: 'Image Alt Text',
+      productType: 'Product Type',
+      vendor: 'Vendor',
     };
     return labels[field] || field;
   };
@@ -253,7 +388,6 @@ export default function ProductsPage() {
           comparison = a.aiScore - b.aiScore;
           break;
         case 'status':
-          // Sort by: critical (no image/desc) first, then warning, then good
           const getStatusPriority = (p: ProductAudit) => {
             if (!p.hasImages || !p.hasDescription) return 0;
             if (p.aiScore < 70) return 1;
@@ -291,6 +425,9 @@ export default function ProductsPage() {
   // Get products needing improvement (sorted by score, lowest first)
   const productsNeedingWork = sortProducts(data?.products.filter(p => p.aiScore < 70) || []);
 
+  // Active history entries
+  const activeHistory = history.filter(h => h.status === 'applied');
+
   // Pagination
   const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
   const paginatedProducts = sortedProducts.slice(
@@ -311,7 +448,7 @@ export default function ProductsPage() {
   // Loading state
   if (loading || shopLoading) {
     return (
-      <Page title="Your Products" backAction={{ content: 'Home', url: '/admin' }}>
+      <Page title="Products" backAction={{ content: 'Home', url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -335,9 +472,10 @@ export default function ProductsPage() {
   const tabs = [
     { id: 'all', content: `All Products (${sortedProducts.length})` },
     { id: 'improve', content: `Need Improvement (${productsNeedingWork.length})` },
+    { id: 'history', content: `History (${activeHistory.length})` },
   ];
 
-  const displayProducts = selectedTab === 0 ? paginatedProducts : productsNeedingWork.slice(0, 15);
+  const displayProducts = selectedTab === 0 ? paginatedProducts : selectedTab === 1 ? productsNeedingWork.slice(0, 15) : [];
 
   const tableRows = displayProducts.map((product) => [
     <BlockStack key={product.id} gap="100">
@@ -369,14 +507,14 @@ export default function ProductsPage() {
       disabled={!quota?.available || product.aiScore >= 90}
       size="slim"
     >
-      Improve
+      Optimize
     </Button>,
   ]);
 
   return (
     <Page
-      title="Your Products"
-      subtitle="See how AI-ready your products are"
+      title="Products"
+      subtitle="Analyze and optimize your products for AI visibility"
       backAction={{ content: 'Home', url: '/admin' }}
       primaryAction={{
         content: auditing ? 'Analyzing...' : 'Analyze Products',
@@ -384,11 +522,6 @@ export default function ProductsPage() {
         loading: auditing,
       }}
       secondaryActions={[
-        {
-          content: 'AI Optimizer',
-          icon: MagicIcon,
-          url: '/admin/optimize',
-        },
         {
           content: 'Refresh',
           icon: RefreshIcon,
@@ -401,6 +534,26 @@ export default function ProductsPage() {
           <Layout.Section>
             <Banner tone="critical" title="Something went wrong" onDismiss={() => setError(null)}>
               <p>{error}</p>
+            </Banner>
+          </Layout.Section>
+        )}
+
+        {success && (
+          <Layout.Section>
+            <Banner tone="success" onDismiss={() => setSuccess(null)}>
+              <InlineStack gap="400" blockAlign="center">
+                <Text as="p">{success}</Text>
+                {lastAppliedHistoryIds.length > 0 && (
+                  <Button
+                    icon={UndoIcon}
+                    size="slim"
+                    onClick={() => handleUndo(lastAppliedHistoryIds[0])}
+                    loading={applying}
+                  >
+                    Undo
+                  </Button>
+                )}
+              </InlineStack>
             </Banner>
           </Layout.Section>
         )}
@@ -430,8 +583,8 @@ export default function ProductsPage() {
 
         {/* Summary Stats */}
         <Layout.Section>
-          <InlineStack gap="400" align="start">
-            <Box minWidth="180px">
+          <InlineStack gap="400" align="start" wrap>
+            <Box minWidth="160px">
               <Card>
                 <BlockStack gap="200">
                   <Text as="h3" variant="bodySm" tone="subdued">Average Score</Text>
@@ -454,80 +607,60 @@ export default function ProductsPage() {
               </Card>
             </Box>
 
-            <Box minWidth="180px">
+            <Box minWidth="140px">
               <Card>
                 <BlockStack gap="200">
-                  <Text as="h3" variant="bodySm" tone="subdued">Products Analyzed</Text>
+                  <Text as="h3" variant="bodySm" tone="subdued">Products</Text>
                   <Text as="p" variant="heading2xl" fontWeight="bold">
                     {data?.auditedProducts ?? 0}
                   </Text>
                   <Text as="p" variant="bodySm" tone={data?.plan?.isAtLimit ? 'critical' : 'subdued'}>
                     {data?.plan?.isAtLimit ? (
-                      <>of {data?.plan?.productLimit} (plan limit)</>
+                      <>of {data?.plan?.productLimit} (limit)</>
                     ) : (
                       <>of {data?.totalProducts ?? 0} total</>
                     )}
                   </Text>
-                  {data?.plan?.isAtLimit && (
-                    <Button size="slim" url="/admin/settings">
-                      Upgrade
-                    </Button>
-                  )}
                 </BlockStack>
               </Card>
             </Box>
 
-            {criticalCount > 0 && (
-              <Box minWidth="180px">
-                <Card>
-                  <BlockStack gap="200">
-                    <Text as="h3" variant="bodySm" tone="subdued">Need Urgent Fix</Text>
-                    <Text as="p" variant="heading2xl" fontWeight="bold" tone="critical">
-                      {criticalCount}
-                    </Text>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      missing images or descriptions
-                    </Text>
-                  </BlockStack>
-                </Card>
-              </Box>
-            )}
+            <Box minWidth="140px">
+              <Card>
+                <BlockStack gap="200">
+                  <Text as="h3" variant="bodySm" tone="subdued">Need Work</Text>
+                  <Text as="p" variant="heading2xl" fontWeight="bold" tone={productsNeedingWork.length > 0 ? 'critical' : 'success'}>
+                    {productsNeedingWork.length}
+                  </Text>
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    score below 70
+                  </Text>
+                </BlockStack>
+              </Card>
+            </Box>
 
-            {warningCount > 0 && (
-              <Box minWidth="180px">
-                <Card>
-                  <BlockStack gap="200">
-                    <Text as="h3" variant="bodySm" tone="subdued">Can Be Improved</Text>
+            <Box minWidth="160px">
+              <Card>
+                <BlockStack gap="200">
+                  <Text as="h3" variant="bodySm" tone="subdued">AI Credits</Text>
+                  <InlineStack gap="200" blockAlign="center">
                     <Text as="p" variant="heading2xl" fontWeight="bold">
-                      {warningCount}
+                      {quota?.remaining ?? 0}
                     </Text>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      short descriptions or missing details
-                    </Text>
-                  </BlockStack>
-                </Card>
-              </Box>
-            )}
-
-            {quota && (
-              <Box minWidth="180px">
-                <Card>
-                  <BlockStack gap="200">
-                    <Text as="h3" variant="bodySm" tone="subdued">AI Improvements Left</Text>
-                    <Text as="p" variant="heading2xl" fontWeight="bold">
-                      {quota.remaining}
-                    </Text>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      this month
-                    </Text>
-                  </BlockStack>
-                </Card>
-              </Box>
-            )}
+                    <Badge tone={quota?.available ? 'success' : 'critical'}>
+                      {quota?.available ? 'Available' : 'Limit'}
+                    </Badge>
+                  </InlineStack>
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    of {quota?.limit ?? 0} this month
+                  </Text>
+                </BlockStack>
+              </Card>
+            </Box>
           </InlineStack>
         </Layout.Section>
 
-        {/* Products Table */}
+        {/* Products Table / History */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
@@ -574,7 +707,63 @@ export default function ProductsPage() {
 
               <Divider />
 
-              {!hasProducts ? (
+              {/* History Tab */}
+              {selectedTab === 2 ? (
+                history.length === 0 ? (
+                  <Box padding="600">
+                    <BlockStack gap="300" inlineAlign="center">
+                      <Text as="p" variant="headingMd">No optimization history yet</Text>
+                      <Text as="p" tone="subdued">
+                        When you apply AI suggestions to your products, they&apos;ll appear here.
+                      </Text>
+                    </BlockStack>
+                  </Box>
+                ) : (
+                  <BlockStack gap="300">
+                    {history.slice(0, 20).map((entry) => (
+                      <Box
+                        key={entry.id}
+                        padding="300"
+                        background={entry.status === 'applied' ? 'bg-surface-success' : 'bg-surface-secondary'}
+                        borderRadius="200"
+                      >
+                        <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
+                          <BlockStack gap="100">
+                            <InlineStack gap="200" blockAlign="center">
+                              <Text as="p" fontWeight="semibold">{entry.productTitle}</Text>
+                              <Badge tone={entry.status === 'applied' ? 'success' : 'info'}>
+                                {entry.status === 'applied' ? 'Active' : 'Undone'}
+                              </Badge>
+                            </InlineStack>
+                            <InlineStack gap="200">
+                              <Badge>{getFieldLabel(entry.field)}</Badge>
+                              <Text as="span" variant="bodySm" tone="subdued">
+                                {new Date(entry.createdAt).toLocaleDateString()} at{' '}
+                                {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </Text>
+                              {entry.scoreBefore !== null && entry.scoreAfter !== null && (
+                                <Text as="span" variant="bodySm">
+                                  Score: {entry.scoreBefore} → {entry.scoreAfter}
+                                </Text>
+                              )}
+                            </InlineStack>
+                          </BlockStack>
+                          {entry.status === 'applied' && (
+                            <Button
+                              icon={UndoIcon}
+                              size="slim"
+                              onClick={() => handleUndo(entry.id)}
+                              loading={applying}
+                            >
+                              Undo
+                            </Button>
+                          )}
+                        </InlineStack>
+                      </Box>
+                    ))}
+                  </BlockStack>
+                )
+              ) : !hasProducts ? (
                 <Box padding="600">
                   <BlockStack gap="300" inlineAlign="center">
                     <Text as="p" variant="headingMd">No products analyzed yet</Text>
@@ -586,6 +775,15 @@ export default function ProductsPage() {
                         Analyze Products
                       </Button>
                     </Box>
+                  </BlockStack>
+                </Box>
+              ) : displayProducts.length === 0 ? (
+                <Box padding="600">
+                  <BlockStack gap="300" inlineAlign="center">
+                    <Text as="p" variant="headingMd" tone="success">All products are well optimized!</Text>
+                    <Text as="p" tone="subdued">
+                      Your products all have a score of 70 or above. Great job!
+                    </Text>
                   </BlockStack>
                 </Box>
               ) : (
@@ -630,7 +828,7 @@ export default function ProductsPage() {
         </Layout.Section>
 
         {/* Tips */}
-        {hasProducts && (criticalCount > 0 || warningCount > 0) && (
+        {hasProducts && (criticalCount > 0 || warningCount > 0) && selectedTab !== 2 && (
           <Layout.Section>
             <Card>
               <BlockStack gap="400">
@@ -649,17 +847,9 @@ export default function ProductsPage() {
                   )}
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Write detailed descriptions</Text>
+                      <Text as="p" fontWeight="semibold">Use the &quot;Optimize&quot; button</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Include materials, sizes, colors, and use cases. Aim for 150+ words.
-                      </Text>
-                    </BlockStack>
-                  </Box>
-                  <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                    <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Use the &quot;Improve&quot; button</Text>
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        Get AI-powered suggestions to make your content more discoverable.
+                        Get AI-powered suggestions and apply them directly to your products with one click.
                       </Text>
                     </BlockStack>
                   </Box>
@@ -674,22 +864,32 @@ export default function ProductsPage() {
       <Modal
         open={showModal}
         onClose={() => setShowModal(false)}
-        title={selectedProduct ? `Improve: ${selectedProduct.title}` : 'Improve Product'}
+        title={selectedProduct ? `Optimize: ${selectedProduct.title}` : 'Optimize Product'}
         primaryAction={
-          optimization
+          optimization && optimization.suggestions.length > 0
             ? {
-                content: 'Done',
-                onAction: () => setShowModal(false),
+                content: `Apply ${selectedSuggestions.size} to Shopify`,
+                icon: CheckIcon,
+                onAction: handleApplySelected,
+                disabled: selectedSuggestions.size === 0 || applying,
+                loading: applying,
               }
             : undefined
         }
+        secondaryActions={[
+          {
+            content: 'Close',
+            onAction: () => setShowModal(false),
+          },
+        ]}
+        size="large"
       >
         <Modal.Section>
           {optimizing ? (
             <Box padding="800">
               <BlockStack gap="400" inlineAlign="center">
                 <Spinner size="large" />
-                <Text as="p">Creating suggestions...</Text>
+                <Text as="p">Generating AI suggestions...</Text>
                 <Text as="p" variant="bodySm" tone="subdued">
                   This takes a few seconds
                 </Text>
@@ -705,6 +905,7 @@ export default function ProductsPage() {
                     <Badge tone="critical">{String(optimization.currentScore)}</Badge>
                     <Text as="p">→</Text>
                     <Badge tone="success">{String(optimization.estimatedNewScore)}</Badge>
+                    <Badge tone="info">{`+${optimization.estimatedNewScore - optimization.currentScore}`}</Badge>
                   </InlineStack>
                 </InlineStack>
               </Box>
@@ -717,62 +918,165 @@ export default function ProductsPage() {
                   </Text>
                 </Banner>
               ) : (
-                optimization.suggestions.map((suggestion, index) => (
-                  <Card key={index}>
-                    <BlockStack gap="300">
-                      <InlineStack align="space-between" blockAlign="center">
-                        <Badge tone="info">{getFieldLabel(suggestion.field)}</Badge>
-                        <Badge tone="success">{suggestion.improvement}</Badge>
-                      </InlineStack>
+                <BlockStack gap="400">
+                  <InlineStack align="space-between" blockAlign="center" wrap>
+                    <Text as="p" fontWeight="semibold">
+                      {selectedSuggestions.size} of {optimization.suggestions.length} selected
+                    </Text>
+                    <InlineStack gap="200">
+                      <Button
+                        size="slim"
+                        onClick={() => {
+                          if (selectedSuggestions.size === optimization.suggestions.length) {
+                            setSelectedSuggestions(new Set());
+                          } else {
+                            const all = new Set<number>();
+                            optimization.suggestions.forEach((_, i) => all.add(i));
+                            setSelectedSuggestions(all);
+                          }
+                        }}
+                      >
+                        {selectedSuggestions.size === optimization.suggestions.length ? 'Deselect All' : 'Select All'}
+                      </Button>
+                    </InlineStack>
+                  </InlineStack>
 
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        {suggestion.reasoning}
-                      </Text>
-
-                      <Divider />
-
-                      {suggestion.original && (
-                        <BlockStack gap="100">
-                          <Text as="p" variant="bodySm" fontWeight="semibold">Current:</Text>
-                          <Box padding="200" background="bg-surface-secondary" borderRadius="100">
-                            <Text as="p" variant="bodySm">
-                              {suggestion.original.length > 200
-                                ? `${suggestion.original.substring(0, 200)}...`
-                                : suggestion.original || '(empty)'}
-                            </Text>
-                          </Box>
-                        </BlockStack>
-                      )}
-
-                      <BlockStack gap="100">
+                  {optimization.suggestions.map((suggestion, index) => (
+                    <Card key={index}>
+                      <BlockStack gap="300">
                         <InlineStack align="space-between" blockAlign="center">
-                          <Text as="p" variant="bodySm" fontWeight="semibold">Suggested:</Text>
-                          <Button
-                            icon={ClipboardIcon}
-                            size="slim"
-                            onClick={() => handleCopy(suggestion.suggested, suggestion.field)}
-                          >
-                            {copied === suggestion.field ? 'Copied!' : 'Copy'}
-                          </Button>
+                          <InlineStack gap="300" blockAlign="center">
+                            <Checkbox
+                              label=""
+                              labelHidden
+                              checked={selectedSuggestions.has(index)}
+                              onChange={() => toggleSuggestion(index)}
+                            />
+                            <Badge tone="info">{getFieldLabel(suggestion.field)}</Badge>
+                            <Badge tone="success">{suggestion.improvement}</Badge>
+                          </InlineStack>
+                          <InlineStack gap="200">
+                            <Button
+                              icon={ClipboardIcon}
+                              size="slim"
+                              onClick={() => handleCopy(suggestion.suggested, suggestion.field)}
+                            >
+                              {copied === suggestion.field ? 'Copied!' : 'Copy'}
+                            </Button>
+                            <Button
+                              icon={CheckIcon}
+                              size="slim"
+                              variant="primary"
+                              onClick={() => handleApplySingle(suggestion)}
+                              loading={applying}
+                            >
+                              Apply
+                            </Button>
+                          </InlineStack>
                         </InlineStack>
-                        <Box padding="200" background="bg-surface-success" borderRadius="100">
-                          <Text as="p" variant="bodySm">
-                            {suggestion.suggested}
-                          </Text>
-                        </Box>
+
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          {suggestion.reasoning}
+                        </Text>
+
+                        <Divider />
+
+                        <InlineStack gap="400" align="start">
+                          {/* Before */}
+                          <Box minWidth="45%">
+                            <BlockStack gap="100">
+                              <Text as="p" variant="bodySm" fontWeight="semibold">
+                                Before:
+                              </Text>
+                              <Box padding="200" background="bg-surface-secondary" borderRadius="100">
+                                <Text as="p" variant="bodySm">
+                                  {suggestion.original
+                                    ? suggestion.original.length > 150
+                                      ? `${suggestion.original.substring(0, 150)}...`
+                                      : suggestion.original
+                                    : '(empty)'}
+                                </Text>
+                              </Box>
+                            </BlockStack>
+                          </Box>
+
+                          {/* After */}
+                          <Box minWidth="45%">
+                            <BlockStack gap="100">
+                              <Text as="p" variant="bodySm" fontWeight="semibold">
+                                After:
+                              </Text>
+                              <Box padding="200" background="bg-surface-success" borderRadius="100">
+                                <Text as="p" variant="bodySm">
+                                  {suggestion.suggested.length > 150
+                                    ? `${suggestion.suggested.substring(0, 150)}...`
+                                    : suggestion.suggested}
+                                </Text>
+                              </Box>
+                            </BlockStack>
+                          </Box>
+                        </InlineStack>
                       </BlockStack>
-                    </BlockStack>
-                  </Card>
-                ))
+                    </Card>
+                  ))}
+                </BlockStack>
               )}
 
               <Banner tone="info">
                 <Text as="p">
-                  Copy the suggestions above and paste them into your product editor in Shopify.
+                  Click &quot;Apply&quot; to update your product directly in Shopify, or &quot;Copy&quot; to paste manually.
+                  You can undo any changes from the History tab.
                 </Text>
               </Banner>
             </BlockStack>
           ) : null}
+        </Modal.Section>
+      </Modal>
+
+      {/* Apply Confirmation Modal */}
+      <Modal
+        open={showApplyConfirm}
+        onClose={() => setShowApplyConfirm(false)}
+        title="Apply Changes to Shopify"
+        primaryAction={{
+          content: 'Confirm & Apply',
+          icon: CheckIcon,
+          onAction: confirmApply,
+          loading: applying,
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setShowApplyConfirm(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <BlockStack gap="400">
+            <Text as="p">
+              You are about to apply {suggestionsToApply.length} change{suggestionsToApply.length !== 1 ? 's' : ''} to
+              your product in Shopify:
+            </Text>
+
+            <BlockStack gap="200">
+              {suggestionsToApply.map((s, i) => (
+                <Box key={i} padding="200" background="bg-surface-secondary" borderRadius="100">
+                  <InlineStack gap="200">
+                    <Badge>{getFieldLabel(s.field)}</Badge>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {s.improvement}
+                    </Text>
+                  </InlineStack>
+                </Box>
+              ))}
+            </BlockStack>
+
+            <Banner tone="info">
+              <Text as="p">
+                You can undo these changes at any time from the History tab.
+              </Text>
+            </Banner>
+          </BlockStack>
         </Modal.Section>
       </Modal>
     </Page>

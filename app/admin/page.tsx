@@ -24,7 +24,6 @@ import {
   QuestionCircleIcon,
   ProductIcon,
   ViewIcon,
-  MagicIcon,
   TargetIcon,
   ReplayIcon,
 } from '@shopify/polaris-icons';
@@ -233,17 +232,10 @@ export default function Dashboard() {
   const quickAccessCards = [
     {
       title: 'Products',
-      description: 'Analyze and improve your product content',
+      description: 'Analyze, optimize and apply AI improvements',
       icon: ProductIcon,
       href: '/admin/products',
       color: 'bg-fill-info',
-    },
-    {
-      title: 'AI Optimizer',
-      description: 'Auto-generate and apply content improvements',
-      icon: MagicIcon,
-      href: '/admin/optimize',
-      color: 'bg-fill-success',
     },
     {
       title: 'Visibility',
