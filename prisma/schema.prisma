@@ -25,6 +25,10 @@ model Shop {
   aiScore         Int?      // 0-100 overall score
   lastAuditAt     DateTime?
 
+  // Multi-store organization
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
   installedAt     DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -41,6 +45,7 @@ model Shop {
   abTests               ABTest[]
 
   @@index([plan])
+  @@index([organizationId])
 }
 
 model Settings {
@@ -58,6 +63,73 @@ model Settings {
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+// ============================================
+// MULTI-STORE MODELS - Organization Management
+// ============================================
+
+model Organization {
+  id              String    @id @default(cuid())
+  name            String
+  slug            String    @unique
+  ownerEmail      String    // Primary admin email
+  plan            Plan      @default(FREE)
+
+  // Settings
+  maxStores       Int       @default(5)
+  features        Json      @default("[]") // Enabled features for org
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  shops           Shop[]
+  members         OrganizationMember[]
+  invites         OrganizationInvite[]
+
+  @@index([ownerEmail])
+}
+
+model OrganizationMember {
+  id              String    @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  email           String
+  role            OrgRole   @default(viewer)
+  name            String?
+
+  joinedAt        DateTime  @default(now())
+  lastActiveAt    DateTime?
+
+  @@unique([organizationId, email])
+  @@index([email])
+}
+
+model OrganizationInvite {
+  id              String    @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  email           String
+  role            OrgRole   @default(viewer)
+  invitedBy       String    // Email of inviter
+
+  token           String    @unique @default(cuid())
+  expiresAt       DateTime
+
+  createdAt       DateTime  @default(now())
+
+  @@index([token])
+  @@index([email])
+}
+
+enum OrgRole {
+  owner       // Full access, can manage org
+  admin       // Can manage stores and members
+  editor      // Can make changes
+  viewer      // Read-only access
 }
 
 // ============================================
