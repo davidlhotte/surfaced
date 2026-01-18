@@ -22,7 +22,8 @@ import {
   AlertTriangleIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
-import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
 interface Alert {
   id: string;
@@ -58,6 +59,7 @@ interface WeeklyReport {
 
 export default function AlertsPage() {
   const { fetch } = useAuthenticatedFetch();
+  const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -155,7 +157,12 @@ export default function AlertsPage() {
     return labels[code] || code;
   };
 
-  if (loading) {
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
+
+  if (loading || shopLoading) {
     return (
       <Page title="Alerts & Reports" backAction={{ content: 'Dashboard', url: '/admin' }}>
         <Layout>

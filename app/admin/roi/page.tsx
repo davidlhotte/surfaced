@@ -20,7 +20,8 @@ import {
   RefreshIcon,
   ChartVerticalFilledIcon,
 } from '@shopify/polaris-icons';
-import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
 type TimePeriod = '7d' | '30d' | '90d' | '365d';
 
@@ -71,6 +72,7 @@ interface EstimatedROI {
 
 export default function ROIDashboardPage() {
   const { fetch } = useAuthenticatedFetch();
+  const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
 
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<ROIMetrics | null>(null);
@@ -126,7 +128,12 @@ export default function ROIDashboardPage() {
     return labels[platform] || platform;
   };
 
-  if (loading) {
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
+
+  if (loading || shopLoading) {
     return (
       <Page title="ROI Dashboard" backAction={{ content: 'Dashboard', url: '/admin' }}>
         <Layout>
