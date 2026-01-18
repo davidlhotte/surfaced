@@ -21,6 +21,9 @@ vi.mock('@/lib/db/prisma', () => ({
     settings: {
       upsert: vi.fn(),
     },
+    competitorAnalysisResult: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -246,10 +249,11 @@ describe('Alerts Service', () => {
 
   describe('getActiveAlerts', () => {
     it('should combine and sort all alert types', async () => {
-      // Setup mocks for all alert types
+      // Setup mocks for all alert types (4 calls: scoreDrops, visibility, critical, competitors)
       (prisma.shop.findUnique as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: 'shop-1', aiScore: 50, settings: { emailAlerts: true } })
         .mockResolvedValueOnce({ id: 'shop-1', name: 'Test' })
+        .mockResolvedValueOnce({ id: 'shop-1' })
         .mockResolvedValueOnce({ id: 'shop-1' });
 
       (prisma.auditLog.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([
@@ -262,6 +266,9 @@ describe('Alerts Service', () => {
       ]);
 
       (prisma.productAudit.count as ReturnType<typeof vi.fn>).mockResolvedValue(5);
+
+      // Mock competitor analysis results (empty - no overtakes)
+      (prisma.competitorAnalysisResult.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
       const alerts = await getActiveAlerts('test.myshopify.com');
 
