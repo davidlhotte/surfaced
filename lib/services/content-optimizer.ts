@@ -101,43 +101,38 @@ export async function generateOptimizationSuggestions(
     throw new Error(`AI optimization limit reached (${quota.limit}/month). Upgrade your plan for more.`);
   }
 
-  const suggestions: OptimizationSuggestion[] = [];
-  let estimatedNewScore = 0;
+  // Determine which suggestions are needed
+  const needsDescription = !productData.description || productData.description.length < 150;
+  const needsSeoTitle = !productData.seoTitle;
+  const needsSeoDescription = !productData.seoDescription;
+  const needsTags = productData.tags.length < 5;
 
-  // Generate description optimization
-  if (!productData.description || productData.description.length < 150) {
-    const descriptionSuggestion = await generateDescriptionSuggestion(productData);
-    if (descriptionSuggestion) {
-      suggestions.push(descriptionSuggestion);
-    }
+  // Build array of generation tasks to run in parallel
+  const generationTasks: Promise<OptimizationSuggestion | null>[] = [];
+
+  if (needsDescription) {
+    generationTasks.push(generateDescriptionSuggestion(productData));
+  }
+  if (needsSeoTitle) {
+    generationTasks.push(generateSeoTitleSuggestion(productData));
+  }
+  if (needsSeoDescription) {
+    generationTasks.push(generateSeoDescriptionSuggestion(productData));
+  }
+  if (needsTags) {
+    generationTasks.push(generateTagsSuggestion(productData));
   }
 
-  // Generate SEO title if missing
-  if (!productData.seoTitle) {
-    const seoTitleSuggestion = await generateSeoTitleSuggestion(productData);
-    if (seoTitleSuggestion) {
-      suggestions.push(seoTitleSuggestion);
-    }
-  }
+  // Run all OpenAI calls in parallel for much faster optimization
+  const results = await Promise.all(generationTasks);
 
-  // Generate SEO description if missing
-  if (!productData.seoDescription) {
-    const seoDescSuggestion = await generateSeoDescriptionSuggestion(productData);
-    if (seoDescSuggestion) {
-      suggestions.push(seoDescSuggestion);
-    }
-  }
-
-  // Generate tag suggestions if few tags
-  if (productData.tags.length < 5) {
-    const tagsSuggestion = await generateTagsSuggestion(productData);
-    if (tagsSuggestion) {
-      suggestions.push(tagsSuggestion);
-    }
-  }
+  // Filter out null results
+  const suggestions: OptimizationSuggestion[] = results.filter(
+    (result): result is OptimizationSuggestion => result !== null
+  );
 
   // Calculate estimated new score
-  estimatedNewScore = calculateEstimatedScore(productData, suggestions);
+  const estimatedNewScore = calculateEstimatedScore(productData, suggestions);
 
   // Get shop and log the optimization
   const shop = await prisma.shop.findUnique({

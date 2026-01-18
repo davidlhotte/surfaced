@@ -213,28 +213,35 @@ export async function runAudit(shopDomain: string): Promise<AuditResult> {
 
   logger.info({ shopDomain, maxProducts }, 'Fetching shop info from Shopify');
 
-  // Fetch shop info
-  let shopInfo;
-  try {
-    shopInfo = await fetchShopInfo(shopDomain);
-    logger.info({ shopDomain, shopName: shopInfo.shop.name }, 'Shop info fetched successfully');
-  } catch (error) {
-    logger.error({ shopDomain, error: error instanceof Error ? error.message : 'Unknown' }, 'Failed to fetch shop info');
-    throw error;
-  }
+  // Parallelize Shopify API calls for better performance
+  const [shopInfoResult, totalProductsResult, productsResponseResult] = await Promise.allSettled([
+    fetchShopInfo(shopDomain),
+    fetchProductsCount(shopDomain),
+    fetchProducts(shopDomain, Math.min(maxProducts, 50)),
+  ]);
 
-  // Get product count (separate query since Shopify doesn't expose totalCount)
-  let totalProducts: number;
-  try {
-    totalProducts = await fetchProductsCount(shopDomain);
-    logger.info({ shopDomain, totalProducts }, 'Product count fetched successfully');
-  } catch (error) {
-    logger.error({ shopDomain, error: error instanceof Error ? error.message : 'Unknown' }, 'Failed to fetch product count');
-    throw error;
+  // Handle shop info result
+  if (shopInfoResult.status === 'rejected') {
+    logger.error({ shopDomain, error: shopInfoResult.reason }, 'Failed to fetch shop info');
+    throw new Error('Failed to fetch shop info');
   }
+  const shopInfo = shopInfoResult.value;
+  logger.info({ shopDomain, shopName: shopInfo.shop.name }, 'Shop info fetched successfully');
 
-  // Fetch products (up to plan limit)
-  const productsResponse = await fetchProducts(shopDomain, Math.min(maxProducts, 50));
+  // Handle product count result
+  if (totalProductsResult.status === 'rejected') {
+    logger.error({ shopDomain, error: totalProductsResult.reason }, 'Failed to fetch product count');
+    throw new Error('Failed to fetch product count');
+  }
+  const totalProducts = totalProductsResult.value;
+  logger.info({ shopDomain, totalProducts }, 'Product count fetched successfully');
+
+  // Handle products result
+  if (productsResponseResult.status === 'rejected') {
+    logger.error({ shopDomain, error: productsResponseResult.reason }, 'Failed to fetch products');
+    throw new Error('Failed to fetch products');
+  }
+  const productsResponse = productsResponseResult.value;
   const products = productsResponse.products.nodes;
 
   // Audit each product
@@ -257,69 +264,73 @@ export async function runAudit(shopDomain: string): Promise<AuditResult> {
   // Save audit results to database
   const now = new Date();
 
-  // Upsert each product audit
-  for (const result of auditResults) {
-    // Convert string productId back to BigInt for database storage
-    const productIdBigInt = BigInt(result.shopifyProductId);
-
-    await prisma.productAudit.upsert({
-      where: {
-        shopId_shopifyProductId: {
+  // Use a transaction for all database operations (faster than sequential)
+  await prisma.$transaction(async (tx) => {
+    // Batch upsert all product audits in parallel within the transaction
+    const upsertPromises = auditResults.map((result) => {
+      const productIdBigInt = BigInt(result.shopifyProductId);
+      return tx.productAudit.upsert({
+        where: {
+          shopId_shopifyProductId: {
+            shopId: shop.id,
+            shopifyProductId: productIdBigInt,
+          },
+        },
+        update: {
+          title: result.title,
+          handle: result.handle,
+          aiScore: result.aiScore,
+          issues: result.issues,
+          hasImages: result.hasImages,
+          hasDescription: result.hasDescription,
+          hasMetafields: result.hasMetafields,
+          descriptionLength: result.descriptionLength,
+          lastAuditAt: now,
+        },
+        create: {
           shopId: shop.id,
           shopifyProductId: productIdBigInt,
+          title: result.title,
+          handle: result.handle,
+          aiScore: result.aiScore,
+          issues: result.issues,
+          hasImages: result.hasImages,
+          hasDescription: result.hasDescription,
+          hasMetafields: result.hasMetafields,
+          descriptionLength: result.descriptionLength,
+          lastAuditAt: now,
         },
-      },
-      update: {
-        title: result.title,
-        handle: result.handle,
-        aiScore: result.aiScore,
-        issues: result.issues,
-        hasImages: result.hasImages,
-        hasDescription: result.hasDescription,
-        hasMetafields: result.hasMetafields,
-        descriptionLength: result.descriptionLength,
-        lastAuditAt: now,
-      },
-      create: {
-        shopId: shop.id,
-        shopifyProductId: productIdBigInt,
-        title: result.title,
-        handle: result.handle,
-        aiScore: result.aiScore,
-        issues: result.issues,
-        hasImages: result.hasImages,
-        hasDescription: result.hasDescription,
-        hasMetafields: result.hasMetafields,
-        descriptionLength: result.descriptionLength,
-        lastAuditAt: now,
-      },
+      });
     });
-  }
 
-  // Update shop-level metrics
-  await prisma.shop.update({
-    where: { shopDomain },
-    data: {
-      productsCount: totalProducts,
-      aiScore: averageScore,
-      lastAuditAt: now,
-      name: shopInfo.shop.name,
-      email: shopInfo.shop.email,
-    },
-  });
+    // Run all upserts in parallel within the transaction
+    await Promise.all(upsertPromises);
 
-  // Create audit log
-  await prisma.auditLog.create({
-    data: {
-      shopId: shop.id,
-      action: 'audit_completed',
-      details: {
-        totalProducts,
-        auditedProducts: auditResults.length,
-        averageScore,
-        issues: issuesCounts,
-      },
-    },
+    // Update shop-level metrics and create audit log in parallel
+    await Promise.all([
+      tx.shop.update({
+        where: { shopDomain },
+        data: {
+          productsCount: totalProducts,
+          aiScore: averageScore,
+          lastAuditAt: now,
+          name: shopInfo.shop.name,
+          email: shopInfo.shop.email,
+        },
+      }),
+      tx.auditLog.create({
+        data: {
+          shopId: shop.id,
+          action: 'audit_completed',
+          details: {
+            totalProducts,
+            auditedProducts: auditResults.length,
+            averageScore,
+            issues: issuesCounts,
+          },
+        },
+      }),
+    ]);
   });
 
   logger.info(

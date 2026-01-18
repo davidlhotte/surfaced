@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
+import styles from './ResponsiveGrid.module.css';
 
 interface ResponsiveGridProps {
   children: ReactNode;
@@ -13,50 +14,72 @@ interface ResponsiveGridProps {
   gap?: 'tight' | 'base' | 'loose';
 }
 
+// Column class mappings (moved outside component to avoid recreation)
+const colsClasses: Record<number, string> = {
+  1: styles.cols1,
+  2: styles.cols2,
+  3: styles.cols3,
+  4: styles.cols4,
+  5: styles.cols5,
+  6: styles.cols6,
+};
+
+const smColsClasses: Record<number, string> = {
+  1: styles.smCols1,
+  2: styles.smCols2,
+  3: styles.smCols3,
+  4: styles.smCols4,
+  5: styles.smCols5,
+  6: styles.smCols6,
+};
+
+const mdColsClasses: Record<number, string> = {
+  1: styles.mdCols1,
+  2: styles.mdCols2,
+  3: styles.mdCols3,
+  4: styles.mdCols4,
+  5: styles.mdCols5,
+  6: styles.mdCols6,
+};
+
+const lgColsClasses: Record<number, string> = {
+  1: styles.lgCols1,
+  2: styles.lgCols2,
+  3: styles.lgCols3,
+  4: styles.lgCols4,
+  5: styles.lgCols5,
+  6: styles.lgCols6,
+};
+
+const gapClasses: Record<string, string> = {
+  tight: styles.gapTight,
+  base: styles.gapBase,
+  loose: styles.gapLoose,
+};
+
 /**
  * Responsive grid component for admin pages
- * Uses CSS Grid with responsive breakpoints
+ * Uses CSS Grid with responsive breakpoints via CSS modules (no runtime style generation)
  */
 export function ResponsiveGrid({
   children,
   columns = { xs: 1, sm: 2, md: 3, lg: 4 },
   gap = 'base'
 }: ResponsiveGridProps) {
-  const gapValues = {
-    tight: '8px',
-    base: '16px',
-    loose: '24px',
-  };
+  const className = useMemo(() => {
+    const classes = [
+      styles.responsiveGrid,
+      gapClasses[gap],
+      colsClasses[columns.xs || 1],
+      smColsClasses[columns.sm || 2],
+      mdColsClasses[columns.md || 3],
+      lgColsClasses[columns.lg || 4],
+    ].filter(Boolean).join(' ');
+    return classes;
+  }, [columns.xs, columns.sm, columns.md, columns.lg, gap]);
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gap: gapValues[gap],
-        gridTemplateColumns: `repeat(${columns.xs || 1}, 1fr)`,
-      }}
-      className="responsive-grid"
-    >
-      <style>{`
-        .responsive-grid {
-          grid-template-columns: repeat(${columns.xs || 1}, 1fr) !important;
-        }
-        @media (min-width: 500px) {
-          .responsive-grid {
-            grid-template-columns: repeat(${columns.sm || 2}, 1fr) !important;
-          }
-        }
-        @media (min-width: 768px) {
-          .responsive-grid {
-            grid-template-columns: repeat(${columns.md || 3}, 1fr) !important;
-          }
-        }
-        @media (min-width: 1024px) {
-          .responsive-grid {
-            grid-template-columns: repeat(${columns.lg || 4}, 1fr) !important;
-          }
-        }
-      `}</style>
+    <div className={className}>
       {children}
     </div>
   );
@@ -74,57 +97,42 @@ interface StatCardProps {
   icon?: ReactNode;
 }
 
+// Tone class mappings (moved outside component)
+const toneClasses: Record<string, string> = {
+  success: styles.toneSuccess,
+  warning: styles.toneWarning,
+  critical: styles.toneCritical,
+  info: styles.toneInfo,
+  default: styles.toneDefault,
+};
+
+const trendClasses: Record<string, string> = {
+  up: styles.trendUp,
+  down: styles.trendDown,
+  neutral: styles.trendNeutral,
+};
+
 /**
  * Stat card with consistent styling
  */
 export function StatCard({ title, value, subtitle, trend, tone = 'default', icon }: StatCardProps) {
-  const toneColors = {
-    success: { bg: 'var(--p-color-bg-fill-success-secondary)', border: 'var(--p-color-border-success)' },
-    warning: { bg: 'var(--p-color-bg-fill-warning-secondary)', border: 'var(--p-color-border-warning)' },
-    critical: { bg: 'var(--p-color-bg-fill-critical-secondary)', border: 'var(--p-color-border-critical)' },
-    info: { bg: 'var(--p-color-bg-fill-info-secondary)', border: 'var(--p-color-border-info)' },
-    default: { bg: 'var(--p-color-bg-surface-secondary)', border: 'var(--p-color-border)' },
-  };
-
-  const trendColors = {
-    up: '#108043',
-    down: '#D82C0D',
-    neutral: '#6D7175',
-  };
+  const cardClassName = `${styles.statCard} ${toneClasses[tone]}`;
 
   return (
-    <div
-      style={{
-        padding: '16px',
-        borderRadius: '12px',
-        backgroundColor: toneColors[tone].bg,
-        border: `1px solid ${toneColors[tone].border}`,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '13px', color: 'var(--p-color-text-secondary)', fontWeight: 500 }}>
-          {title}
-        </span>
-        {icon && <span style={{ opacity: 0.7 }}>{icon}</span>}
+    <div className={cardClassName}>
+      <div className={styles.statCardHeader}>
+        <span className={styles.statCardTitle}>{title}</span>
+        {icon && <span className={styles.statCardIcon}>{icon}</span>}
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-        <span style={{ fontSize: '28px', fontWeight: 600, color: 'var(--p-color-text)' }}>
-          {value}
-        </span>
+      <div className={styles.statCardValueRow}>
+        <span className={styles.statCardValue}>{value}</span>
         {trend && (
-          <span style={{ fontSize: '13px', color: trendColors[trend.direction], fontWeight: 500 }}>
+          <span className={`${styles.statCardTrend} ${trendClasses[trend.direction]}`}>
             {trend.direction === 'up' ? '↑' : trend.direction === 'down' ? '↓' : '→'} {Math.abs(trend.value)}%
           </span>
         )}
       </div>
-      {subtitle && (
-        <span style={{ fontSize: '12px', color: 'var(--p-color-text-secondary)' }}>
-          {subtitle}
-        </span>
-      )}
+      {subtitle && <span className={styles.statCardSubtitle}>{subtitle}</span>}
     </div>
   );
 }
@@ -136,35 +144,15 @@ interface ScrollContainerProps {
 }
 
 /**
- * Scrollable container with fade indicators
+ * Scrollable container with custom scrollbar
  */
 export function ScrollContainer({ children, maxHeight = '400px', showScrollbar = true }: ScrollContainerProps) {
+  const className = showScrollbar
+    ? styles.scrollContainer
+    : `${styles.scrollContainer} ${styles.hideScrollbar}`;
+
   return (
-    <div
-      style={{
-        maxHeight,
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        scrollbarWidth: showScrollbar ? 'thin' : 'none',
-        msOverflowStyle: showScrollbar ? 'auto' : 'none',
-      }}
-      className="scroll-container"
-    >
-      <style>{`
-        .scroll-container::-webkit-scrollbar {
-          width: ${showScrollbar ? '6px' : '0'};
-        }
-        .scroll-container::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .scroll-container::-webkit-scrollbar-thumb {
-          background-color: var(--p-color-border);
-          border-radius: 3px;
-        }
-        .scroll-container::-webkit-scrollbar-thumb:hover {
-          background-color: var(--p-color-border-hover);
-        }
-      `}</style>
+    <div className={className} style={{ maxHeight }}>
       {children}
     </div>
   );
@@ -175,12 +163,10 @@ interface PageSectionProps {
   title?: string;
   description?: string;
   action?: ReactNode;
-  collapsible?: boolean;
-  defaultCollapsed?: boolean;
 }
 
 /**
- * Consistent page section with optional collapsibility
+ * Consistent page section layout
  */
 export function PageSection({
   children,
@@ -189,36 +175,12 @@ export function PageSection({
   action,
 }: PageSectionProps) {
   return (
-    <div style={{ marginBottom: '24px' }}>
+    <div className={styles.pageSection}>
       {(title || action) && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '12px',
-          flexWrap: 'wrap',
-          gap: '8px',
-        }}>
+        <div className={styles.pageSectionHeader}>
           <div>
-            {title && (
-              <h2 style={{
-                fontSize: '16px',
-                fontWeight: 600,
-                color: 'var(--p-color-text)',
-                margin: 0,
-              }}>
-                {title}
-              </h2>
-            )}
-            {description && (
-              <p style={{
-                fontSize: '13px',
-                color: 'var(--p-color-text-secondary)',
-                margin: '4px 0 0 0',
-              }}>
-                {description}
-              </p>
-            )}
+            {title && <h2 className={styles.pageSectionTitle}>{title}</h2>}
+            {description && <p className={styles.pageSectionDescription}>{description}</p>}
           </div>
           {action && <div>{action}</div>}
         </div>

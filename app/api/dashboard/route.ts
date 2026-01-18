@@ -4,6 +4,10 @@ import { handleApiError } from '@/lib/utils/errors';
 import { getShopFromRequest } from '@/lib/shopify/get-shop';
 import { PLAN_LIMITS } from '@/lib/constants/plans';
 import { logger } from '@/lib/monitoring/logger';
+import { cacheGet, cacheSet } from '@/lib/cache/redis';
+
+// Cache TTL: 30 seconds for dashboard (frequently accessed, relatively stable data)
+const DASHBOARD_CACHE_TTL = 30;
 
 export async function GET(request: NextRequest) {
   logger.info('Dashboard API called');
@@ -12,19 +16,88 @@ export async function GET(request: NextRequest) {
     const shopDomain = await getShopFromRequest(request, { rateLimit: false });
     logger.info({ shopDomain }, 'Dashboard request authenticated');
 
-    const shop = await prisma.shop.findUnique({
-      where: { shopDomain },
-      include: {
-        productsAudit: true,
-        visibilityChecks: {
-          orderBy: { checkedAt: 'desc' },
-          take: 10,
+    // Try to get from cache first
+    const cacheKey = `dashboard:${shopDomain}`;
+    const cachedData = await cacheGet<object>(cacheKey);
+    if (cachedData) {
+      logger.info({ shopDomain }, 'Dashboard data served from cache');
+      return NextResponse.json({
+        success: true,
+        data: cachedData,
+        cached: true,
+      });
+    }
+
+    // Start of month for quota calculations
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    // Optimized query: only fetch what we need, use database aggregations where possible
+    const [shop, auditStats, visibilityStats] = await Promise.all([
+      // Basic shop info + competitors
+      prisma.shop.findUnique({
+        where: { shopDomain },
+        select: {
+          id: true,
+          name: true,
+          shopDomain: true,
+          plan: true,
+          productsCount: true,
+          aiScore: true,
+          lastAuditAt: true,
+          competitors: {
+            where: { isActive: true },
+            select: { name: true, domain: true },
+            take: 5,
+          },
         },
-        competitors: {
-          where: { isActive: true },
-        },
-      },
-    });
+      }),
+      // Audit statistics via database aggregation
+      prisma.productAudit.groupBy({
+        by: ['shopId'],
+        where: { shop: { shopDomain } },
+        _count: true,
+        _avg: { aiScore: true },
+      }).then(async (result) => {
+        if (result.length === 0) return { count: 0, avgScore: 0, critical: 0, warning: 0, info: 0 };
+        const shopId = result[0].shopId;
+        const [critical, warning, info] = await Promise.all([
+          prisma.productAudit.count({ where: { shopId, aiScore: { lt: 40 } } }),
+          prisma.productAudit.count({ where: { shopId, aiScore: { gte: 40, lt: 70 } } }),
+          prisma.productAudit.count({ where: { shopId, aiScore: { gte: 70, lt: 90 } } }),
+        ]);
+        return {
+          count: result[0]._count,
+          avgScore: Math.round(result[0]._avg.aiScore || 0),
+          critical,
+          warning,
+          info,
+        };
+      }),
+      // Visibility statistics via database
+      prisma.shop.findUnique({
+        where: { shopDomain },
+        select: { id: true },
+      }).then(async (shopResult) => {
+        if (!shopResult) return { platforms: [], monthlyChecks: 0, mentionedCount: 0 };
+        const [recentChecks, monthlyChecks, mentionedCount] = await Promise.all([
+          prisma.visibilityCheck.findMany({
+            where: { shopId: shopResult.id },
+            orderBy: { checkedAt: 'desc' },
+            take: 10,
+            select: { platform: true, isMentioned: true, checkedAt: true },
+          }),
+          prisma.visibilityCheck.count({
+            where: { shopId: shopResult.id, checkedAt: { gte: startOfMonth } },
+          }),
+          prisma.visibilityCheck.count({
+            where: { shopId: shopResult.id, isMentioned: true },
+          }),
+        ]);
+        return { recentChecks, monthlyChecks, mentionedCount };
+      }),
+    ]);
 
     if (!shop) {
       logger.error({ shopDomain }, 'Shop not found in database');
@@ -34,57 +107,20 @@ export async function GET(request: NextRequest) {
     logger.info({
       shopDomain,
       productsCount: shop.productsCount,
-      auditCount: shop.productsAudit.length,
-      visibilityChecksCount: shop.visibilityChecks.length,
+      auditCount: auditStats.count,
       competitorsCount: shop.competitors.length,
     }, 'Dashboard data loaded');
 
-    // Calculate audit statistics
-    const auditStats = {
-      totalProducts: shop.productsCount,
-      auditedProducts: shop.productsAudit.length,
-      averageScore: shop.productsAudit.length > 0
-        ? Math.round(
-            shop.productsAudit.reduce((sum, p) => sum + p.aiScore, 0) /
-              shop.productsAudit.length
-          )
-        : 0,
-      issues: {
-        critical: shop.productsAudit.filter((p) => p.aiScore < 40).length,
-        warning: shop.productsAudit.filter((p) => p.aiScore >= 40 && p.aiScore < 70).length,
-        info: shop.productsAudit.filter((p) => p.aiScore >= 70 && p.aiScore < 90).length,
-      },
-    };
+    // Build visibility status from recent checks
+    const platformsStatus = ['chatgpt', 'perplexity', 'gemini', 'copilot'].map((platformName) => {
+      const lastCheck = visibilityStats.recentChecks?.find((c) => c.platform === platformName);
+      return {
+        name: platformName,
+        mentioned: lastCheck?.isMentioned ?? false,
+        lastCheck: lastCheck?.checkedAt?.toISOString() ?? null,
+      };
+    });
 
-    // Build visibility status
-    const platformsStatus = ['chatgpt', 'perplexity', 'gemini', 'copilot'].map(
-      (platformName) => {
-        const checks = shop.visibilityChecks.filter(
-          (c) => c.platform === platformName
-        );
-        const lastCheck = checks[0];
-        return {
-          name: platformName,
-          mentioned: lastCheck?.isMentioned ?? false,
-          lastCheck: lastCheck?.checkedAt?.toISOString() ?? null,
-        };
-      }
-    );
-
-    // Get current month checks count
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    const monthlyChecksCount = shop.visibilityChecks.filter(
-      (c) => c.checkedAt >= startOfMonth
-    ).length;
-
-    const mentionedCount = shop.visibilityChecks.filter(
-      (c) => c.isMentioned
-    ).length;
-
-    // Competitor info
     const planLimits = PLAN_LIMITS[shop.plan];
 
     const dashboardData = {
@@ -96,11 +132,20 @@ export async function GET(request: NextRequest) {
         aiScore: shop.aiScore,
         lastAuditAt: shop.lastAuditAt?.toISOString() ?? null,
       },
-      audit: auditStats,
+      audit: {
+        totalProducts: shop.productsCount,
+        auditedProducts: auditStats.count,
+        averageScore: auditStats.avgScore,
+        issues: {
+          critical: auditStats.critical,
+          warning: auditStats.warning,
+          info: auditStats.info,
+        },
+      },
       visibility: {
-        lastCheck: shop.visibilityChecks[0]?.checkedAt?.toISOString() ?? null,
-        mentionedCount,
-        totalChecks: monthlyChecksCount,
+        lastCheck: visibilityStats.recentChecks?.[0]?.checkedAt?.toISOString() ?? null,
+        mentionedCount: visibilityStats.mentionedCount,
+        totalChecks: visibilityStats.monthlyChecks,
         platforms: platformsStatus,
       },
       competitors: {
@@ -110,18 +155,13 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: dashboardData,
-      },
-      {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache',
-        },
-      }
-    );
+    // Cache the result
+    await cacheSet(cacheKey, dashboardData, DASHBOARD_CACHE_TTL);
+
+    return NextResponse.json({
+      success: true,
+      data: dashboardData,
+    });
   } catch (error) {
     return handleApiError(error);
   }

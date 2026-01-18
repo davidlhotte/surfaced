@@ -412,38 +412,45 @@ export async function runVisibilityCheck(
     throw new Error('Not enough remaining checks this month');
   }
 
-  const results: VisibilityResult[] = [];
-
-  // Run checks for each platform and query
+  // Build all platform/query combinations for parallel execution
+  const checkTasks: { platform: Platform; query: string }[] = [];
   for (const platform of platformsToCheck) {
     for (const query of queriesToRun) {
-      try {
-        const result = await checkPlatform(platform, query, brandName, shopDomain);
-        results.push(result);
-
-        // Save to database
-        await prisma.visibilityCheck.create({
-          data: {
-            shopId: shop.id,
-            platform: result.platform,
-            query: result.query,
-            isMentioned: result.isMentioned,
-            mentionContext: result.mentionContext,
-            position: result.position,
-            competitorsFound: result.competitorsFound,
-            rawResponse: result.rawResponse,
-            responseQuality: result.responseQuality,
-            checkedAt: new Date(),
-          },
-        });
-
-        // Small delay between requests
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
-        logger.error({ error, query, platform }, 'Visibility check query failed');
-        // Continue with other checks even if one fails
-      }
+      checkTasks.push({ platform, query });
     }
+  }
+
+  // Run all checks in parallel (different AI providers, no rate limit issue)
+  const checkPromises = checkTasks.map(async ({ platform, query }) => {
+    try {
+      return await checkPlatform(platform, query, brandName, shopDomain);
+    } catch (error) {
+      logger.error({ error, query, platform }, 'Visibility check query failed');
+      return null; // Return null for failed checks
+    }
+  });
+
+  // Wait for all checks to complete in parallel
+  const checkResults = await Promise.all(checkPromises);
+  const results: VisibilityResult[] = checkResults.filter((r): r is VisibilityResult => r !== null);
+
+  // Batch save all results to database in a single transaction
+  if (results.length > 0) {
+    const now = new Date();
+    await prisma.visibilityCheck.createMany({
+      data: results.map((result) => ({
+        shopId: shop.id,
+        platform: result.platform,
+        query: result.query,
+        isMentioned: result.isMentioned,
+        mentionContext: result.mentionContext,
+        position: result.position,
+        competitorsFound: result.competitorsFound,
+        rawResponse: result.rawResponse,
+        responseQuality: result.responseQuality,
+        checkedAt: now,
+      })),
+    });
   }
 
   // Create audit log

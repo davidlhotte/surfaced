@@ -1,0 +1,183 @@
+/* ResponsiveGrid styles */
+.responsiveGrid {
+  display: grid;
+  gap: var(--grid-gap, 16px);
+}
+
+/* Column configurations using CSS custom properties */
+.cols1 { grid-template-columns: repeat(1, 1fr); }
+.cols2 { grid-template-columns: repeat(2, 1fr); }
+.cols3 { grid-template-columns: repeat(3, 1fr); }
+.cols4 { grid-template-columns: repeat(4, 1fr); }
+.cols5 { grid-template-columns: repeat(5, 1fr); }
+.cols6 { grid-template-columns: repeat(6, 1fr); }
+
+/* Responsive breakpoints */
+@media (min-width: 500px) {
+  .smCols1 { grid-template-columns: repeat(1, 1fr); }
+  .smCols2 { grid-template-columns: repeat(2, 1fr); }
+  .smCols3 { grid-template-columns: repeat(3, 1fr); }
+  .smCols4 { grid-template-columns: repeat(4, 1fr); }
+  .smCols5 { grid-template-columns: repeat(5, 1fr); }
+  .smCols6 { grid-template-columns: repeat(6, 1fr); }
+}
+
+@media (min-width: 768px) {
+  .mdCols1 { grid-template-columns: repeat(1, 1fr); }
+  .mdCols2 { grid-template-columns: repeat(2, 1fr); }
+  .mdCols3 { grid-template-columns: repeat(3, 1fr); }
+  .mdCols4 { grid-template-columns: repeat(4, 1fr); }
+  .mdCols5 { grid-template-columns: repeat(5, 1fr); }
+  .mdCols6 { grid-template-columns: repeat(6, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .lgCols1 { grid-template-columns: repeat(1, 1fr); }
+  .lgCols2 { grid-template-columns: repeat(2, 1fr); }
+  .lgCols3 { grid-template-columns: repeat(3, 1fr); }
+  .lgCols4 { grid-template-columns: repeat(4, 1fr); }
+  .lgCols5 { grid-template-columns: repeat(5, 1fr); }
+  .lgCols6 { grid-template-columns: repeat(6, 1fr); }
+}
+
+/* Gap sizes */
+.gapTight { --grid-gap: 8px; }
+.gapBase { --grid-gap: 16px; }
+.gapLoose { --grid-gap: 24px; }
+
+/* ScrollContainer styles */
+.scrollContainer {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background-color: var(--p-color-border);
+  border-radius: 3px;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb:hover {
+  background-color: var(--p-color-border-hover);
+}
+
+.hideScrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hideScrollbar::-webkit-scrollbar {
+  width: 0;
+}
+
+/* StatCard styles */
+.statCard {
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.statCardTitle {
+  font-size: 13px;
+  color: var(--p-color-text-secondary);
+  font-weight: 500;
+}
+
+.statCardIcon {
+  opacity: 0.7;
+}
+
+.statCardValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.statCardValue {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--p-color-text);
+}
+
+.statCardTrend {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.trendUp { color: #108043; }
+.trendDown { color: #D82C0D; }
+.trendNeutral { color: #6D7175; }
+
+.statCardSubtitle {
+  font-size: 12px;
+  color: var(--p-color-text-secondary);
+}
+
+/* Tone backgrounds */
+.toneSuccess {
+  background-color: var(--p-color-bg-fill-success-secondary);
+  border: 1px solid var(--p-color-border-success);
+}
+
+.toneWarning {
+  background-color: var(--p-color-bg-fill-warning-secondary);
+  border: 1px solid var(--p-color-border-warning);
+}
+
+.toneCritical {
+  background-color: var(--p-color-bg-fill-critical-secondary);
+  border: 1px solid var(--p-color-border-critical);
+}
+
+.toneInfo {
+  background-color: var(--p-color-bg-fill-info-secondary);
+  border: 1px solid var(--p-color-border-info);
+}
+
+.toneDefault {
+  background-color: var(--p-color-bg-surface-secondary);
+  border: 1px solid var(--p-color-border);
+}
+
+/* PageSection styles */
+.pageSection {
+  margin-bottom: 24px;
+}
+
+.pageSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pageSectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--p-color-text);
+  margin: 0;
+}
+
+.pageSectionDescription {
+  font-size: 13px;
+  color: var(--p-color-text-secondary);
+  margin: 4px 0 0 0;
+}

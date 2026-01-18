@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Page,
   Layout,
@@ -410,30 +410,42 @@ export default function ProductsPage() {
     setCurrentPage(1);
   };
 
-  // Filter products
-  const filteredProducts = data?.products.filter((product) => {
-    if (selectedFilter.length === 0) return true;
-    if (selectedFilter.includes('critical') && product.aiScore < 40) return true;
-    if (selectedFilter.includes('warning') && product.aiScore >= 40 && product.aiScore < 70) return true;
-    if (selectedFilter.includes('good') && product.aiScore >= 70) return true;
-    return false;
-  }) || [];
+  // Filter products - memoized to avoid recalculation on unrelated state changes
+  const filteredProducts = useMemo(() => {
+    if (!data?.products) return [];
+    if (selectedFilter.length === 0) return data.products;
+    return data.products.filter((product) => {
+      if (selectedFilter.includes('critical') && product.aiScore < 40) return true;
+      if (selectedFilter.includes('warning') && product.aiScore >= 40 && product.aiScore < 70) return true;
+      if (selectedFilter.includes('good') && product.aiScore >= 70) return true;
+      return false;
+    });
+  }, [data?.products, selectedFilter]);
 
-  // Sort filtered products
-  const sortedProducts = sortProducts(filteredProducts);
+  // Sort filtered products - memoized O(n log n) operation
+  const sortedProducts = useMemo(() => {
+    return sortProducts(filteredProducts);
+  }, [filteredProducts, sortColumn, sortDirection]);
 
-  // Get products needing improvement (sorted by score, lowest first)
-  const productsNeedingWork = sortProducts(data?.products.filter(p => p.aiScore < 70) || []);
+  // Products needing improvement - memoized
+  const productsNeedingWork = useMemo(() => {
+    if (!data?.products) return [];
+    return sortProducts(data.products.filter(p => p.aiScore < 70));
+  }, [data?.products, sortColumn, sortDirection]);
 
-  // Active history entries
-  const activeHistory = history.filter(h => h.status === 'applied');
+  // Active history entries - memoized
+  const activeHistory = useMemo(() => {
+    return history.filter(h => h.status === 'applied');
+  }, [history]);
 
-  // Pagination
-  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
-  const paginatedProducts = sortedProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Pagination - memoized
+  const totalPages = useMemo(() => Math.ceil(sortedProducts.length / itemsPerPage), [sortedProducts.length]);
+  const paginatedProducts = useMemo(() => {
+    return sortedProducts.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [sortedProducts, currentPage]);
 
   const handleFilterChange = (selected: string[]) => {
     setSelectedFilter(selected);
@@ -469,15 +481,22 @@ export default function ProductsPage() {
   const criticalCount = data?.issues.critical ?? 0;
   const warningCount = data?.issues.warning ?? 0;
 
-  const tabs = [
+  // Tabs - memoized
+  const tabs = useMemo(() => [
     { id: 'all', content: `All Products (${sortedProducts.length})` },
     { id: 'improve', content: `Need Improvement (${productsNeedingWork.length})` },
     { id: 'history', content: `History (${activeHistory.length})` },
-  ];
+  ], [sortedProducts.length, productsNeedingWork.length, activeHistory.length]);
 
-  const displayProducts = selectedTab === 0 ? paginatedProducts : selectedTab === 1 ? productsNeedingWork.slice(0, 15) : [];
+  // Display products based on selected tab - memoized
+  const displayProducts = useMemo(() => {
+    if (selectedTab === 0) return paginatedProducts;
+    if (selectedTab === 1) return productsNeedingWork.slice(0, 15);
+    return [];
+  }, [selectedTab, paginatedProducts, productsNeedingWork]);
 
-  const tableRows = displayProducts.map((product) => [
+  // Table rows - memoized to avoid JSX recreation on every render
+  const tableRows = useMemo(() => displayProducts.map((product) => [
     <BlockStack key={product.id} gap="100">
       <Text as="p" fontWeight="semibold" truncate>{product.title}</Text>
       <Text as="p" variant="bodySm" tone="subdued">/{product.handle}</Text>
@@ -509,7 +528,7 @@ export default function ProductsPage() {
     >
       Optimize
     </Button>,
-  ]);
+  ]), [displayProducts, quota?.available, handleOptimize]);
 
   return (
     <Page
