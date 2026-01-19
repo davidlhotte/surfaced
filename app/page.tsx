@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { LanguageProvider, useLanguage, LanguageSwitcher } from '@/lib/i18n';
 
 // Check if we should redirect (computed once, outside component)
 function shouldRedirect(): boolean {
@@ -13,11 +14,12 @@ function shouldRedirect(): boolean {
   return !!(host || embedded === '1' || shop);
 }
 
-export default function Home() {
+function HomeContent() {
   const hasCheckedRedirect = useRef(false);
   const [activeTab, setActiveTab] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (hasCheckedRedirect.current) return;
@@ -53,7 +55,7 @@ export default function Home() {
       <div className="flex min-h-screen items-center justify-center" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0EA5E9 100%)' }}>
         <div className="text-white text-center">
           <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p>Chargement...</p>
+          <p>{t.common.loading}</p>
         </div>
       </div>
     );
@@ -69,180 +71,118 @@ export default function Home() {
 
   const features = [
     {
-      category: 'Analyser',
-      title: 'Score de Visibilite IA',
-      description: 'Chaque produit recoit un score 0-100 basé sur sa capacité à etre recommandé par les IA. Identifiez instantanément les produits invisibles.',
-      benefits: ['Score par produit', 'Detection des problèmes critiques', 'Priorités claires'],
+      category: t.features.analyze.category,
+      title: t.features.analyze.title,
+      description: t.features.analyze.description,
+      benefits: t.features.analyze.benefits,
       color: 'from-sky-500 to-cyan-600',
     },
     {
-      category: 'Optimiser',
-      title: 'Optimisation IA Automatique',
-      description: 'Notre IA réécrit vos descriptions, titres et tags pour maximiser la compréhension par ChatGPT & co. Application en un clic.',
-      benefits: ['Descriptions optimisées', 'Tags intelligents', 'SEO + AEO'],
+      category: t.features.optimize.category,
+      title: t.features.optimize.title,
+      description: t.features.optimize.description,
+      benefits: t.features.optimize.benefits,
       color: 'from-emerald-500 to-teal-600',
     },
     {
-      category: 'Mesurer',
-      title: 'Tracking de Visibilite',
-      description: 'Vérifiez en temps réel si ChatGPT, Claude, Perplexity mentionnent votre marque. Suivez votre progression.',
-      benefits: ['5 plateformes IA', 'Historique complet', 'Alertes automatiques'],
+      category: t.features.measure.category,
+      title: t.features.measure.title,
+      description: t.features.measure.description,
+      benefits: t.features.measure.benefits,
       color: 'from-amber-500 to-orange-600',
     },
     {
-      category: 'Dominer',
-      title: 'Veille Concurrentielle',
-      description: 'Comparez votre visibilité IA à celle de vos concurrents. Soyez alerté quand ils vous dépassent.',
-      benefits: ['Suivi concurrents', 'Benchmarks industrie', 'Alertes en temps réel'],
+      category: t.features.dominate.category,
+      title: t.features.dominate.title,
+      description: t.features.dominate.description,
+      benefits: t.features.dominate.benefits,
       color: 'from-rose-500 to-pink-600',
     },
   ];
 
   const useCases = [
     {
-      title: 'Un client demande à ChatGPT',
-      query: '"Recommande-moi les meilleurs écouteurs sans fil pour le sport"',
-      without: 'Votre boutique n\'apparaît pas. Le client achète ailleurs.',
-      with: 'ChatGPT recommande VOS produits. Le client clique et achète.',
+      title: t.useCases.case1.title,
+      query: t.useCases.case1.query,
+      without: t.useCases.case1.without,
+      with: t.useCases.case1.with,
     },
     {
-      title: 'Un acheteur utilise Perplexity',
-      query: '"Où acheter une robe de mariée éco-responsable ?"',
-      without: 'Vos robes sont invisibles malgré leur qualité.',
-      with: 'Perplexity cite votre boutique comme référence.',
+      title: t.useCases.case2.title,
+      query: t.useCases.case2.query,
+      without: t.useCases.case2.without,
+      with: t.useCases.case2.with,
     },
     {
-      title: 'Un consommateur consulte Claude',
-      query: '"Compare les meilleures crèmes anti-âge naturelles"',
-      without: 'Seuls vos concurrents sont mentionnés.',
-      with: 'Votre marque est recommandée avec contexte.',
+      title: t.useCases.case3.title,
+      query: t.useCases.case3.query,
+      without: t.useCases.case3.without,
+      with: t.useCases.case3.with,
     },
   ];
 
   const testimonials = [
     {
-      quote: "En 3 semaines, notre visibilité sur ChatGPT est passée de 0 à 47%. On reçoit maintenant du trafic organique qu'on n'avait jamais eu.",
-      author: 'Marie L.',
-      role: 'Fondatrice, Cosmétiques Bio',
-      metric: '+47%',
-      metricLabel: 'visibilité IA',
+      quote: t.testimonials.testimonial1.quote,
+      author: t.testimonials.testimonial1.author,
+      role: t.testimonials.testimonial1.role,
+      metric: t.testimonials.testimonial1.metric,
+      metricLabel: t.testimonials.testimonial1.metricLabel,
     },
     {
-      quote: "Surfaced nous a montré pourquoi nos produits n'apparaissaient jamais. Après optimisation, nos ventes ont augmenté de 23%.",
-      author: 'Thomas D.',
-      role: 'E-commerce Manager, Mode',
-      metric: '+23%',
-      metricLabel: 'ventes',
+      quote: t.testimonials.testimonial2.quote,
+      author: t.testimonials.testimonial2.author,
+      role: t.testimonials.testimonial2.role,
+      metric: t.testimonials.testimonial2.metric,
+      metricLabel: t.testimonials.testimonial2.metricLabel,
     },
     {
-      quote: "Le ROI est incroyable. Contrairement aux pubs, le trafic IA est gratuit et les conversions sont meilleures.",
-      author: 'Sophie M.',
-      role: 'CEO, Décoration Intérieure',
-      metric: '5.2x',
-      metricLabel: 'ROI',
+      quote: t.testimonials.testimonial3.quote,
+      author: t.testimonials.testimonial3.author,
+      role: t.testimonials.testimonial3.role,
+      metric: t.testimonials.testimonial3.metric,
+      metricLabel: t.testimonials.testimonial3.metricLabel,
     },
   ];
 
-  const faqs = [
-    {
-      q: "Qu'est-ce que l'AEO (AI Engine Optimization) ?",
-      a: "L'AEO est l'équivalent du SEO pour les assistants IA. Comme le SEO optimise pour Google, l'AEO optimise vos contenus pour que ChatGPT, Claude, Perplexity vous recommandent. C'est la nouvelle frontière du e-commerce : ceux qui s'adaptent maintenant auront un avantage décisif.",
-    },
-    {
-      q: 'Comment Surfaced améliore ma visibilité IA ?',
-      a: "Surfaced analyse vos produits selon les critères que les IA utilisent pour recommander : clarté des descriptions, données structurées, mots-clés pertinents, contexte d'usage. Notre IA optimise ensuite votre contenu pour maximiser vos chances d'être recommandé.",
-    },
-    {
-      q: 'Sur quelles plateformes IA vérifiez-vous ma visibilité ?',
-      a: "Nous vérifions votre présence sur les 5 principales plateformes : ChatGPT (OpenAI), Claude (Anthropic), Perplexity, Google Gemini, et Microsoft Copilot. Ensemble, elles représentent plus de 400 millions d'utilisateurs actifs.",
-    },
-    {
-      q: 'Combien de temps pour voir des résultats ?',
-      a: "Vous pouvez optimiser vos produits immédiatement après installation. Les IA indexent généralement les changements en 1-4 semaines. Nos clients voient en moyenne une amélioration de 35% de leur visibilité IA dans le premier mois.",
-    },
-    {
-      q: 'Est-ce compatible avec mes efforts SEO existants ?',
-      a: "Absolument ! L'AEO et le SEO sont complémentaires. Les optimisations qui plaisent aux IA plaisent aussi à Google. Vous améliorez les deux simultanément : meilleur ranking Google ET recommandations IA.",
-    },
-    {
-      q: 'Puis-je essayer gratuitement ?',
-      a: "Oui ! Notre plan gratuit permet d'analyser 10 produits et de faire 3 vérifications de visibilité par mois. Aucune carte bancaire requise. Vous pouvez upgrader à tout moment quand vous voyez les résultats.",
-    },
-    {
-      q: 'Comment le score IA est-il calculé ?',
-      a: "Le score analyse 15+ facteurs : longueur et qualité de description, présence d'images, alt-texts, métadonnées SEO, catégorisation, tags, prix, variantes, avis clients, données structurées. Chaque facteur est pondéré selon son impact sur les recommandations IA.",
-    },
-    {
-      q: "Qu'est-ce que le fichier llms.txt ?",
-      a: "Le llms.txt est un fichier standardisé (comme robots.txt pour Google) qui indique aux IA comment comprendre votre site. Surfaced le génère automatiquement avec vos produits phares, votre positionnement, et vos différenciateurs.",
-    },
-  ];
+  const faqs = t.faq.questions;
 
   // Pricing synced with lib/constants/plans.ts (PLAN_LIMITS and PLAN_PRICES)
   const pricing = [
     {
       name: 'Free Trial',
       price: '0',
-      period: 'pour toujours',
-      description: 'Pour découvrir votre visibilité IA',
-      features: [
-        '10 produits analysés',
-        '3 vérifications/mois',
-        '3 suggestions IA/mois',
-        'Score IA par produit',
-        'Générateur AI Guide',
-        'Historique 7 jours',
-      ],
-      cta: 'Commencer Gratuitement',
+      period: t.pricing.free.period,
+      description: t.pricing.free.description,
+      features: t.pricing.free.features,
+      cta: t.pricing.free.cta,
       popular: false,
     },
     {
       name: 'Starter',
       price: '49',
-      period: '/mois',
-      description: 'Pour les boutiques en croissance',
-      features: [
-        '100 produits analysés',
-        '10 vérifications/mois',
-        '20 suggestions IA/mois',
-        '1 concurrent suivi',
-        'Schémas JSON-LD auto',
-        'Historique 30 jours',
-      ],
-      cta: 'Essai Gratuit 14 Jours',
+      period: t.pricing.starter.period,
+      description: t.pricing.starter.description,
+      features: t.pricing.starter.features,
+      cta: t.pricing.starter.cta,
       popular: false,
     },
     {
       name: 'Growth',
       price: '99',
-      period: '/mois',
-      description: 'Pour dominer votre marché',
-      features: [
-        '500 produits analysés',
-        '50 vérifications/mois',
-        '100 suggestions IA/mois',
-        '3 concurrents suivis',
-        'Export CSV',
-        'Historique 90 jours',
-      ],
-      cta: 'Essai Gratuit 14 Jours',
+      period: t.pricing.growth.period,
+      description: t.pricing.growth.description,
+      features: t.pricing.growth.features,
+      cta: t.pricing.growth.cta,
       popular: true,
     },
     {
       name: 'Scale',
       price: '199',
-      period: '/mois',
-      description: 'Pour les catalogues importants',
-      features: [
-        'Produits illimités',
-        '200 vérifications/mois',
-        '500 suggestions IA/mois',
-        '10 concurrents suivis',
-        'Accès API',
-        'Historique 1 an',
-        'Support prioritaire',
-      ],
-      cta: 'Essai Gratuit 14 Jours',
+      period: t.pricing.scale.period,
+      description: t.pricing.scale.description,
+      features: t.pricing.scale.features,
+      cta: t.pricing.scale.cta,
       popular: false,
     },
   ];
@@ -270,35 +210,36 @@ export default function Home() {
               </div>
               <span className="text-xl font-bold" style={{ color: '#0A1628' }}>surfaced</span>
               <span className="hidden sm:inline-flex ml-2 px-2 py-0.5 text-xs font-medium rounded-full" style={{ background: '#E0F2FE', color: '#0EA5E9' }}>
-                AEO pour Shopify
+                {t.header.tagline}
               </span>
             </div>
 
             <nav className="hidden md:flex items-center gap-8">
               <a href="#fonctionnalites" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                Fonctionnalités
+                {t.header.features}
               </a>
               <a href="#comment-ca-marche" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                Comment ça marche
+                {t.header.howItWorks}
               </a>
               <a href="#tarifs" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                Tarifs
+                {t.header.pricing}
               </a>
               <a href="#faq" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                FAQ
+                {t.header.faq}
               </a>
               <Link href="/help" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                Aide
+                {t.header.help}
               </Link>
             </nav>
 
             <div className="flex items-center gap-3">
+              <LanguageSwitcher className="hidden sm:flex" />
               <a
                 href="https://apps.shopify.com/surfaced"
                 className="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all"
                 style={{ background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)', boxShadow: '0 4px 14px rgba(14, 165, 233, 0.4)' }}
               >
-                Installer Gratuitement
+                {t.header.install}
               </a>
               {/* Mobile menu button */}
               <button
@@ -326,42 +267,45 @@ export default function Home() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  Fonctionnalités
+                  {t.header.features}
                 </a>
                 <a
                   href="#comment-ca-marche"
                   onClick={() => setMobileMenuOpen(false)}
                   className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  Comment ça marche
+                  {t.header.howItWorks}
                 </a>
                 <a
                   href="#tarifs"
                   onClick={() => setMobileMenuOpen(false)}
                   className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  Tarifs
+                  {t.header.pricing}
                 </a>
                 <a
                   href="#faq"
                   onClick={() => setMobileMenuOpen(false)}
                   className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  FAQ
+                  {t.header.faq}
                 </a>
                 <Link
                   href="/help"
                   onClick={() => setMobileMenuOpen(false)}
                   className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  Aide
+                  {t.header.help}
                 </Link>
+                <div className="px-4 py-3">
+                  <LanguageSwitcher />
+                </div>
                 <a
                   href="https://apps.shopify.com/surfaced"
                   className="mx-4 mt-2 px-4 py-3 text-center font-semibold text-white rounded-lg transition-all"
                   style={{ background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)' }}
                 >
-                  Installer Gratuitement
+                  {t.header.install}
                 </a>
               </nav>
             </div>
@@ -379,21 +323,21 @@ export default function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
               </span>
-              Nouveau canal d&apos;acquisition : les assistants IA
+              {t.hero.badge}
             </div>
 
             {/* Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6" style={{ color: '#0A1628' }}>
-              Faites recommander vos produits par{' '}
+              {t.hero.title}{' '}
               <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 50%, #0EA5E9 100%)' }}>
-                ChatGPT, Claude & Perplexity
+                {t.hero.titleHighlight}
               </span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed">
-              Quand vos clients demandent des recommandations à l&apos;IA, votre boutique apparait-elle ?
-              <span className="font-semibold text-slate-900"> Surfaced optimise votre catalogue Shopify pour la visibilité IA.</span>
+              {t.hero.subtitle}
+              <span className="font-semibold text-slate-900"> {t.hero.subtitleHighlight}</span>
             </p>
 
             {/* CTAs */}
@@ -403,13 +347,13 @@ export default function Home() {
                 className="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-white rounded-xl transition-all hover:-translate-y-0.5"
                 style={{ background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)', boxShadow: '0 8px 24px rgba(14, 165, 233, 0.4)' }}
               >
-                Analyser Ma Boutique Gratuitement
+                {t.hero.cta}
               </a>
               <a
                 href="#comment-ca-marche"
                 className="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-slate-700 bg-white border-2 border-slate-200 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-all"
               >
-                Voir la Démo
+                {t.hero.ctaSecondary}
               </a>
             </div>
 
@@ -419,26 +363,26 @@ export default function Home() {
                 <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Installation en 30 secondes
+                {t.hero.trust1}
               </span>
               <span className="flex items-center gap-1">
                 <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Sans carte bancaire
+                {t.hero.trust2}
               </span>
               <span className="flex items-center gap-1">
                 <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Plan gratuit illimité
+                {t.hero.trust3}
               </span>
             </div>
           </div>
 
           {/* AI Platforms */}
           <div className="mt-16 text-center">
-            <p className="text-sm text-slate-500 mb-6">Optimisez pour les 5 principales plateformes IA</p>
+            <p className="text-sm text-slate-500 mb-6">{t.hero.platforms}</p>
             <div className="flex flex-wrap items-center justify-center gap-8">
               {platforms.map((platform) => (
                 <div key={platform.name} className="flex flex-col items-center gap-1">
@@ -457,48 +401,47 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Le e-commerce change.<br />Vos clients aussi.
+              {t.problem.title}
             </h2>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-              De plus en plus d&apos;acheteurs demandent à l&apos;IA quoi acheter et où.
-              Si vos produits ne sont pas optimisés, vous êtes invisible.
+              {t.problem.subtitle}
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-slate-800/50 rounded-2xl p-8 border border-slate-700">
-              <div className="text-5xl font-bold text-sky-400 mb-2">43%</div>
-              <p className="text-slate-300">des acheteurs en ligne utilisent maintenant les assistants IA pour rechercher des produits</p>
-              <p className="text-sm text-slate-500 mt-2">Source: Gartner 2024</p>
+              <div className="text-5xl font-bold text-sky-400 mb-2">{t.problem.stats.stat1.value}</div>
+              <p className="text-slate-300">{t.problem.stats.stat1.description}</p>
+              <p className="text-sm text-slate-500 mt-2">{t.problem.stats.stat1.source}</p>
             </div>
             <div className="bg-slate-800/50 rounded-2xl p-8 border border-slate-700">
-              <div className="text-5xl font-bold text-emerald-400 mb-2">0€</div>
-              <p className="text-slate-300">par clic quand l&apos;IA recommande vos produits, contrairement aux pubs qui coutent toujours plus</p>
-              <p className="text-sm text-slate-500 mt-2">Trafic 100% organique</p>
+              <div className="text-5xl font-bold text-emerald-400 mb-2">{t.problem.stats.stat2.value}</div>
+              <p className="text-slate-300">{t.problem.stats.stat2.description}</p>
+              <p className="text-sm text-slate-500 mt-2">{t.problem.stats.stat2.source}</p>
             </div>
             <div className="bg-slate-800/50 rounded-2xl p-8 border border-slate-700">
-              <div className="text-5xl font-bold text-amber-400 mb-2">5.3x</div>
-              <p className="text-slate-300">taux de conversion plus élevé quand un acheteur vient d&apos;une recommandation IA</p>
-              <p className="text-sm text-slate-500 mt-2">vs. trafic publicitaire</p>
+              <div className="text-5xl font-bold text-amber-400 mb-2">{t.problem.stats.stat3.value}</div>
+              <p className="text-slate-300">{t.problem.stats.stat3.description}</p>
+              <p className="text-sm text-slate-500 mt-2">{t.problem.stats.stat3.source}</p>
             </div>
           </div>
 
           <div className="mt-16 bg-sky-500/10 rounded-2xl p-8 border border-sky-400/30">
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="flex-1">
-                <h3 className="text-2xl font-bold mb-4">L&apos;AEO : le nouveau SEO</h3>
+                <h3 className="text-2xl font-bold mb-4">{t.problem.aeo.title}</h3>
                 <p className="text-slate-300 mb-4">
-                  <strong className="text-white">AI Engine Optimization</strong> — Comme le SEO a révolutionné la visibilité sur Google, l&apos;AEO révolutionne la visibilité sur les assistants IA.
+                  <strong className="text-white">{t.problem.aeo.highlight}</strong> — {t.problem.aeo.description}
                 </p>
                 <p className="text-slate-400">
-                  Les marchands qui s&apos;adaptent maintenant auront un avantage décisif sur leurs concurrents.
+                  {t.problem.aeo.conclusion}
                 </p>
               </div>
               <div className="text-center">
                 <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-400">
                   AEO
                 </div>
-                <p className="text-sm text-slate-400 mt-2">La prochaine révolution</p>
+                <p className="text-sm text-slate-400 mt-2">{t.problem.aeo.badge}</p>
               </div>
             </div>
           </div>
@@ -510,10 +453,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Visualisez la différence
+              {t.useCases.title}
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Voici ce qui se passe quand un client potentiel pose une question à l&apos;IA
+              {t.useCases.subtitle}
             </p>
           </div>
 
@@ -531,7 +474,7 @@ export default function Home() {
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
-                      Sans Surfaced
+                      {t.useCases.without}
                     </div>
                     <p className="text-slate-700">{useCase.without}</p>
                   </div>
@@ -541,7 +484,7 @@ export default function Home() {
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Avec Surfaced
+                      {t.useCases.withSurfaced}
                     </div>
                     <p className="text-slate-700">{useCase.with}</p>
                   </div>
@@ -557,10 +500,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Tout ce qu&apos;il faut pour dominer la visibilité IA
+              {t.features.title}
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Une suite complète d&apos;outils pour analyser, optimiser, mesurer et surpasser vos concurrents
+              {t.features.subtitle}
             </p>
           </div>
 
@@ -617,16 +560,7 @@ export default function Home() {
 
           {/* Additional features grid */}
           <div className="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: '📄', title: 'llms.txt Generator', desc: 'Fichier guide pour les IA crawlers' },
-              { icon: '🏷️', title: 'JSON-LD Schemas', desc: 'Données structurées automatiques' },
-              { icon: '🔄', title: 'Tests A/B', desc: 'Testez vos variations de contenu' },
-              { icon: '⚡', title: 'Shopify Flow', desc: 'Automatisations personnalisées' },
-              { icon: '📈', title: 'ROI Dashboard', desc: 'Mesurez votre retour sur investissement' },
-              { icon: '📊', title: 'Benchmarks Industrie', desc: 'Comparez-vous à votre secteur' },
-              { icon: '🔔', title: 'Alertes Intelligentes', desc: 'Soyez notifié des changements' },
-              { icon: '🔌', title: 'API Publique', desc: 'Intégrez vos propres outils' },
-            ].map((item, i) => (
+            {t.features.additional.map((item, i) => (
               <div key={i} className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all">
                 <span className="text-3xl block mb-3">{item.icon}</span>
                 <h4 className="font-semibold text-slate-900 mb-1">{item.title}</h4>
@@ -642,10 +576,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Des résultats concrets
+              {t.testimonials.title}
             </h2>
             <p className="text-lg text-slate-600">
-              Ce que disent les marchands Shopify qui utilisent Surfaced
+              {t.testimonials.subtitle}
             </p>
           </div>
 
@@ -677,19 +611,19 @@ export default function Home() {
             <div className="grid sm:grid-cols-4 gap-8 text-center">
               <div>
                 <div className="text-4xl font-bold">500+</div>
-                <div className="text-sky-200">Boutiques optimisées</div>
+                <div className="text-sky-200">{t.testimonials.stats.shops}</div>
               </div>
               <div>
                 <div className="text-4xl font-bold">50K+</div>
-                <div className="text-sky-200">Produits analysés</div>
+                <div className="text-sky-200">{t.testimonials.stats.products}</div>
               </div>
               <div>
                 <div className="text-4xl font-bold">35%</div>
-                <div className="text-sky-200">Gain moyen de visibilité</div>
+                <div className="text-sky-200">{t.testimonials.stats.visibility}</div>
               </div>
               <div>
                 <div className="text-4xl font-bold">4.9/5</div>
-                <div className="text-sky-200">Note App Store</div>
+                <div className="text-sky-200">{t.testimonials.stats.rating}</div>
               </div>
             </div>
           </div>
@@ -701,10 +635,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Tarification simple et transparente
+              {t.pricing.title}
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Commencez gratuitement, upgradez quand vous êtes prêt. Aucuns frais cachés.
+              {t.pricing.subtitle}
             </p>
           </div>
 
@@ -720,7 +654,7 @@ export default function Home() {
               >
                 {plan.popular && (
                   <span className="inline-block px-3 py-1 text-xs font-bold bg-amber-400 text-amber-900 rounded-full mb-4">
-                    PLUS POPULAIRE
+                    {t.pricing.popular}
                   </span>
                 )}
                 <h3 className={`text-xl font-bold ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
@@ -728,7 +662,7 @@ export default function Home() {
                 </h3>
                 <div className="mt-4 mb-2">
                   <span className={`text-4xl font-bold ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
-                    {plan.price === '0' ? 'Gratuit' : `$${plan.price}`}
+                    {plan.price === '0' ? t.pricing.free.free : `$${plan.price}`}
                   </span>
                   {plan.price !== '0' && (
                     <span className={plan.popular ? 'text-sky-200' : 'text-slate-500'}>{plan.period}</span>
@@ -762,7 +696,7 @@ export default function Home() {
           </div>
 
           <p className="text-center text-sm text-slate-500 mt-8">
-            Tous les plans payants incluent un essai gratuit de 14 jours. Annulez à tout moment. Prix en USD.
+            {t.pricing.disclaimer}
           </p>
         </div>
       </section>
@@ -772,10 +706,10 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Questions Fréquentes
+              {t.faq.title}
             </h2>
             <p className="text-lg text-slate-600">
-              Tout ce que vous devez savoir sur Surfaced et l&apos;AEO
+              {t.faq.subtitle}
             </p>
           </div>
 
@@ -806,12 +740,12 @@ export default function Home() {
           </div>
 
           <div className="mt-12 text-center">
-            <p className="text-slate-600 mb-4">Vous avez d&apos;autres questions ?</p>
+            <p className="text-slate-600 mb-4">{t.faq.moreQuestions}</p>
             <Link
               href="/help"
               className="inline-flex items-center gap-2 text-sky-600 font-semibold hover:text-sky-700"
             >
-              Consultez notre centre d&apos;aide
+              {t.faq.helpCenter}
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -824,20 +758,19 @@ export default function Home() {
       <section className="py-20 px-4 sm:px-6 lg:px-8" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0EA5E9 100%)' }}>
         <div className="max-w-4xl mx-auto text-center text-white">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Prêt à être découvert par l&apos;IA ?
+            {t.cta.title}
           </h2>
           <p className="text-xl text-sky-100 mb-8 max-w-2xl mx-auto">
-            Rejoignez les marchands Shopify qui optimisent déjà pour la visibilité IA.
-            Commencez gratuitement et voyez votre score en quelques minutes.
+            {t.cta.subtitle}
           </p>
           <a
             href="https://apps.shopify.com/surfaced"
             className="inline-block px-10 py-5 text-lg font-bold bg-white text-sky-600 rounded-xl hover:bg-sky-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
           >
-            Installer Surfaced Gratuitement
+            {t.cta.button}
           </a>
           <p className="text-sm text-sky-200 mt-4">
-            Aucune carte bancaire requise • Configuration en 30 secondes
+            {t.cta.note}
           </p>
         </div>
       </section>
@@ -865,51 +798,58 @@ export default function Home() {
                 <span className="text-xl font-bold">surfaced</span>
               </div>
               <p className="text-slate-400 text-sm leading-relaxed">
-                La première solution d&apos;AEO (AI Engine Optimization) pour Shopify.
-                Faites recommander vos produits par ChatGPT, Claude, Perplexity et les assistants IA.
+                {t.footer.description}
               </p>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Produit</h4>
+              <h4 className="font-semibold mb-4">{t.footer.product.title}</h4>
               <ul className="space-y-2 text-sm text-slate-400">
-                <li><a href="#fonctionnalites" className="hover:text-white transition-colors">Fonctionnalités</a></li>
-                <li><a href="#tarifs" className="hover:text-white transition-colors">Tarifs</a></li>
-                <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
+                <li><a href="#fonctionnalites" className="hover:text-white transition-colors">{t.footer.product.features}</a></li>
+                <li><a href="#tarifs" className="hover:text-white transition-colors">{t.footer.product.pricing}</a></li>
+                <li><a href="#faq" className="hover:text-white transition-colors">{t.footer.product.faq}</a></li>
                 <li><a href="https://apps.shopify.com/surfaced" className="hover:text-white transition-colors">Shopify App Store</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Ressources</h4>
+              <h4 className="font-semibold mb-4">{t.footer.resources.title}</h4>
               <ul className="space-y-2 text-sm text-slate-400">
-                <li><Link href="/help" className="hover:text-white transition-colors">Centre d&apos;aide</Link></li>
-                <li><Link href="/help#getting-started" className="hover:text-white transition-colors">Guide de démarrage</Link></li>
-                <li><Link href="/help#api" className="hover:text-white transition-colors">Documentation API</Link></li>
-                <li><a href="mailto:support@surfaced.app" className="hover:text-white transition-colors">Support</a></li>
+                <li><Link href="/help" className="hover:text-white transition-colors">{t.footer.resources.helpCenter}</Link></li>
+                <li><Link href="/help#getting-started" className="hover:text-white transition-colors">{t.footer.resources.gettingStarted}</Link></li>
+                <li><Link href="/help#api" className="hover:text-white transition-colors">{t.footer.resources.apiDocs}</Link></li>
+                <li><a href="mailto:support@surfaced.app" className="hover:text-white transition-colors">{t.footer.resources.support}</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Légal</h4>
+              <h4 className="font-semibold mb-4">{t.footer.legal.title}</h4>
               <ul className="space-y-2 text-sm text-slate-400">
-                <li><Link href="/privacy" className="hover:text-white transition-colors">Politique de confidentialité</Link></li>
-                <li><Link href="/terms" className="hover:text-white transition-colors">Conditions d&apos;utilisation</Link></li>
-                <li><Link href="/gdpr" className="hover:text-white transition-colors">RGPD</Link></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">{t.footer.legal.privacy}</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">{t.footer.legal.terms}</Link></li>
+                <li><Link href="/gdpr" className="hover:text-white transition-colors">{t.footer.legal.gdpr}</Link></li>
               </ul>
             </div>
           </div>
 
           <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-slate-500">
-              &copy; {new Date().getFullYear()} Surfaced. Tous droits réservés.
+              &copy; {new Date().getFullYear()} Surfaced. {t.footer.copyright}
             </p>
             <p className="text-sm text-slate-500">
-              Conçu pour les marchands Shopify qui veulent être trouvés
+              {t.footer.tagline}
             </p>
           </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <LanguageProvider>
+      <HomeContent />
+    </LanguageProvider>
   );
 }
