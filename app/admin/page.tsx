@@ -267,8 +267,8 @@ export default function Dashboard() {
       color: 'bg-fill-magic',
     },
     {
-      title: 'AI Tools',
-      description: 'llms.txt and JSON-LD generators',
+      title: 'Outils IA',
+      description: 'Fichier llms.txt et schémas JSON-LD',
       icon: CodeIcon,
       href: '/admin/tools',
       color: 'bg-fill-success',

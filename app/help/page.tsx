@@ -264,12 +264,11 @@ Description de votre entreprise et positionnement unique.
 
 ### Comment l'utiliser
 
-1. Allez dans **AI Tools** depuis le tableau de bord
-2. Sélectionnez l'onglet **AI Guide (llms.txt)**
-3. Personnalisez les informations si nécessaire
-4. Cliquez sur **Générer**
-5. Téléchargez le fichier
-6. Uploadez-le à la racine de votre domaine
+1. Allez dans **Outils IA** depuis le tableau de bord
+2. Sélectionnez **Fichier llms.txt**
+3. Choisissez quelles IA peuvent vous recommander
+4. Cliquez sur **Générer mon fichier llms.txt**
+5. Téléchargez et installez dans votre thème Shopify
         `,
       },
       {
@@ -296,14 +295,13 @@ JSON-LD est un format de **données structurées** qui aide les moteurs de reche
 
 ### Comment les installer
 
-1. Allez dans **AI Tools** depuis le tableau de bord
-2. Sélectionnez l'onglet **Structured Data (JSON-LD)**
-3. Sélectionnez un produit
-4. Générez le schéma
-5. Copiez le code
-6. Collez-le dans votre thème Shopify (dans le fichier product.liquid)
+1. Allez dans **Outils IA** depuis le tableau de bord
+2. Sélectionnez **Schémas JSON-LD**
+3. Choisissez ce que vous voulez afficher dans Google
+4. Cliquez sur **Générer mes schémas JSON-LD**
+5. Copiez le code et collez-le dans theme.liquid avant &lt;/head&gt;
 
-Ou utilisez notre **installation automatique** (plan Pro+) qui l'ajoute via l'app.
+Testez ensuite sur le **Google Rich Results Test** pour vérifier que tout fonctionne.
         `,
       },
       {
