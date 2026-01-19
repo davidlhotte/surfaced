@@ -273,7 +273,7 @@ export default function CompetitorsPage() {
               <Box padding="600">
                 <BlockStack gap="500">
                   <div style={{
-                    background: 'linear-gradient(135deg, #e17055 0%, #d63031 100%)',
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
                     padding: '24px',
                     borderRadius: '12px',
                     color: 'white',
@@ -298,7 +298,7 @@ export default function CompetitorsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#e17055',
+                            background: '#F59E0B',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
@@ -317,7 +317,7 @@ export default function CompetitorsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#e17055',
+                            background: '#F59E0B',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
@@ -336,7 +336,7 @@ export default function CompetitorsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#e17055',
+                            background: '#F59E0B',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',

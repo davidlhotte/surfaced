@@ -1,16 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#6366F1"/>
-      <stop offset="100%" style="stop-color:#8B5CF6"/>
+    <linearGradient id="surfaceGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
     </linearGradient>
   </defs>
-  
-  <!-- Fond -->
-  <rect width="32" height="32" rx="8" fill="url(#g1)"/>
-  
-  <!-- Pin simplifié -->
-  <path d="M16,5 C11.58,5 8,8.58 8,13 C8,18.25 16,27 16,27 C16,27 24,18.25 24,13 C24,8.58 20.42,5 16,5 Z" fill="#FFFFFF"/>
-  <circle cx="16" cy="13" r="4" fill="url(#g1)"/>
-  <circle cx="16" cy="13" r="1.5" fill="#FFFFFF"/>
+  <rect width="64" height="64" rx="14" fill="#0A1628"/>
+  <path d="M10 46 Q20 38 32 38 Q44 38 54 46 Q44 30 32 30 Q20 30 10 46 Z"
+        fill="url(#surfaceGradient)" opacity="0.3"/>
+  <path d="M8 40 Q18 28 32 28 Q46 28 56 40 Q46 20 32 20 Q18 20 8 40 Z"
+        fill="url(#surfaceGradient)" opacity="0.5"/>
+  <path d="M6 34 Q16 18 32 18 Q48 18 58 34 Q48 12 32 12 Q16 12 6 34 Z"
+        fill="url(#surfaceGradient)"/>
+  <circle cx="32" cy="16" r="4" fill="#38BDF8"/>
 </svg>

@@ -375,7 +375,7 @@ export default function SettingsPage() {
         <Layout.Section>
           <Card>
             <div style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
               margin: '-16px -16px 16px -16px',
               padding: '24px',
               borderRadius: '12px 12px 0 0',
@@ -402,7 +402,7 @@ export default function SettingsPage() {
                         width: '32px',
                         height: '32px',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -424,7 +424,7 @@ export default function SettingsPage() {
                         width: '32px',
                         height: '32px',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -446,7 +446,7 @@ export default function SettingsPage() {
                         width: '32px',
                         height: '32px',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -752,19 +752,19 @@ export default function SettingsPage() {
                 <Text as="h3" variant="headingMd">Conseils pour maximiser votre investissement</Text>
                 <BlockStack gap="200">
                   <InlineStack gap="200" blockAlign="start">
-                    <span style={{ color: '#667eea' }}>1.</span>
+                    <span style={{ color: '#0EA5E9' }}>1.</span>
                     <Text as="p" variant="bodySm">
                       <strong>Commencez petit</strong> : Le plan gratuit vous permet de tester la valeur de Surfaced avant de vous engager.
                     </Text>
                   </InlineStack>
                   <InlineStack gap="200" blockAlign="start">
-                    <span style={{ color: '#667eea' }}>2.</span>
+                    <span style={{ color: '#0EA5E9' }}>2.</span>
                     <Text as="p" variant="bodySm">
                       <strong>Surveillez vos métriques</strong> : Utilisez les insights pour voir l&apos;impact réel sur votre visibilité IA.
                     </Text>
                   </InlineStack>
                   <InlineStack gap="200" blockAlign="start">
-                    <span style={{ color: '#667eea' }}>3.</span>
+                    <span style={{ color: '#0EA5E9' }}>3.</span>
                     <Text as="p" variant="bodySm">
                       <strong>Passez au supérieur quand c&apos;est nécessaire</strong> : Quand vous atteignez vos limites, c&apos;est le signe que ça fonctionne !
                     </Text>

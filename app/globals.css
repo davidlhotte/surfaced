@@ -1,26 +1,225 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
+  /* ===== SURFACED BRAND COLORS ===== */
+  /* Primary */
+  --color-deep-ocean: #0A1628;
+  --color-surface-blue: #0EA5E9;
+  --color-bright-surface: #38BDF8;
+
+  /* Secondary */
+  --color-foam-white: #F0F9FF;
+  --color-pearl: #E0F2FE;
+  --color-slate: #64748B;
+
+  /* Accents */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  /* ===== GRADIENTS ===== */
+  --gradient-primary: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%);
+  --gradient-surface-rise: linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0EA5E9 100%);
+  --gradient-subtle: linear-gradient(180deg, #F0F9FF 0%, #E0F2FE 100%);
+
+  /* ===== TYPOGRAPHY ===== */
+  --font-primary: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+
+  /* Font Weights */
+  --font-light: 300;
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* ===== SPACING ===== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ===== BORDER RADIUS ===== */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* ===== SHADOWS ===== */
+  --shadow-sm: 0 1px 2px rgba(10, 22, 40, 0.05);
+  --shadow-md: 0 4px 12px rgba(10, 22, 40, 0.1);
+  --shadow-lg: 0 8px 24px rgba(10, 22, 40, 0.12);
+  --shadow-xl: 0 16px 48px rgba(10, 22, 40, 0.16);
+  --shadow-glow: 0 0 24px rgba(14, 165, 233, 0.4);
+  --shadow-glow-lg: 0 0 48px rgba(14, 165, 233, 0.5);
+
+  /* ===== ANIMATIONS ===== */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* Theme colors for components */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0A1628;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-primary);
+  --font-mono: var(--font-mono);
+
+  /* Brand colors for Tailwind */
+  --color-deep-ocean: #0A1628;
+  --color-surface-blue: #0EA5E9;
+  --color-bright-surface: #38BDF8;
+  --color-foam-white: #F0F9FF;
+  --color-pearl: #E0F2FE;
 }
 
+/* ===== ANIMATIONS KEYFRAMES ===== */
+@keyframes surfaceRise {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(14, 165, 233, 0.6);
+  }
+}
+
+@keyframes waveMotion {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* ===== DARK THEME ===== */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0A1628;
+    --foreground: #F0F9FF;
   }
+}
+
+[data-theme="dark"] {
+  --background: #0A1628;
+  --foreground: #F0F9FF;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-primary);
+}
+
+/* ===== UI COMPONENT STYLES ===== */
+.btn-primary {
+  background: var(--gradient-primary);
+  color: #FFFFFF;
+  font-family: var(--font-primary);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-base);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  border: none;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
+  transition: all var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-surface-blue);
+  font-family: var(--font-primary);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-base);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-surface-blue);
+  transition: all var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--color-surface-blue);
+  color: #FFFFFF;
+}
+
+.card-surfaced {
+  background: #FFFFFF;
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-pearl);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.card-surfaced:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.score-badge {
+  font-family: var(--font-mono);
+  font-size: var(--text-5xl);
+  font-weight: var(--font-bold);
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.animate-surface-rise {
+  animation: surfaceRise 0.6s var(--ease-out);
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.animate-wave {
+  animation: waveMotion 3s ease-in-out infinite;
 }

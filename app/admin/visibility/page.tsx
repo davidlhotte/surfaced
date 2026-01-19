@@ -280,7 +280,7 @@ export default function VisibilityPage() {
               <Box padding="600">
                 <BlockStack gap="500">
                   <div style={{
-                    background: 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)',
+                    background: 'linear-gradient(135deg, #10B981 0%, #38BDF8 100%)',
                     padding: '24px',
                     borderRadius: '12px',
                     color: 'white',
@@ -305,7 +305,7 @@ export default function VisibilityPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#00b894',
+                            background: '#10B981',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
@@ -324,7 +324,7 @@ export default function VisibilityPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#00b894',
+                            background: '#10B981',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
@@ -343,7 +343,7 @@ export default function VisibilityPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#00b894',
+                            background: '#10B981',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',

@@ -49,7 +49,7 @@ export default function Home() {
 
   if (shouldRedirect()) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700">
+      <div className="flex min-h-screen items-center justify-center" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0EA5E9 100%)' }}>
         <div className="text-white text-center">
           <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
           <p>Chargement...</p>
@@ -72,7 +72,7 @@ export default function Home() {
       title: 'Score de Visibilite IA',
       description: 'Chaque produit recoit un score 0-100 basé sur sa capacité à etre recommandé par les IA. Identifiez instantanément les produits invisibles.',
       benefits: ['Score par produit', 'Detection des problèmes critiques', 'Priorités claires'],
-      color: 'from-blue-500 to-indigo-600',
+      color: 'from-sky-500 to-cyan-600',
     },
     {
       category: 'Optimiser',
@@ -254,11 +254,22 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                <span className="text-white font-bold">S</span>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#0A1628', boxShadow: '0 4px 14px rgba(14, 165, 233, 0.25)' }}>
+                <svg viewBox="0 0 64 64" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="headerGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#0EA5E9"/>
+                      <stop offset="100%" stopColor="#38BDF8"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M10 46 Q20 38 32 38 Q44 38 54 46 Q44 30 32 30 Q20 30 10 46 Z" fill="url(#headerGrad)" opacity="0.3"/>
+                  <path d="M8 40 Q18 28 32 28 Q46 28 56 40 Q46 20 32 20 Q18 20 8 40 Z" fill="url(#headerGrad)" opacity="0.5"/>
+                  <path d="M6 34 Q16 18 32 18 Q48 18 58 34 Q48 12 32 12 Q16 12 6 34 Z" fill="url(#headerGrad)"/>
+                  <circle cx="32" cy="16" r="4" fill="#38BDF8"/>
+                </svg>
               </div>
-              <span className="text-xl font-bold text-slate-900">Surfaced</span>
-              <span className="hidden sm:inline-flex ml-2 px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full">
+              <span className="text-xl font-bold" style={{ color: '#0A1628' }}>surfaced</span>
+              <span className="hidden sm:inline-flex ml-2 px-2 py-0.5 text-xs font-medium rounded-full" style={{ background: '#E0F2FE', color: '#0EA5E9' }}>
                 AEO pour Shopify
               </span>
             </div>
@@ -284,7 +295,8 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <a
                 href="https://apps.shopify.com/surfaced"
-                className="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/25"
+                className="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all"
+                style={{ background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)', boxShadow: '0 4px 14px rgba(14, 165, 233, 0.4)' }}
               >
                 Installer Gratuitement
               </a>
@@ -307,9 +319,9 @@ export default function Home() {
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight mb-6">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6" style={{ color: '#0A1628' }}>
               Faites recommander vos produits par{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
+              <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 50%, #0EA5E9 100%)' }}>
                 ChatGPT, Claude & Perplexity
               </span>
             </h1>
@@ -324,7 +336,8 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
               <a
                 href="https://apps.shopify.com/surfaced"
-                className="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
+                className="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-white rounded-xl transition-all hover:-translate-y-0.5"
+                style={{ background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)', boxShadow: '0 8px 24px rgba(14, 165, 233, 0.4)' }}
               >
                 Analyser Ma Boutique Gratuitement
               </a>
@@ -390,7 +403,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-slate-800/50 rounded-2xl p-8 border border-slate-700">
-              <div className="text-5xl font-bold text-indigo-400 mb-2">43%</div>
+              <div className="text-5xl font-bold text-sky-400 mb-2">43%</div>
               <p className="text-slate-300">des acheteurs en ligne utilisent maintenant les assistants IA pour rechercher des produits</p>
               <p className="text-sm text-slate-500 mt-2">Source: Gartner 2024</p>
             </div>
@@ -406,7 +419,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-16 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 rounded-2xl p-8 border border-indigo-500/30">
+          <div className="mt-16 bg-sky-500/10 rounded-2xl p-8 border border-sky-400/30">
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="flex-1">
                 <h3 className="text-2xl font-bold mb-4">L&apos;AEO : le nouveau SEO</h3>
@@ -418,7 +431,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="text-center">
-                <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+                <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-400">
                   AEO
                 </div>
                 <p className="text-sm text-slate-400 mt-2">La prochaine révolution</p>
@@ -576,7 +589,7 @@ export default function Home() {
             {testimonials.map((testimonial, index) => (
               <div key={index} className="bg-slate-50 rounded-2xl p-8 border border-slate-200">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center text-white font-bold text-xl">
                     {testimonial.author[0]}
                   </div>
                   <div>
@@ -588,7 +601,7 @@ export default function Home() {
                   &quot;{testimonial.quote}&quot;
                 </blockquote>
                 <div className="flex items-center gap-2 pt-4 border-t border-slate-200">
-                  <span className="text-3xl font-bold text-indigo-600">{testimonial.metric}</span>
+                  <span className="text-3xl font-bold text-sky-600">{testimonial.metric}</span>
                   <span className="text-sm text-slate-500">{testimonial.metricLabel}</span>
                 </div>
               </div>
@@ -596,23 +609,23 @@ export default function Home() {
           </div>
 
           {/* Stats bar */}
-          <div className="mt-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white">
+          <div className="mt-16 bg-gradient-to-r from-sky-500 to-cyan-500 rounded-2xl p-8 text-white">
             <div className="grid sm:grid-cols-4 gap-8 text-center">
               <div>
                 <div className="text-4xl font-bold">500+</div>
-                <div className="text-indigo-200">Boutiques optimisées</div>
+                <div className="text-sky-200">Boutiques optimisées</div>
               </div>
               <div>
                 <div className="text-4xl font-bold">50K+</div>
-                <div className="text-indigo-200">Produits analysés</div>
+                <div className="text-sky-200">Produits analysés</div>
               </div>
               <div>
                 <div className="text-4xl font-bold">35%</div>
-                <div className="text-indigo-200">Gain moyen de visibilité</div>
+                <div className="text-sky-200">Gain moyen de visibilité</div>
               </div>
               <div>
                 <div className="text-4xl font-bold">4.9/5</div>
-                <div className="text-indigo-200">Note App Store</div>
+                <div className="text-sky-200">Note App Store</div>
               </div>
             </div>
           </div>
@@ -637,7 +650,7 @@ export default function Home() {
                 key={index}
                 className={`rounded-2xl p-6 ${
                   plan.popular
-                    ? 'bg-gradient-to-b from-indigo-600 to-purple-600 text-white ring-4 ring-indigo-600 ring-offset-4 scale-105'
+                    ? 'bg-gradient-to-b from-sky-500 to-cyan-500 text-white ring-4 ring-sky-500 ring-offset-4 scale-105'
                     : 'bg-white border border-slate-200'
                 }`}
               >
@@ -654,16 +667,16 @@ export default function Home() {
                     {plan.price === '0' ? 'Gratuit' : `${plan.price}€`}
                   </span>
                   {plan.price !== '0' && (
-                    <span className={plan.popular ? 'text-indigo-200' : 'text-slate-500'}>{plan.period}</span>
+                    <span className={plan.popular ? 'text-sky-200' : 'text-slate-500'}>{plan.period}</span>
                   )}
                 </div>
-                <p className={`text-sm ${plan.popular ? 'text-indigo-200' : 'text-slate-500'} mb-6`}>
+                <p className={`text-sm ${plan.popular ? 'text-sky-200' : 'text-slate-500'} mb-6`}>
                   {plan.description}
                 </p>
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className={`flex items-start gap-2 text-sm ${plan.popular ? 'text-indigo-100' : 'text-slate-600'}`}>
-                      <svg className={`w-5 h-5 flex-shrink-0 ${plan.popular ? 'text-indigo-300' : 'text-green-500'}`} fill="currentColor" viewBox="0 0 20 20">
+                    <li key={i} className={`flex items-start gap-2 text-sm ${plan.popular ? 'text-sky-100' : 'text-slate-600'}`}>
+                      <svg className={`w-5 h-5 flex-shrink-0 ${plan.popular ? 'text-sky-300' : 'text-green-500'}`} fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                       {feature}
@@ -674,7 +687,7 @@ export default function Home() {
                   href="https://apps.shopify.com/surfaced"
                   className={`block w-full py-3 text-center font-semibold rounded-xl transition-all ${
                     plan.popular
-                      ? 'bg-white text-indigo-600 hover:bg-indigo-50'
+                      ? 'bg-white text-sky-600 hover:bg-sky-50'
                       : 'bg-slate-900 text-white hover:bg-slate-800'
                   }`}
                 >
@@ -732,7 +745,7 @@ export default function Home() {
             <p className="text-slate-600 mb-4">Vous avez d&apos;autres questions ?</p>
             <Link
               href="/help"
-              className="inline-flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-700"
+              className="inline-flex items-center gap-2 text-sky-600 font-semibold hover:text-sky-700"
             >
               Consultez notre centre d&apos;aide
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -744,22 +757,22 @@ export default function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
+      <section className="py-20 px-4 sm:px-6 lg:px-8" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0EA5E9 100%)' }}>
         <div className="max-w-4xl mx-auto text-center text-white">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">
             Prêt à être découvert par l&apos;IA ?
           </h2>
-          <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-sky-100 mb-8 max-w-2xl mx-auto">
             Rejoignez les marchands Shopify qui optimisent déjà pour la visibilité IA.
             Commencez gratuitement et voyez votre score en quelques minutes.
           </p>
           <a
             href="https://apps.shopify.com/surfaced"
-            className="inline-block px-10 py-5 text-lg font-bold bg-white text-indigo-600 rounded-xl hover:bg-indigo-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+            className="inline-block px-10 py-5 text-lg font-bold bg-white text-sky-600 rounded-xl hover:bg-sky-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
           >
             Installer Surfaced Gratuitement
           </a>
-          <p className="text-sm text-indigo-200 mt-4">
+          <p className="text-sm text-sky-200 mt-4">
             Aucune carte bancaire requise • Configuration en 30 secondes
           </p>
         </div>
@@ -771,10 +784,21 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                  <span className="font-bold">S</span>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#0A1628' }}>
+                  <svg viewBox="0 0 64 64" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="footerGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#0EA5E9"/>
+                        <stop offset="100%" stopColor="#38BDF8"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M10 46 Q20 38 32 38 Q44 38 54 46 Q44 30 32 30 Q20 30 10 46 Z" fill="url(#footerGrad)" opacity="0.3"/>
+                    <path d="M8 40 Q18 28 32 28 Q46 28 56 40 Q46 20 32 20 Q18 20 8 40 Z" fill="url(#footerGrad)" opacity="0.5"/>
+                    <path d="M6 34 Q16 18 32 18 Q48 18 58 34 Q48 12 32 12 Q16 12 6 34 Z" fill="url(#footerGrad)"/>
+                    <circle cx="32" cy="16" r="4" fill="#38BDF8"/>
+                  </svg>
                 </div>
-                <span className="text-xl font-bold">Surfaced</span>
+                <span className="text-xl font-bold">surfaced</span>
               </div>
               <p className="text-slate-400 text-sm leading-relaxed">
                 La première solution d&apos;AEO (AI Engine Optimization) pour Shopify.

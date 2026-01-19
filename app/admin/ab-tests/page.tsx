@@ -275,7 +275,7 @@ export default function ABTestsPage() {
               <Box padding="600">
                 <BlockStack gap="500">
                   <div style={{
-                    background: 'linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)',
+                    background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
                     padding: '24px',
                     borderRadius: '12px',
                     color: 'white',
@@ -300,7 +300,7 @@ export default function ABTestsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#6c5ce7',
+                            background: '#0EA5E9',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
@@ -319,7 +319,7 @@ export default function ABTestsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#6c5ce7',
+                            background: '#0EA5E9',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
@@ -338,7 +338,7 @@ export default function ABTestsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#6c5ce7',
+                            background: '#0EA5E9',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
