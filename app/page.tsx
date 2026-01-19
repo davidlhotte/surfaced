@@ -17,6 +17,7 @@ export default function Home() {
   const hasCheckedRedirect = useRef(false);
   const [activeTab, setActiveTab] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (hasCheckedRedirect.current) return;
@@ -165,7 +166,7 @@ export default function Home() {
     },
     {
       q: 'Puis-je essayer gratuitement ?',
-      a: "Oui ! Notre plan gratuit permet d'analyser 25 produits et de faire 5 vérifications de visibilité par mois. Aucune carte bancaire requise. Vous pouvez upgrader à tout moment quand vous voyez les résultats.",
+      a: "Oui ! Notre plan gratuit permet d'analyser 10 produits et de faire 3 vérifications de visibilité par mois. Aucune carte bancaire requise. Vous pouvez upgrader à tout moment quand vous voyez les résultats.",
     },
     {
       q: 'Comment le score IA est-il calculé ?',
@@ -186,11 +187,11 @@ export default function Home() {
       description: 'Pour découvrir votre visibilité IA',
       features: [
         '10 produits analysés',
-        '3 vérifications de visibilité/mois',
-        '3 optimisations IA/mois',
+        '3 vérifications/mois',
+        '3 suggestions IA/mois',
         'Score IA par produit',
-        'Générateur llms.txt',
-        'Recommandations basiques',
+        'Générateur AI Guide',
+        'Historique 7 jours',
       ],
       cta: 'Commencer Gratuitement',
       popular: false,
@@ -203,9 +204,9 @@ export default function Home() {
       features: [
         '100 produits analysés',
         '10 vérifications/mois',
-        '20 optimisations IA/mois',
+        '20 suggestions IA/mois',
         '1 concurrent suivi',
-        'Données structurées JSON-LD',
+        'Schémas JSON-LD auto',
         'Historique 30 jours',
       ],
       cta: 'Essai Gratuit 14 Jours',
@@ -219,9 +220,8 @@ export default function Home() {
       features: [
         '500 produits analysés',
         '50 vérifications/mois',
-        '100 optimisations IA/mois',
-        'Suivi de 3 concurrents',
-        'Tests A/B de contenu',
+        '100 suggestions IA/mois',
+        '3 concurrents suivis',
         'Export CSV',
         'Historique 90 jours',
       ],
@@ -236,9 +236,9 @@ export default function Home() {
       features: [
         'Produits illimités',
         '200 vérifications/mois',
-        '500 optimisations IA/mois',
-        'Suivi de 10 concurrents',
-        'API publique',
+        '500 suggestions IA/mois',
+        '10 concurrents suivis',
+        'Accès API',
         'Historique 1 an',
         'Support prioritaire',
       ],
@@ -300,8 +300,72 @@ export default function Home() {
               >
                 Installer Gratuitement
               </a>
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                aria-label="Menu"
+              >
+                <svg className="w-6 h-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
+
+          {/* Mobile menu panel */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-slate-100 py-4">
+              <nav className="flex flex-col gap-2">
+                <a
+                  href="#fonctionnalites"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  Fonctionnalités
+                </a>
+                <a
+                  href="#comment-ca-marche"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  Comment ça marche
+                </a>
+                <a
+                  href="#tarifs"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  Tarifs
+                </a>
+                <a
+                  href="#faq"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  FAQ
+                </a>
+                <Link
+                  href="/help"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  Aide
+                </Link>
+                <a
+                  href="https://apps.shopify.com/surfaced"
+                  className="mx-4 mt-2 px-4 py-3 text-center font-semibold text-white rounded-lg transition-all"
+                  style={{ background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)' }}
+                >
+                  Installer Gratuitement
+                </a>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
@@ -664,7 +728,7 @@ export default function Home() {
                 </h3>
                 <div className="mt-4 mb-2">
                   <span className={`text-4xl font-bold ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
-                    {plan.price === '0' ? 'Gratuit' : `${plan.price}€`}
+                    {plan.price === '0' ? 'Gratuit' : `$${plan.price}`}
                   </span>
                   {plan.price !== '0' && (
                     <span className={plan.popular ? 'text-sky-200' : 'text-slate-500'}>{plan.period}</span>
@@ -698,7 +762,7 @@ export default function Home() {
           </div>
 
           <p className="text-center text-sm text-slate-500 mt-8">
-            Tous les plans incluent un essai gratuit de 7 jours. Annulez à tout moment.
+            Tous les plans payants incluent un essai gratuit de 14 jours. Annulez à tout moment. Prix en USD.
           </p>
         </div>
       </section>

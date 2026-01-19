@@ -315,7 +315,7 @@ export default function Dashboard() {
                       <InlineStack gap="200" blockAlign="center">
                         <Badge tone="info">2</Badge>
                         <Text as="p" variant="bodyMd">
-                          <strong>Optimisez</strong> les descriptions avec l'aide de l'IA
+                          <strong>Optimisez</strong> les descriptions avec l&apos;aide de l&apos;IA
                         </Text>
                       </InlineStack>
                       <InlineStack gap="200" blockAlign="center">
@@ -398,7 +398,7 @@ export default function Dashboard() {
                       <InlineStack gap="200" blockAlign="center">
                         <Icon source={AlertTriangleIcon} tone="critical" />
                         <Text as="span" variant="bodySm">
-                          <strong>{criticalCount}</strong> produits ont besoin d'attention urgente
+                          <strong>{criticalCount}</strong> produits ont besoin d&apos;attention urgente
                         </Text>
                       </InlineStack>
                     </Box>
@@ -433,7 +433,7 @@ export default function Dashboard() {
                       </Button>
                     </Link>
                     <Button onClick={runAudit} loading={auditing}>
-                      Relancer l'analyse
+                      Relancer l&apos;analyse
                     </Button>
                   </InlineStack>
                 </BlockStack>
