@@ -129,3 +129,38 @@ test: Add tests
 refactor: Code refactoring
 chore: Maintenance
 ```
+
+## Deployment Workflow
+
+**IMPORTANT: After every modification, follow this workflow:**
+
+### 1. Commit & Push
+```bash
+git add -A
+git commit -m "feat/fix: Description"
+git push origin main
+```
+
+### 2. Deploy to Shopify
+```bash
+npx shopify app deploy --force
+```
+
+### 3. Verify Deployment
+- **Vercel**: Check https://vercel.com/dashboard for build status
+- **Shopify Partners**: Check Apps > Surfaced > Versions for new version
+
+### Complete Example
+```bash
+# After making changes:
+npm run lint                           # Check for errors
+git add -A && git commit -m "feat: Add new feature" && git push origin main
+npx shopify app deploy --force         # Deploy to Shopify (creates new version)
+# Then verify on Vercel dashboard and Shopify Partners > Apps > Versions
+```
+
+## App URLs
+
+- **Production**: https://surfaced.vercel.app
+- **Shopify Partners**: https://partners.shopify.com (Apps > Surfaced)
+- **Vercel Dashboard**: https://vercel.com/dashboard
