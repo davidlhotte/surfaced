@@ -15,12 +15,7 @@ import {
   Box,
   Divider,
   ProgressBar,
-  Icon,
 } from '@shopify/polaris';
-import {
-  CheckCircleIcon,
-  XCircleIcon,
-} from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 
@@ -84,15 +79,15 @@ const getPlanIndex = (plan: string): number => {
 };
 
 // Import plan limits from the central constants to stay in sync
-import { PLAN_LIMITS, PLAN_PRICES, PLAN_NAMES } from '@/lib/constants/plans';
+import { PLAN_LIMITS, PLAN_PRICES } from '@/lib/constants/plans';
 
-// Real plan features matching lib/constants/plans.ts
+// Plan features with French labels
 const PLAN_FEATURES = {
   FREE: {
-    name: 'Free Trial',
+    name: 'Gratuit',
     price: 0,
-    priceLabel: 'Free forever',
-    description: 'Perfect for getting started',
+    priceLabel: 'Gratuit',
+    description: 'Parfait pour commencer',
     limits: {
       products: PLAN_LIMITS.FREE.productsAudited,
       visibilityChecks: PLAN_LIMITS.FREE.visibilityChecksPerMonth,
@@ -100,23 +95,23 @@ const PLAN_FEATURES = {
       competitors: PLAN_LIMITS.FREE.competitorsTracked,
     },
     features: [
-      { name: 'AI readiness audit', included: true },
-      { name: `Up to ${PLAN_LIMITS.FREE.productsAudited} products`, included: true },
-      { name: `${PLAN_LIMITS.FREE.visibilityChecksPerMonth} visibility checks/month`, included: true },
-      { name: 'AI Guide generator', included: true },
-      { name: 'Basic recommendations', included: true },
-      { name: `${PLAN_LIMITS.FREE.aiOptimizationsPerMonth} AI content suggestions/month`, included: PLAN_LIMITS.FREE.aiOptimizationsPerMonth > 0 },
-      { name: 'Structured data', included: false },
-      { name: 'Weekly reports', included: false },
-      { name: 'Competitor tracking', included: false },
-      { name: 'Priority support', included: false },
+      { name: 'Audit de visibilité IA', included: true },
+      { name: `Jusqu'à ${PLAN_LIMITS.FREE.productsAudited} produits`, included: true },
+      { name: `${PLAN_LIMITS.FREE.visibilityChecksPerMonth} vérifications/mois`, included: true },
+      { name: 'Générateur AI Guide', included: true },
+      { name: 'Recommandations de base', included: true },
+      { name: `${PLAN_LIMITS.FREE.aiOptimizationsPerMonth} suggestions IA/mois`, included: PLAN_LIMITS.FREE.aiOptimizationsPerMonth > 0 },
+      { name: 'Données structurées', included: false },
+      { name: 'Rapports hebdomadaires', included: false },
+      { name: 'Suivi concurrents', included: false },
+      { name: 'Support prioritaire', included: false },
     ],
   },
   BASIC: {
     name: 'Starter',
     price: PLAN_PRICES.BASIC,
-    priceLabel: `$${PLAN_PRICES.BASIC}/month`,
-    description: 'For growing stores',
+    priceLabel: `${PLAN_PRICES.BASIC}$/mois`,
+    description: 'Pour les boutiques en croissance',
     limits: {
       products: PLAN_LIMITS.BASIC.productsAudited,
       visibilityChecks: PLAN_LIMITS.BASIC.visibilityChecksPerMonth,
@@ -124,23 +119,23 @@ const PLAN_FEATURES = {
       competitors: PLAN_LIMITS.BASIC.competitorsTracked,
     },
     features: [
-      { name: 'AI readiness audit', included: true },
-      { name: `Up to ${PLAN_LIMITS.BASIC.productsAudited} products`, included: true },
-      { name: `${PLAN_LIMITS.BASIC.visibilityChecksPerMonth} visibility checks/month`, included: true },
-      { name: 'AI Guide generator', included: true },
-      { name: 'Detailed recommendations', included: true },
-      { name: `${PLAN_LIMITS.BASIC.aiOptimizationsPerMonth} AI content suggestions/month`, included: true },
-      { name: 'Structured data export', included: true },
-      { name: 'Weekly reports', included: false },
-      { name: `Track ${PLAN_LIMITS.BASIC.competitorsTracked} competitor${PLAN_LIMITS.BASIC.competitorsTracked !== 1 ? 's' : ''}`, included: PLAN_LIMITS.BASIC.competitorsTracked > 0 },
-      { name: 'Priority support', included: false },
+      { name: 'Audit de visibilité IA', included: true },
+      { name: `Jusqu'à ${PLAN_LIMITS.BASIC.productsAudited} produits`, included: true },
+      { name: `${PLAN_LIMITS.BASIC.visibilityChecksPerMonth} vérifications/mois`, included: true },
+      { name: 'Générateur AI Guide', included: true },
+      { name: 'Recommandations détaillées', included: true },
+      { name: `${PLAN_LIMITS.BASIC.aiOptimizationsPerMonth} suggestions IA/mois`, included: true },
+      { name: 'Export données structurées', included: true },
+      { name: 'Rapports hebdomadaires', included: false },
+      { name: `Suivi de ${PLAN_LIMITS.BASIC.competitorsTracked} concurrent${PLAN_LIMITS.BASIC.competitorsTracked !== 1 ? 's' : ''}`, included: PLAN_LIMITS.BASIC.competitorsTracked > 0 },
+      { name: 'Support prioritaire', included: false },
     ],
   },
   PLUS: {
     name: 'Growth',
     price: PLAN_PRICES.PLUS,
-    priceLabel: `$${PLAN_PRICES.PLUS}/month`,
-    description: 'For serious sellers',
+    priceLabel: `${PLAN_PRICES.PLUS}$/mois`,
+    description: 'Pour les vendeurs sérieux',
     popular: true,
     limits: {
       products: PLAN_LIMITS.PLUS.productsAudited,
@@ -149,23 +144,23 @@ const PLAN_FEATURES = {
       competitors: PLAN_LIMITS.PLUS.competitorsTracked,
     },
     features: [
-      { name: 'AI readiness audit', included: true },
-      { name: `Up to ${PLAN_LIMITS.PLUS.productsAudited} products`, included: true },
-      { name: `${PLAN_LIMITS.PLUS.visibilityChecksPerMonth} visibility checks/month`, included: true },
-      { name: 'AI Guide generator', included: true },
-      { name: 'Advanced recommendations', included: true },
-      { name: `${PLAN_LIMITS.PLUS.aiOptimizationsPerMonth} AI content suggestions/month`, included: true },
-      { name: 'Structured data export', included: true },
-      { name: 'Weekly reports', included: true },
-      { name: `Track ${PLAN_LIMITS.PLUS.competitorsTracked} competitors`, included: true },
-      { name: 'Priority support', included: false },
+      { name: 'Audit de visibilité IA', included: true },
+      { name: `Jusqu'à ${PLAN_LIMITS.PLUS.productsAudited} produits`, included: true },
+      { name: `${PLAN_LIMITS.PLUS.visibilityChecksPerMonth} vérifications/mois`, included: true },
+      { name: 'Générateur AI Guide', included: true },
+      { name: 'Recommandations avancées', included: true },
+      { name: `${PLAN_LIMITS.PLUS.aiOptimizationsPerMonth} suggestions IA/mois`, included: true },
+      { name: 'Export données structurées', included: true },
+      { name: 'Rapports hebdomadaires', included: true },
+      { name: `Suivi de ${PLAN_LIMITS.PLUS.competitorsTracked} concurrents`, included: true },
+      { name: 'Support prioritaire', included: false },
     ],
   },
   PREMIUM: {
     name: 'Scale',
     price: PLAN_PRICES.PREMIUM,
-    priceLabel: `$${PLAN_PRICES.PREMIUM}/month`,
-    description: 'For high-volume stores',
+    priceLabel: `${PLAN_PRICES.PREMIUM}$/mois`,
+    description: 'Pour les gros volumes',
     limits: {
       products: -1, // Infinity becomes -1 for UI
       visibilityChecks: PLAN_LIMITS.PREMIUM.visibilityChecksPerMonth,
@@ -173,16 +168,16 @@ const PLAN_FEATURES = {
       competitors: PLAN_LIMITS.PREMIUM.competitorsTracked,
     },
     features: [
-      { name: 'AI readiness audit', included: true },
-      { name: 'Unlimited products', included: true },
-      { name: `${PLAN_LIMITS.PREMIUM.visibilityChecksPerMonth} visibility checks/month`, included: true },
-      { name: 'AI Guide generator', included: true },
-      { name: 'Premium recommendations', included: true },
-      { name: `${PLAN_LIMITS.PREMIUM.aiOptimizationsPerMonth} AI content suggestions/month`, included: true },
-      { name: 'Structured data export', included: true },
-      { name: 'Daily reports', included: true },
-      { name: `Track ${PLAN_LIMITS.PREMIUM.competitorsTracked} competitors`, included: true },
-      { name: 'Priority support', included: true },
+      { name: 'Audit de visibilité IA', included: true },
+      { name: 'Produits illimités', included: true },
+      { name: `${PLAN_LIMITS.PREMIUM.visibilityChecksPerMonth} vérifications/mois`, included: true },
+      { name: 'Générateur AI Guide', included: true },
+      { name: 'Recommandations premium', included: true },
+      { name: `${PLAN_LIMITS.PREMIUM.aiOptimizationsPerMonth} suggestions IA/mois`, included: true },
+      { name: 'Export données structurées', included: true },
+      { name: 'Rapports quotidiens', included: true },
+      { name: `Suivi de ${PLAN_LIMITS.PREMIUM.competitorsTracked} concurrents`, included: true },
+      { name: 'Support prioritaire', included: true },
     ],
   },
 };
@@ -202,7 +197,7 @@ export default function SettingsPage() {
     setIsDevMode(checkDevMode());
   }, []);
 
-  // Hidden dev mode activation: click "Your Store" 5 times
+  // Hidden dev mode activation: click "Votre boutique" 5 times
   const handleDevClick = useCallback(() => {
     const newClicks = devClicks + 1;
     setDevClicks(newClicks);
@@ -245,7 +240,7 @@ export default function SettingsPage() {
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
+      setError(err instanceof Error ? err.message : 'Échec du chargement');
     } finally {
       setLoading(false);
     }
@@ -268,10 +263,10 @@ export default function SettingsPage() {
       if (response.ok && result.data?.confirmationUrl) {
         window.open(result.data.confirmationUrl, '_top');
       } else {
-        setError(result.error || 'Failed to initiate upgrade');
+        setError(result.error || 'Échec de la mise à niveau');
       }
     } catch {
-      setError('Failed to initiate upgrade');
+      setError('Échec de la mise à niveau');
     }
   };
 
@@ -290,10 +285,10 @@ export default function SettingsPage() {
         setShopInfo((prev) => prev ? { ...prev, plan } : null);
         setError(null);
       } else {
-        setError(result.error || `Failed to change plan (${response.status})`);
+        setError(result.error || `Échec du changement de plan (${response.status})`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to change plan');
+      setError(err instanceof Error ? err.message : 'Échec du changement de plan');
     }
   };
 
@@ -304,14 +299,14 @@ export default function SettingsPage() {
 
   if (loading || shopLoading) {
     return (
-      <Page title="Your Plan" backAction={{ content: 'Dashboard', url: '/admin' }}>
+      <Page title="Votre abonnement" backAction={{ content: 'Tableau de bord', url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
               <Box padding="800">
                 <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
-                  <Text as="p">Loading your plan...</Text>
+                  <Text as="p">Chargement de votre abonnement...</Text>
                 </BlockStack>
               </Box>
             </Card>
@@ -336,9 +331,9 @@ export default function SettingsPage() {
 
   return (
     <Page
-      title="Your Plan"
-      subtitle="Manage your subscription and see what's included"
-      backAction={{ content: 'Dashboard', url: '/admin' }}
+      title="Votre abonnement"
+      subtitle="Gérez votre forfait et découvrez ce qui est inclus"
+      backAction={{ content: 'Tableau de bord', url: '/admin' }}
     >
       <Layout>
         {error && (
@@ -354,10 +349,10 @@ export default function SettingsPage() {
             <Banner tone="warning">
               <BlockStack gap="300">
                 <Text as="p" fontWeight="bold">
-                  Dev Mode: Test different plans (no billing)
+                  Mode développeur : Testez différents plans (sans facturation)
                 </Text>
                 <Text as="p" variant="bodySm" tone="subdued">
-                  Click a plan to switch instantly without being charged.
+                  Cliquez sur un plan pour basculer instantanément sans être facturé.
                 </Text>
                 <InlineStack gap="200">
                   {(['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const).map((plan) => (
@@ -376,6 +371,101 @@ export default function SettingsPage() {
           </Layout.Section>
         )}
 
+        {/* Welcome Section */}
+        <Layout.Section>
+          <Card>
+            <div style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              margin: '-16px -16px 16px -16px',
+              padding: '24px',
+              borderRadius: '12px 12px 0 0',
+            }}>
+              <BlockStack gap="200">
+                <Text as="h2" variant="headingLg" fontWeight="bold">
+                  <span style={{ color: 'white' }}>Choisissez le plan adapté à votre croissance</span>
+                </Text>
+                <Text as="p" variant="bodyMd">
+                  <span style={{ color: 'rgba(255,255,255,0.9)' }}>
+                    Plus vous investissez dans votre visibilité IA, plus vous attirez de clients via ChatGPT, Perplexity et autres.
+                  </span>
+                </Text>
+              </BlockStack>
+            </div>
+
+            <BlockStack gap="400">
+              <Text as="h3" variant="headingMd">Pourquoi mettre à niveau ?</Text>
+              <InlineStack gap="400" wrap>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                  <BlockStack gap="200">
+                    <InlineStack gap="200" blockAlign="center">
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                      }}>1</div>
+                      <Text as="p" fontWeight="semibold">Plus de produits analysés</Text>
+                    </InlineStack>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Auditez tous vos produits pour maximiser votre visibilité sur toutes les IA.
+                    </Text>
+                  </BlockStack>
+                </div>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                  <BlockStack gap="200">
+                    <InlineStack gap="200" blockAlign="center">
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                      }}>2</div>
+                      <Text as="p" fontWeight="semibold">Suivi des concurrents</Text>
+                    </InlineStack>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Surveillez vos concurrents et comparez votre visibilité IA à la leur.
+                    </Text>
+                  </BlockStack>
+                </div>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                  <BlockStack gap="200">
+                    <InlineStack gap="200" blockAlign="center">
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                      }}>3</div>
+                      <Text as="p" fontWeight="semibold">Rapports détaillés</Text>
+                    </InlineStack>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Recevez des rapports hebdomadaires ou quotidiens sur votre progression.
+                    </Text>
+                  </BlockStack>
+                </div>
+              </InlineStack>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+
         {/* Current Plan Overview */}
         <Layout.Section>
           <Card>
@@ -385,17 +475,20 @@ export default function SettingsPage() {
                   <InlineStack gap="200" blockAlign="center">
                     <Text as="h2" variant="headingLg">{planInfo.name}</Text>
                     {currentPlan !== 'FREE' && (
-                      <Badge tone="success">Active</Badge>
+                      <Badge tone="success">Actif</Badge>
+                    )}
+                    {currentPlan === 'FREE' && (
+                      <Badge tone="info">Plan actuel</Badge>
                     )}
                   </InlineStack>
                   <Text as="p" tone="subdued">{planInfo.description}</Text>
                 </BlockStack>
                 <BlockStack gap="100" inlineAlign="end">
                   <Text as="p" variant="headingXl" fontWeight="bold">
-                    {planInfo.price === 0 ? 'Free' : `$${planInfo.price}`}
+                    {planInfo.price === 0 ? 'Gratuit' : `${planInfo.price}$`}
                   </Text>
                   {planInfo.price > 0 && (
-                    <Text as="p" variant="bodySm" tone="subdued">per month</Text>
+                    <Text as="p" variant="bodySm" tone="subdued">par mois</Text>
                   )}
                 </BlockStack>
               </InlineStack>
@@ -407,13 +500,13 @@ export default function SettingsPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">Your Usage This Month</Text>
+              <Text as="h2" variant="headingMd">Votre utilisation ce mois-ci</Text>
               <Divider />
 
               {/* Products */}
               <BlockStack gap="200">
                 <InlineStack align="space-between">
-                  <Text as="p">Products audited</Text>
+                  <Text as="p">Produits audités</Text>
                   <Text as="p" fontWeight="semibold">
                     {usage?.productsAudited || 0} / {productsLimit < 0 || productsLimit === Infinity ? '∞' : productsLimit}
                   </Text>
@@ -430,7 +523,7 @@ export default function SettingsPage() {
               {/* Visibility Checks */}
               <BlockStack gap="200">
                 <InlineStack align="space-between">
-                  <Text as="p">Visibility checks</Text>
+                  <Text as="p">Vérifications de visibilité</Text>
                   <Text as="p" fontWeight="semibold">
                     {usage?.visibilityChecks || 0} / {visibilityLimit < 0 || visibilityLimit === Infinity ? '∞' : visibilityLimit}
                   </Text>
@@ -447,9 +540,9 @@ export default function SettingsPage() {
               {/* AI Optimizations */}
               <BlockStack gap="200">
                 <InlineStack align="space-between">
-                  <Text as="p">AI content suggestions</Text>
+                  <Text as="p">Suggestions IA</Text>
                   <Text as="p" fontWeight="semibold">
-                    {usage?.aiOptimizations || 0} / {optimizationLimit < 0 || optimizationLimit === Infinity ? '∞' : optimizationLimit === 0 ? 'Not included' : optimizationLimit}
+                    {usage?.aiOptimizations || 0} / {optimizationLimit < 0 || optimizationLimit === Infinity ? '∞' : optimizationLimit === 0 ? 'Non inclus' : optimizationLimit}
                   </Text>
                 </InlineStack>
                 {optimizationLimit > 0 && (
@@ -464,7 +557,7 @@ export default function SettingsPage() {
               {(productUsage > 80 || visibilityUsage > 80) && currentPlan !== 'PREMIUM' && (
                 <Banner tone="warning">
                   <Text as="p">
-                    You&apos;re approaching your plan limits. Upgrade to continue growing.
+                    Vous approchez de vos limites. Passez au niveau supérieur pour continuer à développer votre visibilité.
                   </Text>
                 </Banner>
               )}
@@ -476,9 +569,9 @@ export default function SettingsPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">Compare All Plans</Text>
+              <Text as="h2" variant="headingMd">Comparer tous les plans</Text>
               <Text as="p" tone="subdued">
-                Choose the plan that fits your store
+                Choisissez le forfait qui correspond à votre boutique
               </Text>
               <Divider />
 
@@ -487,7 +580,7 @@ export default function SettingsPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--p-color-border)' }}>
-                      <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600 }}>Feature</th>
+                      <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600 }}>Fonctionnalité</th>
                       {(['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const).map((planKey) => {
                         const plan = PLAN_FEATURES[planKey];
                         const isCurrent = planKey === currentPlan;
@@ -505,12 +598,12 @@ export default function SettingsPage() {
                           >
                             <BlockStack gap="100" inlineAlign="center">
                               <Text as="span" variant="headingSm">{plan.name}</Text>
-                              {isCurrent && <Badge tone="success" size="small">Current</Badge>}
-                              {isPopular && !isCurrent && <Badge tone="attention" size="small">Popular</Badge>}
+                              {isCurrent && <Badge tone="success" size="small">Actuel</Badge>}
+                              {isPopular && !isCurrent && <Badge tone="attention" size="small">Populaire</Badge>}
                               <Text as="span" variant="bodyLg" fontWeight="bold">
-                                {plan.price === 0 ? 'Free' : `$${plan.price}`}
+                                {plan.price === 0 ? 'Gratuit' : `${plan.price}$`}
                               </Text>
-                              {plan.price > 0 && <Text as="span" variant="bodySm" tone="subdued">/month</Text>}
+                              {plan.price > 0 && <Text as="span" variant="bodySm" tone="subdued">/mois</Text>}
                             </BlockStack>
                           </th>
                         );
@@ -520,15 +613,15 @@ export default function SettingsPage() {
                   <tbody>
                     {/* Products */}
                     <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>Products Audited</td>
+                      <td style={{ padding: '10px 8px' }}>Produits audités</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.productsAudited}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.productsAudited}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.productsAudited}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 600 }}>Unlimited</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 600 }}>Illimité</td>
                     </tr>
                     {/* Visibility Checks */}
                     <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>Visibility Checks/month</td>
+                      <td style={{ padding: '10px 8px' }}>Vérifications visibilité/mois</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.visibilityChecksPerMonth}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.visibilityChecksPerMonth}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.visibilityChecksPerMonth}</td>
@@ -536,7 +629,7 @@ export default function SettingsPage() {
                     </tr>
                     {/* AI Optimizations */}
                     <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>AI Optimizations/month</td>
+                      <td style={{ padding: '10px 8px' }}>Suggestions IA/mois</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.aiOptimizationsPerMonth}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.aiOptimizationsPerMonth}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.aiOptimizationsPerMonth}</td>
@@ -544,7 +637,7 @@ export default function SettingsPage() {
                     </tr>
                     {/* Competitors */}
                     <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>Competitors Tracked</td>
+                      <td style={{ padding: '10px 8px' }}>Concurrents suivis</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.competitorsTracked || '-'}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.competitorsTracked}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.competitorsTracked}</td>
@@ -552,11 +645,11 @@ export default function SettingsPage() {
                     </tr>
                     {/* History */}
                     <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>History Retention</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.historyDays} days</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.historyDays} days</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.historyDays} days</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.historyDays} days</td>
+                      <td style={{ padding: '10px 8px' }}>Historique conservé</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.historyDays} jours</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.historyDays} jours</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.historyDays} jours</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.historyDays} jours</td>
                     </tr>
                     {/* Export CSV */}
                     <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
@@ -568,7 +661,7 @@ export default function SettingsPage() {
                     </tr>
                     {/* API Access */}
                     <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>API Access</td>
+                      <td style={{ padding: '10px 8px' }}>Accès API</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.apiAccess ? '✓' : '-'}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.apiAccess ? '✓' : '-'}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.apiAccess ? '✓' : '-'}</td>
@@ -576,7 +669,7 @@ export default function SettingsPage() {
                     </tr>
                     {/* Priority Support */}
                     <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>Priority Support</td>
+                      <td style={{ padding: '10px 8px' }}>Support prioritaire</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.prioritySupport ? '✓' : '-'}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.prioritySupport ? '✓' : '-'}</td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.prioritySupport ? '✓' : '-'}</td>
@@ -592,14 +685,14 @@ export default function SettingsPage() {
                         return (
                           <td key={planKey} style={{ padding: '16px 8px', textAlign: 'center' }}>
                             {isCurrent ? (
-                              <Badge tone="success">Current Plan</Badge>
+                              <Badge tone="success">Plan actuel</Badge>
                             ) : planKey === 'FREE' ? null : (
                               <Button
                                 size="slim"
                                 variant={isUpgrade ? 'primary' : 'secondary'}
                                 onClick={() => isDevMode ? handleDevPlanChange(planKey) : handleUpgrade(planKey)}
                               >
-                                {isUpgrade ? 'Upgrade' : isDowngrade ? 'Downgrade' : 'Select'}
+                                {isUpgrade ? 'Passer au supérieur' : isDowngrade ? 'Rétrograder' : 'Sélectionner'}
                               </Button>
                             )}
                           </td>
@@ -619,21 +712,21 @@ export default function SettingsPage() {
             <BlockStack gap="400">
               <div onClick={handleDevClick} style={{ cursor: 'default' }}>
                 <Text as="h2" variant="headingMd">
-                  Your Store {devClicks > 0 && devClicks < 5 ? `(${5 - devClicks})` : ''}
+                  Votre boutique {devClicks > 0 && devClicks < 5 ? `(${5 - devClicks})` : ''}
                 </Text>
               </div>
               <Divider />
 
               <BlockStack gap="200">
                 <InlineStack gap="200">
-                  <Text as="span" fontWeight="semibold" variant="bodySm">Store:</Text>
+                  <Text as="span" fontWeight="semibold" variant="bodySm">Domaine :</Text>
                   <Text as="span" variant="bodySm">{shopInfo?.shopDomain}</Text>
                 </InlineStack>
                 <InlineStack gap="200">
-                  <Text as="span" fontWeight="semibold" variant="bodySm">Member since:</Text>
+                  <Text as="span" fontWeight="semibold" variant="bodySm">Membre depuis :</Text>
                   <Text as="span" variant="bodySm">
                     {shopInfo?.installedAt
-                      ? new Date(shopInfo.installedAt).toLocaleDateString('en-US', {
+                      ? new Date(shopInfo.installedAt).toLocaleDateString('fr-FR', {
                           month: 'long',
                           day: 'numeric',
                           year: 'numeric'
@@ -646,17 +739,53 @@ export default function SettingsPage() {
           </Card>
         </Layout.Section>
 
+        {/* Tips Section */}
+        <Layout.Section>
+          <Card>
+            <div style={{
+              background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+              margin: '-16px',
+              padding: '20px',
+              borderRadius: '12px',
+            }}>
+              <BlockStack gap="300">
+                <Text as="h3" variant="headingMd">Conseils pour maximiser votre investissement</Text>
+                <BlockStack gap="200">
+                  <InlineStack gap="200" blockAlign="start">
+                    <span style={{ color: '#667eea' }}>1.</span>
+                    <Text as="p" variant="bodySm">
+                      <strong>Commencez petit</strong> : Le plan gratuit vous permet de tester la valeur de Surfaced avant de vous engager.
+                    </Text>
+                  </InlineStack>
+                  <InlineStack gap="200" blockAlign="start">
+                    <span style={{ color: '#667eea' }}>2.</span>
+                    <Text as="p" variant="bodySm">
+                      <strong>Surveillez vos métriques</strong> : Utilisez les insights pour voir l&apos;impact réel sur votre visibilité IA.
+                    </Text>
+                  </InlineStack>
+                  <InlineStack gap="200" blockAlign="start">
+                    <span style={{ color: '#667eea' }}>3.</span>
+                    <Text as="p" variant="bodySm">
+                      <strong>Passez au supérieur quand c&apos;est nécessaire</strong> : Quand vous atteignez vos limites, c&apos;est le signe que ça fonctionne !
+                    </Text>
+                  </InlineStack>
+                </BlockStack>
+              </BlockStack>
+            </div>
+          </Card>
+        </Layout.Section>
+
         {/* Help */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">Need Help?</Text>
+              <Text as="h2" variant="headingMd">Besoin d&apos;aide ?</Text>
               <Text as="p" tone="subdued">
-                Questions about your plan or billing? We&apos;re here to help.
+                Questions sur votre abonnement ou la facturation ? Nous sommes là pour vous aider.
               </Text>
               <InlineStack gap="200">
-                <Button url="mailto:support@surfaced.app">Contact Support</Button>
-                <Button variant="plain" url="/admin">Back to Dashboard</Button>
+                <Button url="mailto:support@surfaced.app">Contacter le support</Button>
+                <Button variant="plain" url="/admin">Retour au tableau de bord</Button>
               </InlineStack>
             </BlockStack>
           </Card>

@@ -142,7 +142,7 @@ export default function InsightsPage() {
         setWeeklyReport(alertsData.data.preferences?.weeklyReport ?? true);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load data');
+      setError(e instanceof Error ? e.message : 'Impossible de charger les données');
     } finally {
       setLoading(false);
     }
@@ -167,10 +167,10 @@ export default function InsightsPage() {
       if (data.success) {
         setPreferences(data.data.preferences);
       } else {
-        setError(data.error || 'Failed to save');
+        setError(data.error || 'Échec de la sauvegarde');
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save');
+      setError(e instanceof Error ? e.message : 'Échec de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -203,38 +203,38 @@ export default function InsightsPage() {
       critical: 'Urgent',
       high: 'Important',
       medium: 'Info',
-      low: 'Tip',
+      low: 'Conseil',
     };
     return <Badge tone={tones[priority]}>{labels[priority]}</Badge>;
   };
 
   const getIssueLabel = (code: string): string => {
     const labels: Record<string, string> = {
-      NO_DESCRIPTION: 'Missing description',
-      SHORT_DESCRIPTION: 'Short description',
-      BRIEF_DESCRIPTION: 'Brief description',
-      NO_IMAGES: 'Missing images',
-      MISSING_ALT_TEXT: 'Missing image descriptions',
-      NO_SEO_TITLE: 'Missing page title',
-      NO_SEO_DESCRIPTION: 'Missing page description',
-      NO_PRODUCT_TYPE: 'Missing product type',
-      NO_TAGS: 'Missing tags',
-      NO_METAFIELDS: 'Missing details',
-      NO_VENDOR: 'Missing brand',
+      NO_DESCRIPTION: 'Description manquante',
+      SHORT_DESCRIPTION: 'Description trop courte',
+      BRIEF_DESCRIPTION: 'Description insuffisante',
+      NO_IMAGES: 'Images manquantes',
+      MISSING_ALT_TEXT: 'Texte alt manquant',
+      NO_SEO_TITLE: 'Titre SEO manquant',
+      NO_SEO_DESCRIPTION: 'Description SEO manquante',
+      NO_PRODUCT_TYPE: 'Type de produit manquant',
+      NO_TAGS: 'Tags manquants',
+      NO_METAFIELDS: 'Métadonnées manquantes',
+      NO_VENDOR: 'Marque manquante',
     };
     return labels[code] || code;
   };
 
   const periodOptions = [
-    { label: 'Last 7 days', value: '7d' },
-    { label: 'Last 30 days', value: '30d' },
-    { label: 'Last 90 days', value: '90d' },
-    { label: 'Last year', value: '365d' },
+    { label: '7 derniers jours', value: '7d' },
+    { label: '30 derniers jours', value: '30d' },
+    { label: '90 derniers jours', value: '90d' },
+    { label: 'Cette année', value: '365d' },
   ];
 
   if (loading) {
     return (
-      <Page title="Insights" backAction={{ content: 'Home', url: '/admin' }}>
+      <Page title="Tableau de bord" backAction={{ content: 'Accueil', url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -250,9 +250,9 @@ export default function InsightsPage() {
   }
 
   const tabs = [
-    { id: 'progress', content: 'Your Progress' },
-    { id: 'alerts', content: `Alerts (${alerts.length})` },
-    { id: 'report', content: 'Weekly Report' },
+    { id: 'progress', content: 'Votre progression' },
+    { id: 'alerts', content: `Alertes (${alerts.length})` },
+    { id: 'report', content: 'Rapport hebdo' },
   ];
 
   const hasAlerts = alerts.length > 0;
@@ -260,12 +260,12 @@ export default function InsightsPage() {
 
   return (
     <Page
-      title="Insights"
-      subtitle="Track your progress and stay informed"
-      backAction={{ content: 'Home', url: '/admin' }}
+      title="Tableau de bord"
+      subtitle="Suivez votre progression et restez informé"
+      backAction={{ content: 'Accueil', url: '/admin' }}
       secondaryActions={[
         {
-          content: 'Refresh',
+          content: 'Actualiser',
           icon: RefreshIcon,
           onAction: loadData,
         },
@@ -285,8 +285,8 @@ export default function InsightsPage() {
           <Layout.Section>
             <Banner
               tone="warning"
-              title={`You have ${criticalAlerts.length} important ${criticalAlerts.length === 1 ? 'alert' : 'alerts'}`}
-              action={{ content: 'View Alerts', onAction: () => setSelectedTab(1) }}
+              title={`Vous avez ${criticalAlerts.length} alerte${criticalAlerts.length > 1 ? 's' : ''} importante${criticalAlerts.length > 1 ? 's' : ''}`}
+              action={{ content: 'Voir les alertes', onAction: () => setSelectedTab(1) }}
             >
               {criticalAlerts[0].message}
             </Banner>
@@ -302,10 +302,10 @@ export default function InsightsPage() {
                   <BlockStack gap="600">
                     {/* Period Selector */}
                     <InlineStack align="space-between" blockAlign="center">
-                      <Text as="h2" variant="headingMd">Your AI Visibility Progress</Text>
+                      <Text as="h2" variant="headingMd">Votre progression IA</Text>
                       <Box minWidth="150px">
                         <Select
-                          label="Period"
+                          label="Période"
                           labelHidden
                           options={periodOptions}
                           value={period}
@@ -315,12 +315,12 @@ export default function InsightsPage() {
                     </InlineStack>
 
                     {/* Key Metrics */}
-                    <InlineStack gap="400" align="start">
+                    <InlineStack gap="400" align="start" wrap>
                       {/* Current Score */}
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">Your AI Score</Text>
+                            <Text as="h3" variant="bodySm" tone="subdued">Score IA</Text>
                             <InlineStack gap="200" blockAlign="center">
                               <Text as="p" variant="heading2xl" fontWeight="bold">
                                 {metrics?.currentScore ?? 0}
@@ -346,12 +346,12 @@ export default function InsightsPage() {
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">AI Mention Rate</Text>
+                            <Text as="h3" variant="bodySm" tone="subdued">Taux de mention</Text>
                             <Text as="p" variant="heading2xl" fontWeight="bold">
                               {metrics?.visibility.mentionRate ?? 0}%
                             </Text>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              {metrics?.visibility.mentioned ?? 0} of {metrics?.visibility.totalChecks ?? 0} checks
+                              {metrics?.visibility.mentioned ?? 0} sur {metrics?.visibility.totalChecks ?? 0}
                             </Text>
                           </BlockStack>
                         </Card>
@@ -361,12 +361,12 @@ export default function InsightsPage() {
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">Products Improved</Text>
+                            <Text as="h3" variant="bodySm" tone="subdued">Produits améliorés</Text>
                             <Text as="p" variant="heading2xl" fontWeight="bold">
                               {metrics?.productsImproved ?? 0}
                             </Text>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              of {metrics?.totalProducts ?? 0} total
+                              sur {metrics?.totalProducts ?? 0} au total
                             </Text>
                           </BlockStack>
                         </Card>
@@ -376,12 +376,12 @@ export default function InsightsPage() {
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">AI Suggestions Used</Text>
+                            <Text as="h3" variant="bodySm" tone="subdued">Suggestions IA utilisées</Text>
                             <Text as="p" variant="heading2xl" fontWeight="bold">
                               {metrics?.optimizationsUsed ?? 0}
                             </Text>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              this period
+                              cette période
                             </Text>
                           </BlockStack>
                         </Card>
@@ -392,21 +392,21 @@ export default function InsightsPage() {
 
                     {/* Next Steps - More actionable than vague impact metrics */}
                     <BlockStack gap="300">
-                      <Text as="h3" variant="headingSm">Recommended Actions</Text>
+                      <Text as="h3" variant="headingSm">Actions recommandées</Text>
                       <BlockStack gap="200">
                         {(metrics?.productsWithCriticalIssues ?? 0) > 0 && (
                           <Box padding="300" background="bg-surface-critical" borderRadius="200">
-                            <InlineStack align="space-between" blockAlign="center">
+                            <InlineStack align="space-between" blockAlign="center" wrap>
                               <BlockStack gap="100">
                                 <Text as="p" fontWeight="semibold">
-                                  {metrics?.productsWithCriticalIssues} products need urgent fixes
+                                  {metrics?.productsWithCriticalIssues} produit{(metrics?.productsWithCriticalIssues ?? 0) > 1 ? 's' : ''} nécessite{(metrics?.productsWithCriticalIssues ?? 0) > 1 ? 'nt' : ''} une action urgente
                                 </Text>
                                 <Text as="p" variant="bodySm" tone="subdued">
-                                  Missing images or descriptions hurt your AI visibility
+                                  Les images ou descriptions manquantes nuisent à votre visibilité IA
                                 </Text>
                               </BlockStack>
                               <Link href="/admin/products">
-                                <Button variant="primary">Fix Now</Button>
+                                <Button variant="primary">Corriger maintenant</Button>
                               </Link>
                             </InlineStack>
                           </Box>
@@ -414,17 +414,17 @@ export default function InsightsPage() {
 
                         {(metrics?.visibility.totalChecks ?? 0) === 0 && (
                           <Box padding="300" background="bg-surface-warning" borderRadius="200">
-                            <InlineStack align="space-between" blockAlign="center">
+                            <InlineStack align="space-between" blockAlign="center" wrap>
                               <BlockStack gap="100">
                                 <Text as="p" fontWeight="semibold">
-                                  Check if AI mentions your store
+                                  Vérifiez si les IA vous mentionnent
                                 </Text>
                                 <Text as="p" variant="bodySm" tone="subdued">
-                                  See which AI assistants recommend your products
+                                  Découvrez quels assistants IA recommandent vos produits
                                 </Text>
                               </BlockStack>
                               <Link href="/admin/visibility">
-                                <Button>Check Visibility</Button>
+                                <Button>Vérifier ma visibilité</Button>
                               </Link>
                             </InlineStack>
                           </Box>
@@ -432,17 +432,17 @@ export default function InsightsPage() {
 
                         {(metrics?.currentScore ?? 0) < 70 && (
                           <Box padding="300" background="bg-surface-info" borderRadius="200">
-                            <InlineStack align="space-between" blockAlign="center">
+                            <InlineStack align="space-between" blockAlign="center" wrap>
                               <BlockStack gap="100">
                                 <Text as="p" fontWeight="semibold">
-                                  Improve your product content
+                                  Améliorez vos contenus produits
                                 </Text>
                                 <Text as="p" variant="bodySm" tone="subdued">
-                                  Use AI to suggest better descriptions and SEO
+                                  Utilisez l&apos;IA pour suggérer de meilleures descriptions et SEO
                                 </Text>
                               </BlockStack>
-                              <Link href="/admin/optimize">
-                                <Button>Optimize Products</Button>
+                              <Link href="/admin/products">
+                                <Button>Optimiser mes produits</Button>
                               </Link>
                             </InlineStack>
                           </Box>
@@ -452,10 +452,10 @@ export default function InsightsPage() {
                           <Box padding="300" background="bg-surface-success" borderRadius="200">
                             <BlockStack gap="100">
                               <Text as="p" fontWeight="semibold">
-                                Your store is in good shape!
+                                Votre boutique est en bonne forme !
                               </Text>
                               <Text as="p" variant="bodySm" tone="subdued">
-                                Keep monitoring your visibility and continue improving
+                                Continuez à surveiller votre visibilité et à améliorer vos contenus
                               </Text>
                             </BlockStack>
                           </Box>
@@ -467,7 +467,7 @@ export default function InsightsPage() {
 
                     {/* Product Quality Distribution */}
                     <BlockStack gap="300">
-                      <Text as="h3" variant="headingSm">Product Quality Breakdown</Text>
+                      <Text as="h3" variant="headingSm">Répartition de la qualité des produits</Text>
                       <BlockStack gap="200">
                         <InlineStack align="space-between">
                           <InlineStack gap="200" blockAlign="center">
@@ -480,7 +480,7 @@ export default function InsightsPage() {
                         <InlineStack align="space-between">
                           <InlineStack gap="200" blockAlign="center">
                             <Box width="12px" minHeight="12px" background="bg-fill-success" borderRadius="full" />
-                            <Text as="p">Good (70-89)</Text>
+                            <Text as="p">Bon (70-89)</Text>
                           </InlineStack>
                           <Text as="p" fontWeight="semibold">{metrics?.scoreDistribution.good ?? 0}</Text>
                         </InlineStack>
@@ -488,7 +488,7 @@ export default function InsightsPage() {
                         <InlineStack align="space-between">
                           <InlineStack gap="200" blockAlign="center">
                             <Box width="12px" minHeight="12px" background="bg-fill-warning" borderRadius="full" />
-                            <Text as="p">Needs Work (40-69)</Text>
+                            <Text as="p">À améliorer (40-69)</Text>
                           </InlineStack>
                           <Text as="p" fontWeight="semibold">{metrics?.scoreDistribution.needsWork ?? 0}</Text>
                         </InlineStack>
@@ -496,7 +496,7 @@ export default function InsightsPage() {
                         <InlineStack align="space-between">
                           <InlineStack gap="200" blockAlign="center">
                             <Box width="12px" minHeight="12px" background="bg-fill-critical" borderRadius="full" />
-                            <Text as="p">Fix Now (&lt;40)</Text>
+                            <Text as="p">Urgent (&lt;40)</Text>
                           </InlineStack>
                           <Text as="p" fontWeight="semibold">{metrics?.scoreDistribution.critical ?? 0}</Text>
                         </InlineStack>
@@ -508,7 +508,7 @@ export default function InsightsPage() {
                       <>
                         <Divider />
                         <BlockStack gap="300">
-                          <Text as="h3" variant="headingSm">Where You Appear</Text>
+                          <Text as="h3" variant="headingSm">Où apparaissez-vous ?</Text>
                           <BlockStack gap="300">
                             {metrics.visibility.byPlatform.map((platform) => (
                               <BlockStack key={platform.platform} gap="100">
@@ -540,7 +540,7 @@ export default function InsightsPage() {
                     <InlineStack align="space-between" blockAlign="center">
                       <InlineStack gap="200" blockAlign="center">
                         <AlertTriangleIcon />
-                        <Text as="h2" variant="headingMd">Active Alerts</Text>
+                        <Text as="h2" variant="headingMd">Alertes actives</Text>
                       </InlineStack>
                       <Badge>{String(alerts.length)}</Badge>
                     </InlineStack>
@@ -550,9 +550,9 @@ export default function InsightsPage() {
                     {!hasAlerts ? (
                       <Box padding="600">
                         <BlockStack gap="200" inlineAlign="center">
-                          <Text as="p" variant="headingMd" tone="success">All clear!</Text>
+                          <Text as="p" variant="headingMd" tone="success">Tout va bien !</Text>
                           <Text as="p" tone="subdued">
-                            No issues detected. Keep up the good work!
+                            Aucun problème détecté. Continuez comme ça !
                           </Text>
                         </BlockStack>
                       </Box>
@@ -582,7 +582,7 @@ export default function InsightsPage() {
                               {alert.actionUrl && (
                                 <Box paddingBlockStart="200">
                                   <Link href={alert.actionUrl}>
-                                    <Button size="slim">{alert.actionLabel || 'Fix This'}</Button>
+                                    <Button size="slim">{alert.actionLabel || 'Corriger'}</Button>
                                   </Link>
                                 </Box>
                               )}
@@ -596,17 +596,17 @@ export default function InsightsPage() {
 
                     {/* Notification Preferences */}
                     <BlockStack gap="300">
-                      <Text as="h3" variant="headingSm">Notification Settings</Text>
+                      <Text as="h3" variant="headingSm">Paramètres de notification</Text>
                       <BlockStack gap="200">
                         <Checkbox
-                          label="Email me about important issues"
-                          helpText="Get notified when something needs your attention"
+                          label="M'envoyer un email pour les problèmes importants"
+                          helpText="Recevez une notification quand quelque chose nécessite votre attention"
                           checked={emailAlerts}
                           onChange={setEmailAlerts}
                         />
                         <Checkbox
-                          label="Send weekly summary"
-                          helpText="Receive a weekly report of your AI visibility progress"
+                          label="Envoyer un résumé hebdomadaire"
+                          helpText="Recevez un rapport de votre progression chaque semaine"
                           checked={weeklyReport}
                           onChange={setWeeklyReport}
                         />
@@ -620,7 +620,7 @@ export default function InsightsPage() {
                             preferences?.weeklyReport === weeklyReport
                           }
                         >
-                          Save Settings
+                          Enregistrer
                         </Button>
                       </Box>
                     </BlockStack>
@@ -631,11 +631,11 @@ export default function InsightsPage() {
                 {selectedTab === 2 && (
                   <BlockStack gap="600">
                     <Text as="h2" variant="headingMd">
-                      Weekly Summary
+                      Résumé hebdomadaire
                     </Text>
                     {report && (
                       <Text as="p" tone="subdued" variant="bodySm">
-                        {new Date(report.period.start).toLocaleDateString()} - {new Date(report.period.end).toLocaleDateString()}
+                        Du {new Date(report.period.start).toLocaleDateString('fr-FR')} au {new Date(report.period.end).toLocaleDateString('fr-FR')}
                       </Text>
                     )}
 
@@ -645,18 +645,18 @@ export default function InsightsPage() {
                       <Box padding="600">
                         <BlockStack gap="200" inlineAlign="center">
                           <Text as="p" tone="subdued">
-                            No report available yet. Check back after your first week of using Surfaced.
+                            Pas encore de rapport disponible. Revenez après votre première semaine d&apos;utilisation.
                           </Text>
                         </BlockStack>
                       </Box>
                     ) : (
                       <>
                         {/* Report Metrics */}
-                        <InlineStack gap="400" align="start">
+                        <InlineStack gap="400" align="start" wrap>
                           <Box minWidth="140px">
                             <Card>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm" tone="subdued">AI Score</Text>
+                                <Text as="p" variant="bodySm" tone="subdued">Score IA</Text>
                                 <InlineStack gap="100" blockAlign="center">
                                   <Text as="p" variant="headingLg" fontWeight="bold">
                                     {report.metrics.aiScore}
@@ -674,7 +674,7 @@ export default function InsightsPage() {
                           <Box minWidth="140px">
                             <Card>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm" tone="subdued">Products</Text>
+                                <Text as="p" variant="bodySm" tone="subdued">Produits</Text>
                                 <Text as="p" variant="headingLg" fontWeight="bold">
                                   {report.metrics.productsAudited}
                                 </Text>
@@ -685,7 +685,7 @@ export default function InsightsPage() {
                           <Box minWidth="140px">
                             <Card>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm" tone="subdued">Issues</Text>
+                                <Text as="p" variant="bodySm" tone="subdued">Problèmes</Text>
                                 <Text as="p" variant="headingLg" fontWeight="bold" tone={report.metrics.criticalIssues > 0 ? 'critical' : undefined}>
                                   {report.metrics.criticalIssues}
                                 </Text>
@@ -696,7 +696,7 @@ export default function InsightsPage() {
                           <Box minWidth="140px">
                             <Card>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm" tone="subdued">Mention Rate</Text>
+                                <Text as="p" variant="bodySm" tone="subdued">Taux de mention</Text>
                                 <Text as="p" variant="headingLg" fontWeight="bold">
                                   {Math.round(report.metrics.mentionRate)}%
                                 </Text>
@@ -710,12 +710,12 @@ export default function InsightsPage() {
                           <>
                             <Divider />
                             <BlockStack gap="300">
-                              <Text as="h3" variant="headingSm">Most Common Issues</Text>
+                              <Text as="h3" variant="headingSm">Problèmes les plus fréquents</Text>
                               <BlockStack gap="200">
                                 {report.topIssues.map((issue) => (
                                   <InlineStack key={issue.code} align="space-between">
                                     <Text as="p">{getIssueLabel(issue.code)}</Text>
-                                    <Badge>{`${issue.count} products`}</Badge>
+                                    <Badge>{`${issue.count} produit${issue.count > 1 ? 's' : ''}`}</Badge>
                                   </InlineStack>
                                 ))}
                               </BlockStack>
@@ -728,7 +728,7 @@ export default function InsightsPage() {
                           <>
                             <Divider />
                             <BlockStack gap="300">
-                              <Text as="h3" variant="headingSm">Suggested Next Steps</Text>
+                              <Text as="h3" variant="headingSm">Prochaines étapes suggérées</Text>
                               <BlockStack gap="200">
                                 {report.recommendations.map((rec, index) => (
                                   <Box key={index} padding="300" background="bg-surface-info" borderRadius="200">
@@ -752,58 +752,58 @@ export default function InsightsPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">How to Improve</Text>
+              <Text as="h2" variant="headingMd">Comment s&apos;améliorer</Text>
               <Divider />
               <BlockStack gap="300">
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                  <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Check your products regularly</Text>
+                      <Text as="p" fontWeight="semibold">Vérifiez vos produits régulièrement</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Run an analysis to catch new issues early
+                        Lancez une analyse pour détecter les nouveaux problèmes rapidement
                       </Text>
                     </BlockStack>
                     <Link href="/admin/products">
-                      <Button>View Products</Button>
+                      <Button>Voir les produits</Button>
                     </Link>
                   </InlineStack>
                 </Box>
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                  <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Use AI suggestions</Text>
+                      <Text as="p" fontWeight="semibold">Utilisez les suggestions IA</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Let AI help you write better product descriptions
+                        Laissez l&apos;IA vous aider à écrire de meilleures descriptions
                       </Text>
                     </BlockStack>
-                    <Link href="/admin/optimize">
-                      <Button>Optimize Now</Button>
+                    <Link href="/admin/products">
+                      <Button>Optimiser maintenant</Button>
                     </Link>
                   </InlineStack>
                 </Box>
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                  <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Monitor visibility</Text>
+                      <Text as="p" fontWeight="semibold">Surveillez votre visibilité</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Check if AI assistants are recommending your store
+                        Vérifiez si les assistants IA recommandent votre boutique
                       </Text>
                     </BlockStack>
                     <Link href="/admin/visibility">
-                      <Button>Check Visibility</Button>
+                      <Button>Vérifier la visibilité</Button>
                     </Link>
                   </InlineStack>
                 </Box>
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                  <InlineStack align="space-between" blockAlign="center" gap="400">
+                  <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Set up your AI Guide</Text>
+                      <Text as="p" fontWeight="semibold">Configurez vos outils IA</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Help AI crawlers understand your store better
+                        Aidez les crawlers IA à mieux comprendre votre boutique
                       </Text>
                     </BlockStack>
                     <Link href="/admin/tools">
-                      <Button variant="primary">Configure Tools</Button>
+                      <Button variant="primary">Configurer les outils</Button>
                     </Link>
                   </InlineStack>
                 </Box>

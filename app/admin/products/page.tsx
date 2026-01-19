@@ -158,14 +158,14 @@ export default function ProductsPage() {
         authFetch('/api/optimize'),
       ]);
 
-      if (!auditResponse.ok) throw new Error('Unable to load your products');
+      if (!auditResponse.ok) throw new Error('Impossible de charger vos produits');
 
       const auditResult = await auditResponse.json();
       if (auditResult.success) {
         setData(auditResult.data);
         setError(null);
       } else {
-        setError(auditResult.error || 'Something went wrong');
+        setError(auditResult.error || 'Une erreur est survenue');
       }
 
       if (optimizeResponse.ok) {
@@ -176,7 +176,7 @@ export default function ProductsPage() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load your products');
+      setError(err instanceof Error ? err.message : 'Impossible de charger vos produits');
     } finally {
       setLoading(false);
     }
@@ -195,12 +195,12 @@ export default function ProductsPage() {
       const response = await authFetch('/api/audit', { method: 'POST' });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Analysis failed');
+        throw new Error(errorData.error || 'Analyse échouée');
       }
       await fetchData();
-      setSuccess('Products analyzed successfully!');
+      setSuccess('Produits analysés avec succès !');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
+      setError(err instanceof Error ? err.message : 'Analyse échouée');
     } finally {
       setAuditing(false);
     }
@@ -231,11 +231,11 @@ export default function ProductsPage() {
         result.data.optimization.suggestions.forEach((_: OptimizationSuggestion, i: number) => allSelected.add(i));
         setSelectedSuggestions(allSelected);
       } else {
-        setError(result.error || 'Failed to generate suggestions');
+        setError(result.error || 'Impossible de générer les suggestions');
         setShowModal(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to optimize');
+      setError(err instanceof Error ? err.message : 'Optimisation échouée');
       setShowModal(false);
     } finally {
       setOptimizing(false);
@@ -248,7 +248,7 @@ export default function ProductsPage() {
       setCopied(field);
       setTimeout(() => setCopied(null), 2000);
     } catch {
-      setError('Failed to copy');
+      setError('Échec de la copie');
     }
   };
 
@@ -271,7 +271,7 @@ export default function ProductsPage() {
     if (!optimization) return;
     const selected = optimization.suggestions.filter((_, i) => selectedSuggestions.has(i));
     if (selected.length === 0) {
-      setError('Please select at least one suggestion to apply');
+      setError('Veuillez sélectionner au moins une suggestion à appliquer');
       return;
     }
     setSuggestionsToApply(selected);
@@ -308,16 +308,16 @@ export default function ProductsPage() {
         setShowApplyConfirm(false);
         setShowModal(false);
         setSuccess(
-          `Applied ${data.data.applied} change${data.data.applied !== 1 ? 's' : ''}! ` +
-            `Score: ${data.data.scoreBefore ?? '?'} → ${data.data.scoreAfter ?? '?'}`
+          `${data.data.applied} modification${data.data.applied !== 1 ? 's' : ''} appliquée${data.data.applied !== 1 ? 's' : ''} ! ` +
+            `Score : ${data.data.scoreBefore ?? '?'} → ${data.data.scoreAfter ?? '?'}`
         );
         // Reload data to refresh product list
         fetchData();
       } else {
-        setError(data.error || 'Failed to apply changes');
+        setError(data.error || 'Échec de l\'application des modifications');
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to apply');
+      setError(e instanceof Error ? e.message : 'Échec de l\'application');
     } finally {
       setApplying(false);
     }
@@ -335,14 +335,14 @@ export default function ProductsPage() {
       const data = await response.json();
 
       if (data.success) {
-        setSuccess(`Change undone: ${data.data.field} restored to original`);
+        setSuccess(`Modification annulée : ${getFieldLabel(data.data.field)} restauré`);
         setLastAppliedHistoryIds([]);
         fetchData();
       } else {
-        setError(data.error || 'Failed to undo');
+        setError(data.error || 'Échec de l\'annulation');
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to undo');
+      setError(e instanceof Error ? e.message : 'Échec de l\'annulation');
     } finally {
       setApplying(false);
     }
@@ -350,9 +350,9 @@ export default function ProductsPage() {
 
   const getScoreBadge = (score: number) => {
     if (score >= 90) return <Badge tone="success">Excellent</Badge>;
-    if (score >= 70) return <Badge tone="success">Good</Badge>;
-    if (score >= 40) return <Badge tone="warning">Needs work</Badge>;
-    return <Badge tone="critical">Fix now</Badge>;
+    if (score >= 70) return <Badge tone="success">Bon</Badge>;
+    if (score >= 40) return <Badge tone="warning">À améliorer</Badge>;
+    return <Badge tone="critical">Urgent</Badge>;
   };
 
   const getScoreColor = (score: number): "success" | "highlight" | "critical" => {
@@ -364,14 +364,14 @@ export default function ProductsPage() {
   const getFieldLabel = (field: string) => {
     const labels: Record<string, string> = {
       description: 'Description',
-      seo_title: 'SEO Title',
-      seoTitle: 'SEO Title',
-      seo_description: 'SEO Description',
-      seoDescription: 'SEO Description',
+      seo_title: 'Titre SEO',
+      seoTitle: 'Titre SEO',
+      seo_description: 'Description SEO',
+      seoDescription: 'Description SEO',
       tags: 'Tags',
-      altText: 'Image Alt Text',
-      productType: 'Product Type',
-      vendor: 'Vendor',
+      altText: 'Texte alt image',
+      productType: 'Type de produit',
+      vendor: 'Vendeur',
     };
     return labels[field] || field;
   };
@@ -454,9 +454,9 @@ export default function ProductsPage() {
 
   // Tabs - memoized (must be before early returns per rules of hooks)
   const tabs = useMemo(() => [
-    { id: 'all', content: `All Products (${sortedProducts.length})` },
-    { id: 'improve', content: `Need Improvement (${productsNeedingWork.length})` },
-    { id: 'history', content: `History (${activeHistory.length})` },
+    { id: 'all', content: `Tous les produits (${sortedProducts.length})` },
+    { id: 'improve', content: `À améliorer (${productsNeedingWork.length})` },
+    { id: 'history', content: `Historique (${activeHistory.length})` },
   ], [sortedProducts.length, productsNeedingWork.length, activeHistory.length]);
 
   // Display products based on selected tab - memoized
@@ -484,10 +484,10 @@ export default function ProductsPage() {
     </InlineStack>,
     getScoreBadge(product.aiScore),
     <InlineStack key={`status-${product.id}`} gap="100">
-      {!product.hasImages && <Badge tone="critical">No images</Badge>}
-      {!product.hasDescription && <Badge tone="critical">No description</Badge>}
+      {!product.hasImages && <Badge tone="critical">Sans image</Badge>}
+      {!product.hasDescription && <Badge tone="critical">Sans description</Badge>}
       {product.hasImages && product.hasDescription && product.aiScore >= 70 && (
-        <Badge tone="success">Ready</Badge>
+        <Badge tone="success">Prêt</Badge>
       )}
     </InlineStack>,
     <Button
@@ -497,7 +497,7 @@ export default function ProductsPage() {
       disabled={!quota?.available || product.aiScore >= 90}
       size="slim"
     >
-      Optimize
+      Optimiser
     </Button>,
   ]), [displayProducts, quota?.available, handleOptimize]);
 
@@ -509,14 +509,14 @@ export default function ProductsPage() {
   // Loading state
   if (loading || shopLoading) {
     return (
-      <Page title="Products" backAction={{ content: 'Home', url: '/admin' }}>
+      <Page title="Produits" backAction={{ content: 'Accueil', url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
               <Box padding="1000">
                 <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
-                  <Text as="p" variant="bodyLg">Loading your products...</Text>
+                  <Text as="p" variant="bodyLg">Chargement de vos produits...</Text>
                 </BlockStack>
               </Box>
             </Card>
@@ -532,17 +532,17 @@ export default function ProductsPage() {
 
   return (
     <Page
-      title="Products"
-      subtitle="Analyze and optimize your products for AI visibility"
-      backAction={{ content: 'Home', url: '/admin' }}
+      title="Produits"
+      subtitle="Analysez et optimisez vos produits pour être recommandé par les IA"
+      backAction={{ content: 'Accueil', url: '/admin' }}
       primaryAction={{
-        content: auditing ? 'Analyzing...' : 'Analyze Products',
+        content: auditing ? 'Analyse...' : 'Analyser mes produits',
         onAction: runAudit,
         loading: auditing,
       }}
       secondaryActions={[
         {
-          content: 'Refresh',
+          content: 'Actualiser',
           icon: RefreshIcon,
           onAction: fetchData,
         },
@@ -551,7 +551,7 @@ export default function ProductsPage() {
       <Layout>
         {error && (
           <Layout.Section>
-            <Banner tone="critical" title="Something went wrong" onDismiss={() => setError(null)}>
+            <Banner tone="critical" title="Une erreur est survenue" onDismiss={() => setError(null)}>
               <p>{error}</p>
             </Banner>
           </Layout.Section>
@@ -569,7 +569,7 @@ export default function ProductsPage() {
                     onClick={() => handleUndo(lastAppliedHistoryIds[0])}
                     loading={applying}
                   >
-                    Undo
+                    Annuler
                   </Button>
                 )}
               </InlineStack>
@@ -577,22 +577,119 @@ export default function ProductsPage() {
           </Layout.Section>
         )}
 
+        {/* Welcome Section for New Users */}
+        {!hasProducts && (
+          <Layout.Section>
+            <Card>
+              <Box padding="600">
+                <BlockStack gap="500">
+                  <div style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    padding: '24px',
+                    borderRadius: '12px',
+                    color: 'white',
+                  }}>
+                    <BlockStack gap="400">
+                      <Text as="h2" variant="headingLg">
+                        Bienvenue dans l&apos;analyse de produits
+                      </Text>
+                      <Text as="p">
+                        Découvrez comment vos produits sont perçus par ChatGPT, Perplexity et les autres IA.
+                        Nous analysons chaque produit et vous donnons un score de visibilité.
+                      </Text>
+                    </BlockStack>
+                  </div>
+
+                  <BlockStack gap="300">
+                    <Text as="h3" variant="headingMd">Comment ça marche ?</Text>
+                    <InlineStack gap="400" wrap>
+                      <Box minWidth="200px" maxWidth="300px">
+                        <BlockStack gap="200">
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: '#5c6ac4',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold',
+                          }}>1</div>
+                          <Text as="p" fontWeight="semibold">Analyse automatique</Text>
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            Nous analysons vos descriptions, images, SEO et métadonnées
+                          </Text>
+                        </BlockStack>
+                      </Box>
+                      <Box minWidth="200px" maxWidth="300px">
+                        <BlockStack gap="200">
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: '#5c6ac4',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold',
+                          }}>2</div>
+                          <Text as="p" fontWeight="semibold">Score de visibilité IA</Text>
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            Chaque produit reçoit un score de 0 à 100 basé sur sa lisibilité par les IA
+                          </Text>
+                        </BlockStack>
+                      </Box>
+                      <Box minWidth="200px" maxWidth="300px">
+                        <BlockStack gap="200">
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: '#5c6ac4',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold',
+                          }}>3</div>
+                          <Text as="p" fontWeight="semibold">Optimisation en 1 clic</Text>
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            L&apos;IA génère des suggestions que vous appliquez directement à Shopify
+                          </Text>
+                        </BlockStack>
+                      </Box>
+                    </InlineStack>
+                  </BlockStack>
+
+                  <Box paddingBlockStart="200">
+                    <Button variant="primary" size="large" onClick={runAudit} loading={auditing}>
+                      Lancer ma première analyse
+                    </Button>
+                  </Box>
+                </BlockStack>
+              </Box>
+            </Card>
+          </Layout.Section>
+        )}
+
         {/* Plan Limit Banner */}
         {data?.plan?.isAtLimit && (
           <Layout.Section>
-            <Banner tone="warning" title="Plan Limit Reached">
+            <Banner tone="warning" title="Limite de plan atteinte">
               <BlockStack gap="200">
                 <Text as="p">
-                  Your {data.plan.current} plan allows analyzing up to{' '}
-                  <strong>{data.plan.productLimit} products</strong>.
-                  You have {data.plan.productsNotAnalyzed} more products that aren&apos;t being analyzed.
+                  Votre plan {data.plan.current} permet d&apos;analyser jusqu&apos;à{' '}
+                  <strong>{data.plan.productLimit} produits</strong>.
+                  Vous avez {data.plan.productsNotAnalyzed} produits supplémentaires non analysés.
                 </Text>
                 <InlineStack gap="200">
                   <Button url="/admin/settings" variant="primary">
-                    Upgrade Your Plan
+                    Passer à un plan supérieur
                   </Button>
                   <Text as="span" tone="subdued" variant="bodySm">
-                    to analyze all {data.totalProducts} products
+                    pour analyser vos {data.totalProducts} produits
                   </Text>
                 </InlineStack>
               </BlockStack>
@@ -601,19 +698,19 @@ export default function ProductsPage() {
         )}
 
         {/* Summary Stats */}
-        <Layout.Section>
-          <InlineStack gap="400" align="start" wrap>
-            <Box minWidth="160px">
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="bodySm" tone="subdued">Average Score</Text>
-                  <InlineStack gap="200" blockAlign="center">
-                    <Text as="p" variant="heading2xl" fontWeight="bold">
-                      {hasProducts ? data?.averageScore ?? 0 : '--'}
-                    </Text>
-                    {hasProducts && getScoreBadge(data?.averageScore ?? 0)}
-                  </InlineStack>
-                  {hasProducts && (
+        {hasProducts && (
+          <Layout.Section>
+            <InlineStack gap="400" align="start" wrap>
+              <Box minWidth="180px">
+                <Card>
+                  <BlockStack gap="200">
+                    <Text as="h3" variant="bodySm" tone="subdued">Score moyen</Text>
+                    <InlineStack gap="200" blockAlign="center">
+                      <Text as="p" variant="heading2xl" fontWeight="bold">
+                        {data?.averageScore ?? 0}
+                      </Text>
+                      {getScoreBadge(data?.averageScore ?? 0)}
+                    </InlineStack>
                     <Box width="100%">
                       <ProgressBar
                         progress={data?.averageScore ?? 0}
@@ -621,254 +718,262 @@ export default function ProductsPage() {
                         size="small"
                       />
                     </Box>
-                  )}
-                </BlockStack>
-              </Card>
-            </Box>
-
-            <Box minWidth="140px">
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="bodySm" tone="subdued">Products</Text>
-                  <Text as="p" variant="heading2xl" fontWeight="bold">
-                    {data?.auditedProducts ?? 0}
-                  </Text>
-                  <Text as="p" variant="bodySm" tone={data?.plan?.isAtLimit ? 'critical' : 'subdued'}>
-                    {data?.plan?.isAtLimit ? (
-                      <>of {data?.plan?.productLimit} (limit)</>
-                    ) : (
-                      <>of {data?.totalProducts ?? 0} total</>
-                    )}
-                  </Text>
-                </BlockStack>
-              </Card>
-            </Box>
-
-            <Box minWidth="140px">
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="bodySm" tone="subdued">Need Work</Text>
-                  <Text as="p" variant="heading2xl" fontWeight="bold" tone={productsNeedingWork.length > 0 ? 'critical' : 'success'}>
-                    {productsNeedingWork.length}
-                  </Text>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    score below 70
-                  </Text>
-                </BlockStack>
-              </Card>
-            </Box>
-
-            <Box minWidth="160px">
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="bodySm" tone="subdued">AI Credits</Text>
-                  <InlineStack gap="200" blockAlign="center">
-                    <Text as="p" variant="heading2xl" fontWeight="bold">
-                      {quota?.remaining ?? 0}
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Plus le score est élevé, plus les IA peuvent recommander vos produits
                     </Text>
-                    <Badge tone={quota?.available ? 'success' : 'critical'}>
-                      {quota?.available ? 'Available' : 'Limit'}
-                    </Badge>
-                  </InlineStack>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    of {quota?.limit ?? 0} this month
-                  </Text>
-                </BlockStack>
-              </Card>
-            </Box>
-          </InlineStack>
-        </Layout.Section>
+                  </BlockStack>
+                </Card>
+              </Box>
+
+              <Box minWidth="140px">
+                <Card>
+                  <BlockStack gap="200">
+                    <Text as="h3" variant="bodySm" tone="subdued">Produits analysés</Text>
+                    <Text as="p" variant="heading2xl" fontWeight="bold">
+                      {data?.auditedProducts ?? 0}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone={data?.plan?.isAtLimit ? 'critical' : 'subdued'}>
+                      {data?.plan?.isAtLimit ? (
+                        <>sur {data?.plan?.productLimit} (limite)</>
+                      ) : (
+                        <>sur {data?.totalProducts ?? 0} au total</>
+                      )}
+                    </Text>
+                  </BlockStack>
+                </Card>
+              </Box>
+
+              <Box minWidth="140px">
+                <Card>
+                  <BlockStack gap="200">
+                    <Text as="h3" variant="bodySm" tone="subdued">À améliorer</Text>
+                    <Text as="p" variant="heading2xl" fontWeight="bold" tone={productsNeedingWork.length > 0 ? 'critical' : 'success'}>
+                      {productsNeedingWork.length}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      produits avec un score &lt; 70
+                    </Text>
+                  </BlockStack>
+                </Card>
+              </Box>
+
+              <Box minWidth="160px">
+                <Card>
+                  <BlockStack gap="200">
+                    <Text as="h3" variant="bodySm" tone="subdued">Crédits IA</Text>
+                    <InlineStack gap="200" blockAlign="center">
+                      <Text as="p" variant="heading2xl" fontWeight="bold">
+                        {quota?.remaining ?? 0}
+                      </Text>
+                      <Badge tone={quota?.available ? 'success' : 'critical'}>
+                        {quota?.available ? 'Disponibles' : 'Épuisés'}
+                      </Badge>
+                    </InlineStack>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      sur {quota?.limit ?? 0} ce mois-ci
+                    </Text>
+                  </BlockStack>
+                </Card>
+              </Box>
+            </InlineStack>
+          </Layout.Section>
+        )}
 
         {/* Products Table / History */}
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="400">
-              <Tabs tabs={tabs} selected={selectedTab} onSelect={setSelectedTab}>
-                <Box paddingBlockStart="400">
-                  {selectedTab === 0 && (
-                    <InlineStack align="end" blockAlign="center">
-                      <Filters
-                        queryValue=""
-                        filters={[
-                          {
-                            key: 'status',
-                            label: 'Status',
-                            filter: (
-                              <ChoiceList
-                                title="Status"
-                                titleHidden
-                                choices={[
-                                  { label: 'Fix now (score < 40)', value: 'critical' },
-                                  { label: 'Needs work (40-69)', value: 'warning' },
-                                  { label: 'Good (70+)', value: 'good' },
-                                ]}
-                                selected={selectedFilter}
-                                onChange={handleFilterChange}
-                                allowMultiple
-                              />
-                            ),
-                            shortcut: true,
-                          },
-                        ]}
-                        appliedFilters={selectedFilter.map((filter) => ({
-                          key: filter,
-                          label: filter === 'critical' ? 'Fix now' : filter === 'warning' ? 'Needs work' : 'Good',
-                          onRemove: () => handleFilterChange(selectedFilter.filter((f) => f !== filter)),
-                        }))}
-                        onClearAll={() => handleFilterChange([])}
-                        onQueryChange={() => {}}
-                        onQueryClear={() => {}}
-                      />
-                    </InlineStack>
-                  )}
-                </Box>
-              </Tabs>
+        {hasProducts && (
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400">
+                <Tabs tabs={tabs} selected={selectedTab} onSelect={setSelectedTab}>
+                  <Box paddingBlockStart="400">
+                    {selectedTab === 0 && (
+                      <InlineStack align="end" blockAlign="center">
+                        <Filters
+                          queryValue=""
+                          filters={[
+                            {
+                              key: 'status',
+                              label: 'Statut',
+                              filter: (
+                                <ChoiceList
+                                  title="Statut"
+                                  titleHidden
+                                  choices={[
+                                    { label: 'Urgent (score < 40)', value: 'critical' },
+                                    { label: 'À améliorer (40-69)', value: 'warning' },
+                                    { label: 'Bon (70+)', value: 'good' },
+                                  ]}
+                                  selected={selectedFilter}
+                                  onChange={handleFilterChange}
+                                  allowMultiple
+                                />
+                              ),
+                              shortcut: true,
+                            },
+                          ]}
+                          appliedFilters={selectedFilter.map((filter) => ({
+                            key: filter,
+                            label: filter === 'critical' ? 'Urgent' : filter === 'warning' ? 'À améliorer' : 'Bon',
+                            onRemove: () => handleFilterChange(selectedFilter.filter((f) => f !== filter)),
+                          }))}
+                          onClearAll={() => handleFilterChange([])}
+                          onQueryChange={() => {}}
+                          onQueryClear={() => {}}
+                        />
+                      </InlineStack>
+                    )}
+                  </Box>
+                </Tabs>
 
-              <Divider />
+                <Divider />
 
-              {/* History Tab */}
-              {selectedTab === 2 ? (
-                history.length === 0 ? (
+                {/* History Tab */}
+                {selectedTab === 2 ? (
+                  history.length === 0 ? (
+                    <Box padding="600">
+                      <BlockStack gap="300" inlineAlign="center">
+                        <Text as="p" variant="headingMd">Pas encore d&apos;historique</Text>
+                        <Text as="p" tone="subdued">
+                          Quand vous appliquez des suggestions IA à vos produits, elles apparaîtront ici.
+                          Vous pourrez annuler n&apos;importe quelle modification.
+                        </Text>
+                      </BlockStack>
+                    </Box>
+                  ) : (
+                    <BlockStack gap="300">
+                      <Box padding="200">
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          Retrouvez ici toutes vos modifications. Vous pouvez annuler une modification à tout moment pour restaurer la valeur originale.
+                        </Text>
+                      </Box>
+                      {history.slice(0, 20).map((entry) => (
+                        <Box
+                          key={entry.id}
+                          padding="300"
+                          background={entry.status === 'applied' ? 'bg-surface-success' : 'bg-surface-secondary'}
+                          borderRadius="200"
+                        >
+                          <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
+                            <BlockStack gap="100">
+                              <InlineStack gap="200" blockAlign="center">
+                                <Text as="p" fontWeight="semibold">{entry.productTitle}</Text>
+                                <Badge tone={entry.status === 'applied' ? 'success' : 'info'}>
+                                  {entry.status === 'applied' ? 'Actif' : 'Annulé'}
+                                </Badge>
+                              </InlineStack>
+                              <InlineStack gap="200">
+                                <Badge>{getFieldLabel(entry.field)}</Badge>
+                                <Text as="span" variant="bodySm" tone="subdued">
+                                  {new Date(entry.createdAt).toLocaleDateString('fr-FR')} à{' '}
+                                  {new Date(entry.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                </Text>
+                                {entry.scoreBefore !== null && entry.scoreAfter !== null && (
+                                  <Text as="span" variant="bodySm">
+                                    Score : {entry.scoreBefore} → {entry.scoreAfter}
+                                  </Text>
+                                )}
+                              </InlineStack>
+                            </BlockStack>
+                            {entry.status === 'applied' && (
+                              <Button
+                                icon={UndoIcon}
+                                size="slim"
+                                onClick={() => handleUndo(entry.id)}
+                                loading={applying}
+                              >
+                                Annuler
+                              </Button>
+                            )}
+                          </InlineStack>
+                        </Box>
+                      ))}
+                    </BlockStack>
+                  )
+                ) : displayProducts.length === 0 ? (
                   <Box padding="600">
                     <BlockStack gap="300" inlineAlign="center">
-                      <Text as="p" variant="headingMd">No optimization history yet</Text>
+                      <Text as="p" variant="headingMd" tone="success">Tous vos produits sont bien optimisés !</Text>
                       <Text as="p" tone="subdued">
-                        When you apply AI suggestions to your products, they&apos;ll appear here.
+                        Tous vos produits ont un score de 70 ou plus. Excellent travail !
                       </Text>
                     </BlockStack>
                   </Box>
                 ) : (
-                  <BlockStack gap="300">
-                    {history.slice(0, 20).map((entry) => (
-                      <Box
-                        key={entry.id}
-                        padding="300"
-                        background={entry.status === 'applied' ? 'bg-surface-success' : 'bg-surface-secondary'}
-                        borderRadius="200"
-                      >
-                        <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
-                          <BlockStack gap="100">
-                            <InlineStack gap="200" blockAlign="center">
-                              <Text as="p" fontWeight="semibold">{entry.productTitle}</Text>
-                              <Badge tone={entry.status === 'applied' ? 'success' : 'info'}>
-                                {entry.status === 'applied' ? 'Active' : 'Undone'}
-                              </Badge>
-                            </InlineStack>
-                            <InlineStack gap="200">
-                              <Badge>{getFieldLabel(entry.field)}</Badge>
-                              <Text as="span" variant="bodySm" tone="subdued">
-                                {new Date(entry.createdAt).toLocaleDateString()} at{' '}
-                                {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </Text>
-                              {entry.scoreBefore !== null && entry.scoreAfter !== null && (
-                                <Text as="span" variant="bodySm">
-                                  Score: {entry.scoreBefore} → {entry.scoreAfter}
-                                </Text>
-                              )}
-                            </InlineStack>
-                          </BlockStack>
-                          {entry.status === 'applied' && (
-                            <Button
-                              icon={UndoIcon}
-                              size="slim"
-                              onClick={() => handleUndo(entry.id)}
-                              loading={applying}
-                            >
-                              Undo
-                            </Button>
-                          )}
-                        </InlineStack>
-                      </Box>
-                    ))}
-                  </BlockStack>
-                )
-              ) : !hasProducts ? (
-                <Box padding="600">
-                  <BlockStack gap="300" inlineAlign="center">
-                    <Text as="p" variant="headingMd">No products analyzed yet</Text>
-                    <Text as="p" tone="subdued">
-                      Click &quot;Analyze Products&quot; to see how AI-ready your products are.
-                    </Text>
-                    <Box paddingBlockStart="200">
-                      <Button variant="primary" onClick={runAudit} loading={auditing}>
-                        Analyze Products
-                      </Button>
-                    </Box>
-                  </BlockStack>
-                </Box>
-              ) : displayProducts.length === 0 ? (
-                <Box padding="600">
-                  <BlockStack gap="300" inlineAlign="center">
-                    <Text as="p" variant="headingMd" tone="success">All products are well optimized!</Text>
-                    <Text as="p" tone="subdued">
-                      Your products all have a score of 70 or above. Great job!
-                    </Text>
-                  </BlockStack>
-                </Box>
-              ) : (
-                <>
-                  <DataTable
-                    columnContentTypes={['text', 'text', 'text', 'text', 'text']}
-                    headings={[
-                      <InlineStack key="h-product" gap="100" blockAlign="center">
-                        <Button variant="plain" onClick={() => handleSort('title')}>
-                          {`Product ${sortColumn === 'title' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
-                        </Button>
-                      </InlineStack>,
-                      <InlineStack key="h-score" gap="100" blockAlign="center">
-                        <Button variant="plain" onClick={() => handleSort('score')}>
-                          {`Score ${sortColumn === 'score' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
-                        </Button>
-                      </InlineStack>,
-                      <InlineStack key="h-status" gap="100" blockAlign="center">
-                        <Button variant="plain" onClick={() => handleSort('status')}>
-                          {`Status ${sortColumn === 'status' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
-                        </Button>
-                      </InlineStack>,
-                      'Issues',
-                      'Action',
-                    ]}
-                    rows={tableRows}
-                  />
-                  {selectedTab === 0 && totalPages > 1 && (
-                    <InlineStack align="center">
-                      <Pagination
-                        hasPrevious={currentPage > 1}
-                        hasNext={currentPage < totalPages}
-                        onPrevious={() => setCurrentPage((p) => p - 1)}
-                        onNext={() => setCurrentPage((p) => p + 1)}
-                      />
-                    </InlineStack>
-                  )}
-                </>
-              )}
-            </BlockStack>
-          </Card>
-        </Layout.Section>
+                  <>
+                    <DataTable
+                      columnContentTypes={['text', 'text', 'text', 'text', 'text']}
+                      headings={[
+                        <InlineStack key="h-product" gap="100" blockAlign="center">
+                          <Button variant="plain" onClick={() => handleSort('title')}>
+                            {`Produit ${sortColumn === 'title' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
+                          </Button>
+                        </InlineStack>,
+                        <InlineStack key="h-score" gap="100" blockAlign="center">
+                          <Button variant="plain" onClick={() => handleSort('score')}>
+                            {`Score ${sortColumn === 'score' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
+                          </Button>
+                        </InlineStack>,
+                        <InlineStack key="h-status" gap="100" blockAlign="center">
+                          <Button variant="plain" onClick={() => handleSort('status')}>
+                            {`Statut ${sortColumn === 'status' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
+                          </Button>
+                        </InlineStack>,
+                        'Problèmes',
+                        'Action',
+                      ]}
+                      rows={tableRows}
+                    />
+                    {selectedTab === 0 && totalPages > 1 && (
+                      <InlineStack align="center">
+                        <Pagination
+                          hasPrevious={currentPage > 1}
+                          hasNext={currentPage < totalPages}
+                          onPrevious={() => setCurrentPage((p) => p - 1)}
+                          onNext={() => setCurrentPage((p) => p + 1)}
+                        />
+                      </InlineStack>
+                    )}
+                  </>
+                )}
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+        )}
 
         {/* Tips */}
         {hasProducts && (criticalCount > 0 || warningCount > 0) && selectedTab !== 2 && (
           <Layout.Section>
             <Card>
               <BlockStack gap="400">
-                <Text as="h3" variant="headingMd">How to Improve Your Products</Text>
+                <Text as="h3" variant="headingMd">Conseils pour améliorer vos produits</Text>
                 <Divider />
                 <BlockStack gap="200">
                   {criticalCount > 0 && (
                     <Box padding="300" background="bg-surface-critical" borderRadius="200">
                       <BlockStack gap="100">
-                        <Text as="p" fontWeight="semibold">Add images and descriptions</Text>
+                        <Text as="p" fontWeight="semibold">Ajoutez des images et descriptions</Text>
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Products without images or descriptions are almost never recommended by AI assistants.
+                          Les produits sans images ou descriptions ne sont presque jamais recommandés par les IA.
+                          C&apos;est la base pour être visible.
                         </Text>
                       </BlockStack>
                     </Box>
                   )}
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Use the &quot;Optimize&quot; button</Text>
+                      <Text as="p" fontWeight="semibold">Utilisez le bouton &quot;Optimiser&quot;</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Get AI-powered suggestions and apply them directly to your products with one click.
+                        Notre IA analyse votre produit et génère des suggestions personnalisées.
+                        Appliquez-les en 1 clic directement sur Shopify.
+                      </Text>
+                    </BlockStack>
+                  </Box>
+                  <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                    <BlockStack gap="100">
+                      <Text as="p" fontWeight="semibold">Visez un score de 70+</Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        Les produits avec un score de 70 ou plus ont une bien meilleure chance
+                        d&apos;être recommandés par ChatGPT, Perplexity et autres assistants IA.
                       </Text>
                     </BlockStack>
                   </Box>
@@ -883,11 +988,11 @@ export default function ProductsPage() {
       <Modal
         open={showModal}
         onClose={() => setShowModal(false)}
-        title={selectedProduct ? `Optimize: ${selectedProduct.title}` : 'Optimize Product'}
+        title={selectedProduct ? `Optimiser : ${selectedProduct.title}` : 'Optimiser le produit'}
         primaryAction={
           optimization && optimization.suggestions.length > 0
             ? {
-                content: `Apply ${selectedSuggestions.size} to Shopify`,
+                content: `Appliquer ${selectedSuggestions.size} sur Shopify`,
                 icon: CheckIcon,
                 onAction: handleApplySelected,
                 disabled: selectedSuggestions.size === 0 || applying,
@@ -897,7 +1002,7 @@ export default function ProductsPage() {
         }
         secondaryActions={[
           {
-            content: 'Close',
+            content: 'Fermer',
             onAction: () => setShowModal(false),
           },
         ]}
@@ -908,9 +1013,9 @@ export default function ProductsPage() {
             <Box padding="800">
               <BlockStack gap="400" inlineAlign="center">
                 <Spinner size="large" />
-                <Text as="p">Generating AI suggestions...</Text>
+                <Text as="p">Génération des suggestions IA...</Text>
                 <Text as="p" variant="bodySm" tone="subdued">
-                  This takes a few seconds
+                  Cela prend quelques secondes
                 </Text>
               </BlockStack>
             </Box>
@@ -919,7 +1024,7 @@ export default function ProductsPage() {
               {/* Score improvement */}
               <Box padding="400" background="bg-surface-success" borderRadius="200">
                 <InlineStack align="space-between" blockAlign="center">
-                  <Text as="p" fontWeight="semibold">Expected Improvement</Text>
+                  <Text as="p" fontWeight="semibold">Amélioration prévue</Text>
                   <InlineStack gap="200">
                     <Badge tone="critical">{String(optimization.currentScore)}</Badge>
                     <Text as="p">→</Text>
@@ -933,14 +1038,14 @@ export default function ProductsPage() {
               {optimization.suggestions.length === 0 ? (
                 <Banner tone="info">
                   <Text as="p">
-                    This product is already well optimized, or it needs more basic content (like a description) before AI can help.
+                    Ce produit est déjà bien optimisé, ou il nécessite du contenu de base (comme une description) avant que l&apos;IA puisse vous aider.
                   </Text>
                 </Banner>
               ) : (
                 <BlockStack gap="400">
                   <InlineStack align="space-between" blockAlign="center" wrap>
                     <Text as="p" fontWeight="semibold">
-                      {selectedSuggestions.size} of {optimization.suggestions.length} selected
+                      {selectedSuggestions.size} sur {optimization.suggestions.length} sélectionnées
                     </Text>
                     <InlineStack gap="200">
                       <Button
@@ -955,7 +1060,7 @@ export default function ProductsPage() {
                           }
                         }}
                       >
-                        {selectedSuggestions.size === optimization.suggestions.length ? 'Deselect All' : 'Select All'}
+                        {selectedSuggestions.size === optimization.suggestions.length ? 'Tout désélectionner' : 'Tout sélectionner'}
                       </Button>
                     </InlineStack>
                   </InlineStack>
@@ -980,7 +1085,7 @@ export default function ProductsPage() {
                               size="slim"
                               onClick={() => handleCopy(suggestion.suggested, suggestion.field)}
                             >
-                              {copied === suggestion.field ? 'Copied!' : 'Copy'}
+                              {copied === suggestion.field ? 'Copié !' : 'Copier'}
                             </Button>
                             <Button
                               icon={CheckIcon}
@@ -989,7 +1094,7 @@ export default function ProductsPage() {
                               onClick={() => handleApplySingle(suggestion)}
                               loading={applying}
                             >
-                              Apply
+                              Appliquer
                             </Button>
                           </InlineStack>
                         </InlineStack>
@@ -1005,7 +1110,7 @@ export default function ProductsPage() {
                           <Box minWidth="45%">
                             <BlockStack gap="100">
                               <Text as="p" variant="bodySm" fontWeight="semibold">
-                                Before:
+                                Avant :
                               </Text>
                               <Box padding="200" background="bg-surface-secondary" borderRadius="100">
                                 <Text as="p" variant="bodySm">
@@ -1013,7 +1118,7 @@ export default function ProductsPage() {
                                     ? suggestion.original.length > 150
                                       ? `${suggestion.original.substring(0, 150)}...`
                                       : suggestion.original
-                                    : '(empty)'}
+                                    : '(vide)'}
                                 </Text>
                               </Box>
                             </BlockStack>
@@ -1023,7 +1128,7 @@ export default function ProductsPage() {
                           <Box minWidth="45%">
                             <BlockStack gap="100">
                               <Text as="p" variant="bodySm" fontWeight="semibold">
-                                After:
+                                Après :
                               </Text>
                               <Box padding="200" background="bg-surface-success" borderRadius="100">
                                 <Text as="p" variant="bodySm">
@@ -1043,8 +1148,8 @@ export default function ProductsPage() {
 
               <Banner tone="info">
                 <Text as="p">
-                  Click &quot;Apply&quot; to update your product directly in Shopify, or &quot;Copy&quot; to paste manually.
-                  You can undo any changes from the History tab.
+                  Cliquez sur &quot;Appliquer&quot; pour mettre à jour votre produit directement sur Shopify,
+                  ou &quot;Copier&quot; pour coller manuellement. Vous pouvez annuler toute modification depuis l&apos;onglet Historique.
                 </Text>
               </Banner>
             </BlockStack>
@@ -1056,16 +1161,16 @@ export default function ProductsPage() {
       <Modal
         open={showApplyConfirm}
         onClose={() => setShowApplyConfirm(false)}
-        title="Apply Changes to Shopify"
+        title="Appliquer les modifications sur Shopify"
         primaryAction={{
-          content: 'Confirm & Apply',
+          content: 'Confirmer et appliquer',
           icon: CheckIcon,
           onAction: confirmApply,
           loading: applying,
         }}
         secondaryActions={[
           {
-            content: 'Cancel',
+            content: 'Annuler',
             onAction: () => setShowApplyConfirm(false),
           },
         ]}
@@ -1073,8 +1178,8 @@ export default function ProductsPage() {
         <Modal.Section>
           <BlockStack gap="400">
             <Text as="p">
-              You are about to apply {suggestionsToApply.length} change{suggestionsToApply.length !== 1 ? 's' : ''} to
-              your product in Shopify:
+              Vous allez appliquer {suggestionsToApply.length} modification{suggestionsToApply.length !== 1 ? 's' : ''} à
+              votre produit sur Shopify :
             </Text>
 
             <BlockStack gap="200">
@@ -1092,7 +1197,7 @@ export default function ProductsPage() {
 
             <Banner tone="info">
               <Text as="p">
-                You can undo these changes at any time from the History tab.
+                Vous pourrez annuler ces modifications à tout moment depuis l&apos;onglet Historique.
               </Text>
             </Banner>
           </BlockStack>
