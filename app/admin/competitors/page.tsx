@@ -548,7 +548,7 @@ export default function CompetitorsPage() {
                             </Text>
                             {comp.winner && (
                               <Badge tone={comp.winner === analysis.brandName ? 'success' : 'critical'}>
-                                Gagnant : {comp.winner}
+                                {`Gagnant : ${comp.winner}`}
                               </Badge>
                             )}
                           </InlineStack>
@@ -557,11 +557,11 @@ export default function CompetitorsPage() {
                           </Text>
                           <InlineStack gap="200" wrap>
                             <Badge tone={comp.yourBrand.isMentioned ? 'success' : 'critical'}>
-                              Vous : {comp.yourBrand.isMentioned ? `#${comp.yourBrand.position || '?'}` : 'Non trouvé'}
+                              {`Vous : ${comp.yourBrand.isMentioned ? `#${comp.yourBrand.position || '?'}` : 'Non trouvé'}`}
                             </Badge>
                             {comp.competitors.slice(0, 3).map((c) => (
                               <Badge key={c.domain} tone={c.isMentioned ? 'attention' : 'new'}>
-                                {c.name || c.domain} : {c.isMentioned ? `#${c.position || '?'}` : 'Non trouvé'}
+                                {`${c.name || c.domain} : ${c.isMentioned ? `#${c.position || '?'}` : 'Non trouvé'}`}
                               </Badge>
                             ))}
                           </InlineStack>
@@ -588,7 +588,7 @@ export default function CompetitorsPage() {
                     </Text>
                   </BlockStack>
                   <Badge tone={data.remaining > 0 ? 'info' : 'warning'}>
-                    {data.competitors.length} / {data.limit}
+                    {`${data.competitors.length} / ${data.limit}`}
                   </Badge>
                 </InlineStack>
                 <Divider />
@@ -629,7 +629,7 @@ export default function CompetitorsPage() {
                 {data.remaining > 0 && (
                   <Box paddingBlockStart="200">
                     <Button onClick={() => setShowAddModal(true)} icon={PlusCircleIcon}>
-                      Ajouter un concurrent ({data.remaining} restant{data.remaining > 1 ? 's' : ''})
+                      {`Ajouter un concurrent (${data.remaining} restant${data.remaining > 1 ? 's' : ''})`}
                     </Button>
                   </Box>
                 )}

@@ -209,7 +209,7 @@ export default function ABTestsPage() {
       return <Badge>Égalité</Badge>;
     }
     return (
-      <Badge tone="success">Variante {test.winner} gagne</Badge>
+      <Badge tone="success">{`Variante ${test.winner} gagne`}</Badge>
     );
   };
 
