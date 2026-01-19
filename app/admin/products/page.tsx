@@ -206,7 +206,7 @@ export default function ProductsPage() {
     }
   };
 
-  const handleOptimize = async (product: ProductAudit) => {
+  const handleOptimize = useCallback(async (product: ProductAudit) => {
     try {
       setOptimizing(true);
       setError(null);
@@ -240,7 +240,7 @@ export default function ProductsPage() {
     } finally {
       setOptimizing(false);
     }
-  };
+  }, [authFetch]);
 
   const handleCopy = async (text: string, field: string) => {
     try {
@@ -376,8 +376,8 @@ export default function ProductsPage() {
     return labels[field] || field;
   };
 
-  // Sort function
-  const sortProducts = (products: ProductAudit[]) => {
+  // Sort function - memoized to prevent unnecessary re-renders
+  const sortProducts = useCallback((products: ProductAudit[]) => {
     return [...products].sort((a, b) => {
       let comparison = 0;
       switch (sortColumn) {
@@ -398,7 +398,7 @@ export default function ProductsPage() {
       }
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  };
+  }, [sortColumn, sortDirection]);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -425,13 +425,13 @@ export default function ProductsPage() {
   // Sort filtered products - memoized O(n log n) operation
   const sortedProducts = useMemo(() => {
     return sortProducts(filteredProducts);
-  }, [filteredProducts, sortColumn, sortDirection]);
+  }, [filteredProducts, sortProducts]);
 
   // Products needing improvement - memoized
   const productsNeedingWork = useMemo(() => {
     if (!data?.products) return [];
     return sortProducts(data.products.filter(p => p.aiScore < 70));
-  }, [data?.products, sortColumn, sortDirection]);
+  }, [data?.products, sortProducts]);
 
   // Active history entries - memoized
   const activeHistory = useMemo(() => {
@@ -452,36 +452,7 @@ export default function ProductsPage() {
     setCurrentPage(1);
   };
 
-  // Show authentication error if shop detection failed
-  if (shopDetectionFailed) {
-    return <NotAuthenticated error={shopError} />;
-  }
-
-  // Loading state
-  if (loading || shopLoading) {
-    return (
-      <Page title="Products" backAction={{ content: 'Home', url: '/admin' }}>
-        <Layout>
-          <Layout.Section>
-            <Card>
-              <Box padding="1000">
-                <BlockStack gap="400" inlineAlign="center">
-                  <Spinner size="large" />
-                  <Text as="p" variant="bodyLg">Loading your products...</Text>
-                </BlockStack>
-              </Box>
-            </Card>
-          </Layout.Section>
-        </Layout>
-      </Page>
-    );
-  }
-
-  const hasProducts = (data?.auditedProducts ?? 0) > 0;
-  const criticalCount = data?.issues.critical ?? 0;
-  const warningCount = data?.issues.warning ?? 0;
-
-  // Tabs - memoized
+  // Tabs - memoized (must be before early returns per rules of hooks)
   const tabs = useMemo(() => [
     { id: 'all', content: `All Products (${sortedProducts.length})` },
     { id: 'improve', content: `Need Improvement (${productsNeedingWork.length})` },
@@ -529,6 +500,35 @@ export default function ProductsPage() {
       Optimize
     </Button>,
   ]), [displayProducts, quota?.available, handleOptimize]);
+
+  // Show authentication error if shop detection failed
+  if (shopDetectionFailed) {
+    return <NotAuthenticated error={shopError} />;
+  }
+
+  // Loading state
+  if (loading || shopLoading) {
+    return (
+      <Page title="Products" backAction={{ content: 'Home', url: '/admin' }}>
+        <Layout>
+          <Layout.Section>
+            <Card>
+              <Box padding="1000">
+                <BlockStack gap="400" inlineAlign="center">
+                  <Spinner size="large" />
+                  <Text as="p" variant="bodyLg">Loading your products...</Text>
+                </BlockStack>
+              </Box>
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </Page>
+    );
+  }
+
+  const hasProducts = (data?.auditedProducts ?? 0) > 0;
+  const criticalCount = data?.issues.critical ?? 0;
+  const warningCount = data?.issues.warning ?? 0;
 
   return (
     <Page

@@ -26,6 +26,7 @@ import {
   ViewIcon,
   TargetIcon,
   ReplayIcon,
+  CodeIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
@@ -264,6 +265,13 @@ export default function Dashboard() {
       icon: ChartVerticalFilledIcon,
       href: '/admin/insights',
       color: 'bg-fill-magic',
+    },
+    {
+      title: 'AI Tools',
+      description: 'llms.txt and JSON-LD generators',
+      icon: CodeIcon,
+      href: '/admin/tools',
+      color: 'bg-fill-success',
     },
   ];
 
