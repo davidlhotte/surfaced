@@ -151,10 +151,10 @@ L'Optimiseur IA utilise l'intelligence artificielle pour générer automatiqueme
 
 | Plan | Optimisations/mois |
 |------|-------------------|
-| Gratuit | 0 |
-| Starter | 10 |
-| Pro | 50 |
-| Business | Illimité |
+| Gratuit | 3 |
+| Starter | 20 |
+| Growth | 100 |
+| Scale | 500 |
         `,
       },
       {
@@ -221,9 +221,9 @@ Comprendre comment vos concurrents apparaissent dans les recommandations IA vous
 | Plan | Concurrents |
 |------|-------------|
 | Gratuit | 0 |
-| Starter | 0 |
-| Pro | 3 |
-| Business | 10 |
+| Starter | 1 |
+| Growth | 3 |
+| Scale | 10 |
         `,
       },
       {
@@ -483,10 +483,10 @@ Renommez vos fichiers avant upload :
 
 | Fonctionnalité | Free Trial | Starter | Growth | Scale |
 |----------------|------------|---------|--------|-------|
-| Prix | 0$ | 49$/mois | 99$/mois | 199$/mois |
+| Prix | $0 | $49/mois | $99/mois | $199/mois |
 | Produits analysés | 10 | 100 | 500 | Illimité |
 | Vérifications visibilité | 3/mois | 10/mois | 50/mois | 200/mois |
-| Optimisations IA | 3/mois | 20/mois | 100/mois | 500/mois |
+| Suggestions IA | 3/mois | 20/mois | 100/mois | 500/mois |
 | Concurrents | 0 | 1 | 3 | 10 |
 | llms.txt | ✅ | ✅ | ✅ | ✅ |
 | JSON-LD | ❌ | ✅ | ✅ | ✅ |
@@ -523,7 +523,7 @@ Oui, à tout moment :
 
 ### Y a-t-il un essai gratuit ?
 
-Oui ! Tous les plans payants ont un **essai gratuit de 7 jours**. Vous ne serez pas facturé si vous annulez avant.
+Oui ! Tous les plans payants ont un **essai gratuit de 14 jours**. Vous ne serez pas facturé si vous annulez avant.
 
 ### Que se passe-t-il si j'atteins ma limite ?
 
@@ -556,7 +556,7 @@ Aucun engagement, annulez quand vous voulez.
 
 L'API Surfaced vous permet d'accéder programmatiquement à vos données d'audit, de visibilité et de produits.
 
-**Disponible sur** : Plan Business uniquement
+**Disponible sur** : Plan Scale uniquement
 
 ### Base URL
 
@@ -705,15 +705,15 @@ Lance une nouvelle vérification de visibilité.
 
 **Délai de réponse** :
 - Plan gratuit/Starter : 48-72h
-- Plan Pro : 24h
-- Plan Business : 4h (jours ouvrés)
+- Plan Growth : 24h
+- Plan Scale : 4h (jours ouvrés)
 
 ### Informations à fournir
 
 Pour une résolution rapide, incluez :
 
 1. **Votre domaine Shopify** : exemple.myshopify.com
-2. **Votre plan** : Gratuit/Starter/Pro/Business
+2. **Votre plan** : Gratuit/Starter/Growth/Scale
 3. **Description du problème** : Ce que vous essayez de faire
 4. **Captures d'écran** : Si applicable
 5. **Étapes pour reproduire** : Comment arriver au problème
@@ -728,6 +728,23 @@ Pour une résolution rapide, incluez :
     ],
   },
 ];
+
+// Logo component using the official brand logo
+const LogoIcon = () => (
+  <svg viewBox="0 0 64 64" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="helpLogoGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#0EA5E9"/>
+        <stop offset="100%" stopColor="#38BDF8"/>
+      </linearGradient>
+    </defs>
+    <rect width="64" height="64" rx="14" fill="#0A1628"/>
+    <path d="M10 46 Q20 38 32 38 Q44 38 54 46 Q44 30 32 30 Q20 30 10 46 Z" fill="url(#helpLogoGrad)" opacity="0.3"/>
+    <path d="M8 40 Q18 28 32 28 Q46 28 56 40 Q46 20 32 20 Q18 20 8 40 Z" fill="url(#helpLogoGrad)" opacity="0.5"/>
+    <path d="M6 34 Q16 18 32 18 Q48 18 58 34 Q48 12 32 12 Q16 12 6 34 Z" fill="url(#helpLogoGrad)"/>
+    <circle cx="32" cy="16" r="4" fill="#38BDF8"/>
+  </svg>
+);
 
 export default function HelpPage() {
   const [activeCategory, setActiveCategory] = useState<string>('getting-started');
@@ -757,16 +774,15 @@ export default function HelpPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
-              <span className="text-xl font-bold text-slate-900">Surfaced</span>
+              <LogoIcon />
+              <span className="text-xl font-bold" style={{ color: '#0A1628' }}>surfaced</span>
               <span className="text-slate-400 mx-2">/</span>
               <span className="text-slate-600">Centre d&apos;aide</span>
             </Link>
             <a
               href="https://apps.shopify.com/surfaced"
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+              style={{ background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)' }}
             >
               Installer l&apos;app
             </a>
@@ -775,10 +791,10 @@ export default function HelpPage() {
       </header>
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-indigo-600 to-purple-700 text-white py-16 px-4">
+      <section className="text-white py-16 px-4" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0EA5E9 100%)' }}>
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl font-bold mb-4">Comment pouvons-nous vous aider ?</h1>
-          <p className="text-indigo-100 mb-8">
+          <p className="text-sky-100 mb-8">
             Guides, tutoriels et réponses à vos questions sur Surfaced
           </p>
 
@@ -789,7 +805,7 @@ export default function HelpPage() {
               placeholder="Rechercher dans l'aide..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-5 py-4 rounded-xl text-slate-900 placeholder-slate-400 shadow-lg focus:outline-none focus:ring-2 focus:ring-white"
+              className="w-full px-5 py-4 rounded-xl text-slate-900 placeholder-slate-400 shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
             />
             <svg
               className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
@@ -841,9 +857,10 @@ export default function HelpPage() {
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   activeCategory === category.id
-                    ? 'bg-indigo-600 text-white'
+                    ? 'text-white'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
+                style={activeCategory === category.id ? { background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)' } : {}}
               >
                 <span>{category.icon}</span>
                 {category.title}
@@ -871,7 +888,7 @@ export default function HelpPage() {
                       onClick={() => setActiveArticle(article.id)}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                         activeArticle === article.id
-                          ? 'bg-indigo-50 text-indigo-700 font-medium'
+                          ? 'bg-sky-50 text-sky-700 font-medium'
                           : 'text-slate-600 hover:bg-slate-50'
                       }`}
                     >
@@ -889,7 +906,7 @@ export default function HelpPage() {
                   <>
                     <h1 className="text-3xl font-bold text-slate-900 mb-6">{currentArticle.title}</h1>
                     <div
-                      className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-a:text-indigo-600 prose-code:bg-slate-100 prose-code:px-1 prose-code:rounded prose-pre:bg-slate-900 prose-pre:text-slate-100"
+                      className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-a:text-sky-600 prose-code:bg-slate-100 prose-code:px-1 prose-code:rounded prose-pre:bg-slate-900 prose-pre:text-slate-100"
                       dangerouslySetInnerHTML={{
                         __html: currentArticle.content
                           .replace(/\n/g, '<br>')
@@ -925,12 +942,12 @@ export default function HelpPage() {
               </div>
 
               {/* Contact Support */}
-              <div className="mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-8 text-white text-center">
+              <div className="mt-8 rounded-xl p-8 text-white text-center" style={{ background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)' }}>
                 <h3 className="text-xl font-bold mb-2">Besoin d&apos;aide supplémentaire ?</h3>
-                <p className="text-indigo-100 mb-4">Notre équipe est là pour vous aider</p>
+                <p className="text-sky-100 mb-4">Notre équipe est là pour vous aider</p>
                 <a
                   href="mailto:support@surfaced.app"
-                  className="inline-block px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
+                  className="inline-block px-6 py-3 bg-white text-sky-600 font-semibold rounded-lg hover:bg-sky-50 transition-colors"
                 >
                   Contacter le support
                 </a>
@@ -947,10 +964,10 @@ export default function HelpPage() {
             &copy; {new Date().getFullYear()} Surfaced. Tous droits réservés.
           </p>
           <div className="flex gap-6 text-sm text-slate-500">
-            <Link href="/" className="hover:text-indigo-600">Accueil</Link>
-            <Link href="/privacy" className="hover:text-indigo-600">Confidentialité</Link>
-            <Link href="/terms" className="hover:text-indigo-600">Conditions</Link>
-            <a href="mailto:support@surfaced.app" className="hover:text-indigo-600">Support</a>
+            <Link href="/" className="hover:text-sky-600">Accueil</Link>
+            <Link href="/privacy" className="hover:text-sky-600">Confidentialité</Link>
+            <Link href="/terms" className="hover:text-sky-600">Conditions</Link>
+            <a href="mailto:support@surfaced.app" className="hover:text-sky-600">Support</a>
           </div>
         </div>
       </footer>
