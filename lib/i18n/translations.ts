@@ -278,6 +278,49 @@ export const translations = {
       copyright: 'Tous droits réservés.',
       tagline: 'Conçu pour les marchands Shopify qui veulent être trouvés',
     },
+    help: {
+      title: 'Centre d\'aide',
+      heroTitle: 'Comment pouvons-nous vous aider ?',
+      heroSubtitle: 'Guides, tutoriels et réponses à vos questions sur Surfaced',
+      searchPlaceholder: 'Rechercher dans l\'aide...',
+      installApp: 'Installer l\'app',
+      wasHelpful: 'Cet article vous a-t-il aidé ?',
+      yes: 'Oui',
+      no: 'Non',
+      needMoreHelp: 'Besoin d\'aide supplémentaire ?',
+      teamHere: 'Notre équipe est là pour vous aider',
+      contactSupport: 'Contacter le support',
+      home: 'Accueil',
+      privacy: 'Confidentialité',
+      terms: 'Conditions',
+      support: 'Support',
+      categories: {
+        gettingStarted: {
+          title: 'Prise en main',
+          description: 'Commencez avec Surfaced en quelques minutes',
+        },
+        features: {
+          title: 'Fonctionnalités',
+          description: 'Guide détaillé de chaque fonctionnalité',
+        },
+        bestPractices: {
+          title: 'Bonnes Pratiques',
+          description: 'Conseils pour maximiser votre visibilité IA',
+        },
+        plans: {
+          title: 'Plans & Facturation',
+          description: 'Tout sur les plans et la facturation',
+        },
+        api: {
+          title: 'API Publique',
+          description: 'Documentation de l\'API pour développeurs',
+        },
+        troubleshooting: {
+          title: 'Dépannage',
+          description: 'Solutions aux problèmes courants',
+        },
+      },
+    },
   },
   en: {
     common: {
@@ -555,6 +598,49 @@ export const translations = {
       },
       copyright: 'All rights reserved.',
       tagline: 'Built for Shopify merchants who want to be found',
+    },
+    help: {
+      title: 'Help Center',
+      heroTitle: 'How can we help you?',
+      heroSubtitle: 'Guides, tutorials, and answers to your questions about Surfaced',
+      searchPlaceholder: 'Search help...',
+      installApp: 'Install app',
+      wasHelpful: 'Was this article helpful?',
+      yes: 'Yes',
+      no: 'No',
+      needMoreHelp: 'Need more help?',
+      teamHere: 'Our team is here to help',
+      contactSupport: 'Contact support',
+      home: 'Home',
+      privacy: 'Privacy',
+      terms: 'Terms',
+      support: 'Support',
+      categories: {
+        gettingStarted: {
+          title: 'Getting Started',
+          description: 'Get started with Surfaced in minutes',
+        },
+        features: {
+          title: 'Features',
+          description: 'Detailed guide for each feature',
+        },
+        bestPractices: {
+          title: 'Best Practices',
+          description: 'Tips to maximize your AI visibility',
+        },
+        plans: {
+          title: 'Plans & Billing',
+          description: 'Everything about plans and billing',
+        },
+        api: {
+          title: 'Public API',
+          description: 'API documentation for developers',
+        },
+        troubleshooting: {
+          title: 'Troubleshooting',
+          description: 'Solutions to common problems',
+        },
+      },
     },
   },
 } as const;
