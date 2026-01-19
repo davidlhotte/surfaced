@@ -543,6 +543,68 @@ For quick resolution, include:
   },
 ];
 
+// Simple markdown to HTML parser
+function parseMarkdown(content: string): string {
+  let html = content;
+
+  // Code blocks first (before other replacements)
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto my-4 text-sm font-mono"><code>$2</code></pre>');
+
+  // Headers (must be at start of line)
+  html = html.replace(/^#### (.*$)/gm, '<h4 class="text-base font-semibold mt-5 mb-2 text-slate-800">$1</h4>');
+  html = html.replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold mt-6 mb-3 text-slate-800">$1</h3>');
+  html = html.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold mt-8 mb-4 text-slate-900">$1</h2>');
+
+  // Bold and inline code
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>');
+  html = html.replace(/`([^`]+)`/g, '<code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono text-slate-800">$1</code>');
+
+  // Lists
+  html = html.replace(/^- (.*$)/gm, '<li class="ml-1">$1</li>');
+  html = html.replace(/^(\d+)\. (.*$)/gm, '<li class="ml-1"><span class="font-medium text-slate-700">$1.</span> $2</li>');
+
+  // Wrap consecutive list items
+  html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, (match) => {
+    if (match.includes('<span class="font-medium')) {
+      return `<ol class="list-none pl-4 my-3 space-y-2">${match}</ol>`;
+    }
+    return `<ul class="list-disc pl-6 my-3 space-y-1.5">${match}</ul>`;
+  });
+
+  // Tables
+  html = html.replace(/\|(.+)\|/g, (match, content) => {
+    const cells = content.split('|').map((c: string) => c.trim());
+    const isHeader = cells.some((c: string) => c.includes('---'));
+    if (isHeader) return '';
+    return `<tr>${cells.map((c: string) => `<td class="border border-slate-200 px-3 py-2 text-sm">${c}</td>`).join('')}</tr>`;
+  });
+  html = html.replace(/(<tr>.*<\/tr>\n?)+/g, '<table class="w-full border-collapse my-4">$&</table>');
+
+  // Paragraphs - convert double newlines to paragraph breaks
+  html = html.replace(/\n\n/g, '</p><p class="my-3 text-slate-600 leading-relaxed">');
+
+  // Single newlines to line breaks (but not inside pre/code blocks)
+  html = html.replace(/\n/g, '<br>');
+
+  // Clean up
+  html = html.replace(/<br><h/g, '<h');
+  html = html.replace(/<\/h(\d)><br>/g, '</h$1>');
+  html = html.replace(/<br><ul/g, '<ul');
+  html = html.replace(/<\/ul><br>/g, '</ul>');
+  html = html.replace(/<br><ol/g, '<ol');
+  html = html.replace(/<\/ol><br>/g, '</ol>');
+  html = html.replace(/<br><pre/g, '<pre');
+  html = html.replace(/<\/pre><br>/g, '</pre>');
+  html = html.replace(/<br><table/g, '<table');
+  html = html.replace(/<\/table><br>/g, '</table>');
+  html = html.replace(/<p class="[^"]*"><\/p>/g, '');
+
+  // Wrap in paragraph
+  html = `<p class="my-3 text-slate-600 leading-relaxed">${html}</p>`;
+
+  return html;
+}
+
 // Logo component
 const LogoIcon = () => (
   <svg viewBox="0 0 64 64" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
@@ -731,24 +793,11 @@ function HelpContent() {
               <div className="bg-white rounded-xl border border-slate-200 p-8">
                 {currentArticle && (
                   <>
-                    <h1 className="text-3xl font-bold text-slate-900 mb-6">{currentArticle.title[locale]}</h1>
+                    <h1 className="text-3xl font-bold text-slate-900 mb-8">{currentArticle.title[locale]}</h1>
                     <div
-                      className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-a:text-sky-600 prose-code:bg-slate-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-slate-900 prose-pre:text-slate-100"
+                      className="help-content text-base"
                       dangerouslySetInnerHTML={{
-                        __html: currentArticle.content[locale]
-                          .replace(/\n/g, '<br>')
-                          .replace(/### (.*)/g, '<h3 class="text-lg font-semibold mt-6 mb-3 text-slate-800">$1</h3>')
-                          .replace(/## (.*)/g, '<h2 class="text-xl font-bold mt-8 mb-4 text-slate-900">$1</h2>')
-                          .replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900">$1</strong>')
-                          .replace(/`([^`]+)`/g, '<code>$1</code>')
-                          .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre class="p-4 rounded-lg overflow-x-auto my-4"><code>$2</code></pre>')
-                          .replace(/^- (.*)/gm, '<li class="ml-4">$1</li>')
-                          .replace(/(<li[^>]*>.*<\/li>\n?)+/g, '<ul class="list-disc pl-4 my-3 space-y-1">$&</ul>')
-                          .replace(/<\/ul><br>/g, '</ul>')
-                          .replace(/\| (.*) \|/g, (match) => {
-                            const cells = match.split('|').filter(Boolean).map((c) => c.trim());
-                            return `<tr>${cells.map((c) => `<td class="border border-slate-200 px-3 py-2 text-sm">${c}</td>`).join('')}</tr>`;
-                          }),
+                        __html: parseMarkdown(currentArticle.content[locale]),
                       }}
                     />
                   </>
