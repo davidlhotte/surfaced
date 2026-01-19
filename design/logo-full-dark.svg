@@ -1,0 +1,46 @@
+<svg viewBox="0 0 320 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="surfaceGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon Container -->
+  <g transform="translate(8, 8)">
+    <!-- Background -->
+    <rect width="64" height="64" rx="14" fill="#0A1628"/>
+    
+    <!-- Back wave (subtle) -->
+    <path d="M10 46 Q20 38 32 38 Q44 38 54 46 Q44 30 32 30 Q20 30 10 46 Z" 
+          fill="url(#surfaceGradient)" opacity="0.3"/>
+    
+    <!-- Middle wave -->
+    <path d="M8 40 Q18 28 32 28 Q46 28 56 40 Q46 20 32 20 Q18 20 8 40 Z" 
+          fill="url(#surfaceGradient)" opacity="0.5"/>
+    
+    <!-- Front wave (main) -->
+    <path d="M6 34 Q16 18 32 18 Q48 18 58 34 Q48 12 32 12 Q16 12 6 34 Z" 
+          fill="url(#waveGradient)"/>
+    
+    <!-- Rising dot/bubble -->
+    <circle cx="32" cy="16" r="4" fill="#38BDF8"/>
+    
+    <!-- Light reflection -->
+    <ellipse cx="24" cy="20" rx="3" ry="1.5" fill="#FFFFFF" opacity="0.3"/>
+  </g>
+  
+  <!-- Wordmark - White for dark backgrounds -->
+  <text x="92" y="52" 
+        font-family="Outfit, -apple-system, BlinkMacSystemFont, sans-serif" 
+        font-size="36" 
+        font-weight="600" 
+        fill="#F0F9FF"
+        letter-spacing="-0.02em">
+    surfaced
+  </text>
+</svg>

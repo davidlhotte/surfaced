@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surfaced Logo Generator - 1200x1200 PNG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #fff;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #38BDF8;
+        }
+        .instructions {
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #94A3B8;
+            line-height: 1.6;
+        }
+        .canvas-container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .canvas-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        canvas {
+            border: 2px solid #0EA5E9;
+            border-radius: 16px;
+        }
+        .preview-canvas {
+            width: 300px;
+            height: 300px;
+        }
+        button {
+            background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5);
+        }
+        .size-info {
+            color: #64748B;
+            font-size: 14px;
+        }
+        .hidden-canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌊 Surfaced Logo Generator</h1>
+    <p class="instructions">
+        Ces canvas génèrent les logos au format exact requis.<br>
+        Cliquez sur "Download" pour télécharger chaque version.
+    </p>
+    
+    <div class="canvas-container">
+        <!-- Icon Only 1200x1200 for Shopify -->
+        <div class="canvas-wrapper">
+            <h3>Shopify App Icon</h3>
+            <canvas id="shopify-preview" class="preview-canvas" width="300" height="300"></canvas>
+            <canvas id="shopify-canvas" class="hidden-canvas" width="1200" height="1200"></canvas>
+            <span class="size-info">1200 × 1200 px (PNG)</span>
+            <button onclick="downloadCanvas('shopify-canvas', 'surfaced-shopify-icon-1200x1200.png')">Download PNG</button>
+        </div>
+        
+        <!-- Favicon 64x64 -->
+        <div class="canvas-wrapper">
+            <h3>Favicon</h3>
+            <canvas id="favicon-preview" class="preview-canvas" width="300" height="300"></canvas>
+            <canvas id="favicon-canvas" class="hidden-canvas" width="64" height="64"></canvas>
+            <span class="size-info">64 × 64 px (PNG)</span>
+            <button onclick="downloadCanvas('favicon-canvas', 'surfaced-favicon-64x64.png')">Download PNG</button>
+        </div>
+        
+        <!-- Icon 512x512 for PWA -->
+        <div class="canvas-wrapper">
+            <h3>PWA Icon</h3>
+            <canvas id="pwa-preview" class="preview-canvas" width="300" height="300"></canvas>
+            <canvas id="pwa-canvas" class="hidden-canvas" width="512" height="512"></canvas>
+            <span class="size-info">512 × 512 px (PNG)</span>
+            <button onclick="downloadCanvas('pwa-canvas', 'surfaced-pwa-icon-512x512.png')">Download PNG</button>
+        </div>
+    </div>
+
+    <script>
+        // Draw the Surfaced logo icon on a canvas
+        function drawLogo(ctx, size) {
+            const scale = size / 64;
+            ctx.save();
+            ctx.scale(scale, scale);
+            
+            // Background with rounded corners
+            ctx.beginPath();
+            roundRect(ctx, 0, 0, 64, 64, 14);
+            ctx.fillStyle = '#0A1628';
+            ctx.fill();
+            
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 64, 64, 0);
+            gradient.addColorStop(0, '#0EA5E9');
+            gradient.addColorStop(1, '#38BDF8');
+            
+            // Back wave (subtle)
+            ctx.globalAlpha = 0.3;
+            ctx.beginPath();
+            ctx.moveTo(10, 46);
+            ctx.quadraticCurveTo(20, 38, 32, 38);
+            ctx.quadraticCurveTo(44, 38, 54, 46);
+            ctx.quadraticCurveTo(44, 30, 32, 30);
+            ctx.quadraticCurveTo(20, 30, 10, 46);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Middle wave
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(8, 40);
+            ctx.quadraticCurveTo(18, 28, 32, 28);
+            ctx.quadraticCurveTo(46, 28, 56, 40);
+            ctx.quadraticCurveTo(46, 20, 32, 20);
+            ctx.quadraticCurveTo(18, 20, 8, 40);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Front wave (main)
+            ctx.globalAlpha = 1;
+            const waveGradient = ctx.createLinearGradient(0, 0, 64, 64);
+            waveGradient.addColorStop(0, '#38BDF8');
+            waveGradient.addColorStop(1, '#0EA5E9');
+            
+            ctx.beginPath();
+            ctx.moveTo(6, 34);
+            ctx.quadraticCurveTo(16, 18, 32, 18);
+            ctx.quadraticCurveTo(48, 18, 58, 34);
+            ctx.quadraticCurveTo(48, 12, 32, 12);
+            ctx.quadraticCurveTo(16, 12, 6, 34);
+            ctx.fillStyle = waveGradient;
+            ctx.fill();
+            
+            // Rising dot/bubble
+            ctx.beginPath();
+            ctx.arc(32, 16, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#38BDF8';
+            ctx.fill();
+            
+            // Light reflection
+            ctx.globalAlpha = 0.3;
+            ctx.beginPath();
+            ctx.ellipse(24, 20, 3, 1.5, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        // Helper function for rounded rectangles
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+        
+        // Download canvas as PNG
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Initialize all canvases
+        function init() {
+            // Shopify icon (1200x1200)
+            const shopifyCanvas = document.getElementById('shopify-canvas');
+            const shopifyCtx = shopifyCanvas.getContext('2d');
+            drawLogo(shopifyCtx, 1200);
+            
+            // Preview for Shopify
+            const shopifyPreview = document.getElementById('shopify-preview');
+            const shopifyPreviewCtx = shopifyPreview.getContext('2d');
+            drawLogo(shopifyPreviewCtx, 300);
+            
+            // Favicon (64x64)
+            const faviconCanvas = document.getElementById('favicon-canvas');
+            const faviconCtx = faviconCanvas.getContext('2d');
+            drawLogo(faviconCtx, 64);
+            
+            // Preview for Favicon
+            const faviconPreview = document.getElementById('favicon-preview');
+            const faviconPreviewCtx = faviconPreview.getContext('2d');
+            drawLogo(faviconPreviewCtx, 300);
+            
+            // PWA icon (512x512)
+            const pwaCanvas = document.getElementById('pwa-canvas');
+            const pwaCtx = pwaCanvas.getContext('2d');
+            drawLogo(pwaCtx, 512);
+            
+            // Preview for PWA
+            const pwaPreview = document.getElementById('pwa-preview');
+            const pwaPreviewCtx = pwaPreview.getContext('2d');
+            drawLogo(pwaPreviewCtx, 300);
+        }
+        
+        // Run on page load
+        window.onload = init;
+    </script>
+</body>
+</html>
