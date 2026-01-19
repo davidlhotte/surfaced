@@ -6,12 +6,9 @@ api_version = "2025-01"
 [[extensions]]
 name = "Surfaced Flow Triggers"
 handle = "surfaced-flow-triggers"
+uid = "0f2978a9-508e-811c-70ac-15c3b61a333deda3942e"
 type = "flow_trigger"
-
-  [[extensions.settings]]
-  type = "multi_line_text_field"
-  key = "description"
-  name = "Description"
+description = "Automation triggers for AI-powered product optimization workflows"
 
   # Trigger: Product AI Score Changed
   [[extensions.triggers]]
