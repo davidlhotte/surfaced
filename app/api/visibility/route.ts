@@ -19,9 +19,10 @@ export async function POST(request: NextRequest) {
   try {
     const shopDomain = await getShopFromRequest(request, { rateLimit: true });
 
-    // Parse request body for queries and platforms
+    // Parse request body for queries, platforms, and searchTerm
     let queries: string[] | undefined;
     let platforms: Platform[] | undefined;
+    let searchTerm: string | undefined;
 
     try {
       const body = await request.json();
@@ -35,11 +36,15 @@ export async function POST(request: NextRequest) {
           (p: unknown) => typeof p === 'string' && VALID_PLATFORMS.includes(p as Platform)
         ) as Platform[];
       }
+
+      if (body.searchTerm && typeof body.searchTerm === 'string') {
+        searchTerm = body.searchTerm.trim();
+      }
     } catch {
       // No body or invalid JSON - use defaults
     }
 
-    const result = await runVisibilityCheck(shopDomain, queries, platforms);
+    const result = await runVisibilityCheck(shopDomain, queries, platforms, searchTerm);
 
     return NextResponse.json({
       success: true,

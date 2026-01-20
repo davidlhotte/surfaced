@@ -115,6 +115,7 @@ export type VisibilityResult = {
 export type VisibilityCheckResult = {
   shopDomain: string;
   brandName: string;
+  searchTerm: string; // What we actually searched for in responses
   results: VisibilityResult[];
   summary: {
     totalChecks: number;
@@ -491,9 +492,10 @@ async function checkPlatform(
 export async function runVisibilityCheck(
   shopDomain: string,
   queries?: string[],
-  platforms?: Platform[]
+  platforms?: Platform[],
+  searchTerm?: string // Custom term to search for (brand, product, etc.)
 ): Promise<VisibilityCheckResult> {
-  logger.info({ shopDomain, platforms }, 'Starting visibility check');
+  logger.info({ shopDomain, platforms, searchTerm }, 'Starting visibility check');
 
   // Get shop info
   const shop = await prisma.shop.findUnique({
@@ -532,9 +534,11 @@ export async function runVisibilityCheck(
     );
   }
 
-  // Determine brand name (use shop name or domain)
+  // Determine what to search for in AI responses
+  // Use provided searchTerm, or fall back to shop name/domain
   const brandName =
     shop.name || shopDomain.replace('.myshopify.com', '').replace(/-/g, ' ');
+  const termToSearchFor = searchTerm || brandName;
 
   // Determine product type from audit data
   const productTitle = shop.productsAudit[0]?.title;
@@ -578,9 +582,10 @@ export async function runVisibilityCheck(
   }));
 
   // Run all checks in parallel (different AI providers, no rate limit issue)
+  // Use termToSearchFor (custom term or brandName) to analyze responses
   const checkPromises = checkTasks.map(async ({ platform, query }) => {
     try {
-      return await checkPlatform(platform, query, brandName, shopDomain);
+      return await checkPlatform(platform, query, termToSearchFor, shopDomain);
     } catch (error) {
       logger.error({ error, query, platform }, 'Visibility check query failed');
       return null; // Return null for failed checks
@@ -647,6 +652,7 @@ export async function runVisibilityCheck(
   return {
     shopDomain,
     brandName,
+    searchTerm: termToSearchFor, // What we actually searched for
     results,
     summary,
   };

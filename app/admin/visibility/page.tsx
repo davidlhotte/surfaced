@@ -100,6 +100,7 @@ export default function VisibilityPage() {
   const [checkingPlatforms, setCheckingPlatforms] = useState<Set<Platform>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [customQuery, setCustomQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState(''); // What we're looking for in responses
   const [selectedCheck, setSelectedCheck] = useState<VisibilityCheck | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [brandName, setBrandName] = useState<string>('');
@@ -114,9 +115,15 @@ export default function VisibilityPage() {
     score: locale === 'fr' ? 'Score de Visibilité' : 'Visibility Score',
     brand: locale === 'fr' ? 'Marque' : 'Brand',
     query: locale === 'fr' ? 'Question à tester' : 'Question to test',
-    suggestions: locale === 'fr' ? 'Suggestions' : 'Suggestions',
-    test: locale === 'fr' ? 'Tester sur toutes les IA' : 'Test on all AIs',
+    searchTermLabel: locale === 'fr' ? 'Terme recherché' : 'Search term',
+    searchTermHelp: locale === 'fr'
+      ? 'Marque ou produit à rechercher dans les réponses IA'
+      : 'Brand or product to look for in AI responses',
+    searchTermPlaceholder: locale === 'fr' ? 'Ex: EcoSoap, Savon bio...' : 'E.g.: EcoSoap, Organic soap...',
+    suggestions: locale === 'fr' ? 'Idées de questions' : 'Question ideas',
+    test: locale === 'fr' ? 'Lancer le test' : 'Run test',
     testing: locale === 'fr' ? 'Test en cours...' : 'Testing...',
+    lookingFor: locale === 'fr' ? 'On recherche' : 'Looking for',
     results: locale === 'fr' ? 'Résultats par Plateforme' : 'Results by Platform',
     platform: locale === 'fr' ? 'Plateforme' : 'Platform',
     status: locale === 'fr' ? 'Statut' : 'Status',
@@ -152,7 +159,11 @@ export default function VisibilityPage() {
       const result = await response.json();
       if (result.success) {
         setSessions(result.sessions || []);
-        if (result.brandName) setBrandName(result.brandName);
+        if (result.brandName) {
+          setBrandName(result.brandName);
+          // Initialize searchTerm with brandName if not already set
+          if (!searchTerm) setSearchTerm(result.brandName);
+        }
         // Set current results from the most recent session
         if (result.sessions && result.sessions.length > 0) {
           setCurrentResults(result.sessions[0].checks);
@@ -173,19 +184,23 @@ export default function VisibilityPage() {
 
   // Run visibility check
   const runCheck = async (query: string) => {
-    if (!query.trim()) return;
+    if (!query.trim() || !searchTerm.trim()) return;
 
     try {
       setChecking(true);
       setError(null);
       setCurrentResults([]);
+      setSelectedSession(null);
       // Mark all platforms as checking
       setCheckingPlatforms(new Set(Object.keys(PLATFORMS) as Platform[]));
 
       const response = await authenticatedFetch('/api/visibility', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queries: [query] }),
+        body: JSON.stringify({
+          queries: [query],
+          searchTerm: searchTerm.trim(), // Pass the term to search for
+        }),
       });
 
       if (!response.ok) {
@@ -315,45 +330,55 @@ export default function VisibilityPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              {/* Brand info */}
-              {brandName && (
-                <InlineStack gap="200" blockAlign="center">
-                  <Text as="span" tone="subdued">{t.brand}:</Text>
-                  <Badge tone="info">{brandName}</Badge>
-                </InlineStack>
-              )}
+              {/* Search term - what are we looking for? */}
+              <BlockStack gap="200">
+                <Text as="h2" variant="headingMd">{t.searchTermLabel}</Text>
+                <Text as="p" variant="bodySm" tone="subdued">{t.searchTermHelp}</Text>
+                <Box maxWidth="400px">
+                  <TextField
+                    label=""
+                    labelHidden
+                    placeholder={t.searchTermPlaceholder}
+                    value={searchTerm || brandName}
+                    onChange={setSearchTerm}
+                    autoComplete="off"
+                  />
+                </Box>
+              </BlockStack>
+
+              <Divider />
 
               {/* Query input */}
               <BlockStack gap="300">
                 <Text as="h2" variant="headingMd">{t.query}</Text>
-                <InlineStack gap="300" blockAlign="end">
-                  <Box minWidth="100%" maxWidth="600px">
-                    <TextField
-                      label=""
-                      labelHidden
-                      placeholder={locale === 'fr'
-                        ? 'Ex: Quel est le meilleur produit bio ?'
-                        : 'E.g.: What is the best organic product?'}
-                      value={customQuery}
-                      onChange={setCustomQuery}
-                      autoComplete="off"
-                      connectedRight={
-                        <Button
-                          variant="primary"
-                          icon={SearchIcon}
-                          onClick={() => runCheck(customQuery)}
-                          disabled={!customQuery.trim() || checking}
-                          loading={checking}
-                        >
-                          {checking ? t.testing : t.test}
-                        </Button>
-                      }
-                    />
-                  </Box>
-                </InlineStack>
+                <Box maxWidth="600px">
+                  <TextField
+                    label=""
+                    labelHidden
+                    placeholder={locale === 'fr'
+                      ? 'Ex: Quel est le meilleur savon bio ?'
+                      : 'E.g.: What is the best organic soap?'}
+                    value={customQuery}
+                    onChange={setCustomQuery}
+                    autoComplete="off"
+                    multiline={2}
+                  />
+                </Box>
+                <Button
+                  variant="primary"
+                  icon={SearchIcon}
+                  onClick={() => runCheck(customQuery)}
+                  disabled={!customQuery.trim() || !searchTerm.trim() || checking}
+                  loading={checking}
+                  size="large"
+                >
+                  {checking ? t.testing : t.test}
+                </Button>
               </BlockStack>
 
-              {/* Query suggestions */}
+              <Divider />
+
+              {/* Query suggestions - click to fill, not to run */}
               <BlockStack gap="200">
                 <Text as="span" variant="bodySm" tone="subdued">{t.suggestions}:</Text>
                 <InlineStack gap="200" wrap>
@@ -361,10 +386,8 @@ export default function VisibilityPage() {
                     <Button
                       key={i}
                       size="slim"
-                      onClick={() => {
-                        setCustomQuery(s.query);
-                        runCheck(s.query);
-                      }}
+                      variant="tertiary"
+                      onClick={() => setCustomQuery(s.query)}
                       disabled={checking}
                     >
                       {s.label}
@@ -406,14 +429,21 @@ export default function VisibilityPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <InlineStack align="space-between" blockAlign="center">
+              <BlockStack gap="200">
                 <Text as="h2" variant="headingMd">{t.results}</Text>
-                {currentResults.length > 0 && (
-                  <Text as="span" variant="bodySm" tone="subdued">
-                    {currentResults[0]?.query && `"${currentResults[0].query.substring(0, 50)}${currentResults[0].query.length > 50 ? '...' : ''}"`}
+                {/* Show what we're looking for */}
+                {(searchTerm || brandName) && (
+                  <InlineStack gap="200" blockAlign="center">
+                    <Text as="span" tone="subdued">{t.lookingFor}:</Text>
+                    <Badge tone="info">{searchTerm || brandName}</Badge>
+                  </InlineStack>
+                )}
+                {currentResults.length > 0 && currentResults[0]?.query && (
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    Question: &quot;{currentResults[0].query.substring(0, 80)}{currentResults[0].query.length > 80 ? '...' : ''}&quot;
                   </Text>
                 )}
-              </InlineStack>
+              </BlockStack>
               <Divider />
 
               {/* Table Header */}
