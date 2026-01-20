@@ -19,6 +19,9 @@ import {
   ProgressBar,
 } from '@shopify/polaris';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
+import { TechnicalSeoCard } from '@/components/admin/TechnicalSeoCard';
+import { LlmsTxtConfigModal } from '@/components/admin/LlmsTxtConfigModal';
+import { JsonLdConfigModal } from '@/components/admin/JsonLdConfigModal';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 import type { AdminLocale } from '@/lib/i18n/translations';
@@ -231,6 +234,14 @@ export default function SettingsPage() {
   const { fetch: authFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
 
+  // Technical SEO state
+  const [showLlmsTxtModal, setShowLlmsTxtModal] = useState(false);
+  const [showJsonLdModal, setShowJsonLdModal] = useState(false);
+  const [llmsTxtEnabled, setLlmsTxtEnabled] = useState(false);
+  const [jsonLdEnabled, setJsonLdEnabled] = useState(false);
+  const [llmsTxtLastUpdated, setLlmsTxtLastUpdated] = useState<string | null>(null);
+  const [jsonLdLastUpdated, setJsonLdLastUpdated] = useState<string | null>(null);
+
   // Get plan features with translations
   const PLAN_FEATURES = getPlanFeatures(t);
 
@@ -291,6 +302,37 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchShopInfo();
   }, [fetchShopInfo]);
+
+  // Load Technical SEO config
+  const loadTechnicalSeoConfig = useCallback(async () => {
+    try {
+      // Load llms.txt config
+      const llmsResponse = await authFetch('/api/llms-txt');
+      if (llmsResponse.ok) {
+        const llmsData = await llmsResponse.json();
+        if (llmsData.success) {
+          setLlmsTxtEnabled(llmsData.data.config.isEnabled);
+          setLlmsTxtLastUpdated(llmsData.data.config.lastGeneratedAt);
+        }
+      }
+
+      // Load JSON-LD config
+      const jsonLdResponse = await authFetch('/api/json-ld');
+      if (jsonLdResponse.ok) {
+        const jsonLdData = await jsonLdResponse.json();
+        if (jsonLdData.success) {
+          setJsonLdEnabled(jsonLdData.data.config.isEnabled);
+          setJsonLdLastUpdated(jsonLdData.data.config.lastGeneratedAt);
+        }
+      }
+    } catch {
+      // Silently fail - these are optional features
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    loadTechnicalSeoConfig();
+  }, [loadTechnicalSeoConfig]);
 
   const handleUpgrade = async (plan: string) => {
     try {
@@ -824,6 +866,47 @@ export default function SettingsPage() {
           </Card>
         </Layout.Section>
 
+        {/* Technical SEO Section */}
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <Text as="h2" variant="headingMd">
+                {locale === 'fr' ? 'SEO Technique' : 'Technical SEO'}
+              </Text>
+              <Text as="p" tone="subdued">
+                {locale === 'fr'
+                  ? 'Configurez comment les crawlers IA et les moteurs de recherche comprennent votre boutique.'
+                  : 'Configure how AI crawlers and search engines understand your store.'}
+              </Text>
+              <Divider />
+
+              <BlockStack gap="300">
+                <TechnicalSeoCard
+                  title="llms.txt"
+                  description={locale === 'fr'
+                    ? 'Aidez les assistants IA à comprendre le contenu de votre boutique'
+                    : 'Help AI assistants understand your store content'}
+                  enabled={llmsTxtEnabled}
+                  onConfigure={() => setShowLlmsTxtModal(true)}
+                  lastUpdated={llmsTxtLastUpdated}
+                  locale={locale}
+                />
+
+                <TechnicalSeoCard
+                  title="JSON-LD"
+                  description={locale === 'fr'
+                    ? 'Données structurées pour de meilleurs résultats de recherche'
+                    : 'Structured data for rich search results'}
+                  enabled={jsonLdEnabled}
+                  onConfigure={() => setShowJsonLdModal(true)}
+                  lastUpdated={jsonLdLastUpdated}
+                  locale={locale}
+                />
+              </BlockStack>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+
         {/* Tips Section */}
         <Layout.Section>
           <Card>
@@ -876,6 +959,27 @@ export default function SettingsPage() {
           </Card>
         </Layout.Section>
       </Layout>
+
+      {/* Technical SEO Modals */}
+      <LlmsTxtConfigModal
+        open={showLlmsTxtModal}
+        onClose={() => setShowLlmsTxtModal(false)}
+        locale={locale}
+        onConfigChange={(config) => {
+          setLlmsTxtEnabled(config.isEnabled);
+          setLlmsTxtLastUpdated(config.lastGeneratedAt);
+        }}
+      />
+
+      <JsonLdConfigModal
+        open={showJsonLdModal}
+        onClose={() => setShowJsonLdModal(false)}
+        locale={locale}
+        onConfigChange={(config) => {
+          setJsonLdEnabled(config.isEnabled);
+          setJsonLdLastUpdated(config.lastGeneratedAt);
+        }}
+      />
     </Page>
   );
 }
