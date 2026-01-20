@@ -32,6 +32,7 @@ import {
 import Link from 'next/link';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type DashboardData = {
   shop: {
@@ -77,6 +78,7 @@ export default function Dashboard() {
 
   const { fetch: authFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, error: shopError, isAuthenticated, shopDetectionFailed } = useShopContext();
+  const { t, locale } = useAdminLanguage();
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -84,7 +86,7 @@ export default function Dashboard() {
       const response = await authFetch('/api/dashboard');
 
       if (!response.ok) {
-        throw new Error('Impossible de charger vos données');
+        throw new Error(locale === 'fr' ? 'Impossible de charger vos données' : 'Unable to load your data');
       }
 
       const result = await response.json();
@@ -93,14 +95,14 @@ export default function Dashboard() {
         setData(result.data);
         setError(null);
       } else {
-        setError(result.error || 'Une erreur est survenue');
+        setError(result.error || (locale === 'fr' ? 'Une erreur est survenue' : 'An error occurred'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de charger vos données');
+      setError(err instanceof Error ? err.message : (locale === 'fr' ? 'Impossible de charger vos données' : 'Unable to load your data'));
     } finally {
       setLoading(false);
     }
-  }, [authFetch]);
+  }, [authFetch, locale]);
 
   useEffect(() => {
     if (!shopLoading && isAuthenticated) {
@@ -115,10 +117,10 @@ export default function Dashboard() {
     try {
       setAuditing(true);
       const response = await authFetch('/api/audit', { method: 'POST' });
-      if (!response.ok) throw new Error('Analyse échouée');
+      if (!response.ok) throw new Error(locale === 'fr' ? 'Analyse échouée' : 'Analysis failed');
       await fetchDashboard();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analyse échouée');
+      setError(err instanceof Error ? err.message : (locale === 'fr' ? 'Analyse échouée' : 'Analysis failed'));
     } finally {
       setAuditing(false);
     }
@@ -132,7 +134,7 @@ export default function Dashboard() {
   // Loading state
   if (loading || shopLoading) {
     return (
-      <Page title="Accueil">
+      <Page title={t.dashboard.title}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -140,7 +142,7 @@ export default function Dashboard() {
                 <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
                   <Text as="p" variant="bodyLg">
-                    {shopLoading ? 'Connexion à votre boutique...' : 'Chargement de votre tableau de bord...'}
+                    {shopLoading ? t.common.connectingStore : t.common.loadingDashboard}
                   </Text>
                 </BlockStack>
               </Box>
@@ -154,13 +156,13 @@ export default function Dashboard() {
   // Error state
   if (error) {
     return (
-      <Page title="Accueil">
+      <Page title={t.dashboard.title}>
         <Layout>
           <Layout.Section>
-            <Banner tone="critical" title="Oups, une erreur s'est produite">
+            <Banner tone="critical" title={t.common.error}>
               <BlockStack gap="300">
                 <Text as="p">{error}</Text>
-                <Button onClick={fetchDashboard}>Réessayer</Button>
+                <Button onClick={fetchDashboard}>{t.common.retry}</Button>
               </BlockStack>
             </Banner>
           </Layout.Section>
@@ -177,10 +179,10 @@ export default function Dashboard() {
 
   // Score interpretation
   const getScoreInfo = (s: number) => {
-    if (s >= 80) return { text: 'Excellent', tone: 'success' as const, color: '#108043', emoji: '🌟' };
-    if (s >= 60) return { text: 'Bon', tone: 'success' as const, color: '#108043', emoji: '👍' };
-    if (s >= 40) return { text: 'À améliorer', tone: 'warning' as const, color: '#B98900', emoji: '⚠️' };
-    return { text: 'Urgent', tone: 'critical' as const, color: '#D82C0D', emoji: '🚨' };
+    if (s >= 80) return { text: t.dashboard.scoreExcellent, tone: 'success' as const, color: '#108043', emoji: '🌟' };
+    if (s >= 60) return { text: t.dashboard.scoreGood, tone: 'success' as const, color: '#108043', emoji: '👍' };
+    if (s >= 40) return { text: t.dashboard.scoreNeedsWork, tone: 'warning' as const, color: '#B98900', emoji: '⚠️' };
+    return { text: t.dashboard.scoreUrgent, tone: 'critical' as const, color: '#D82C0D', emoji: '🚨' };
   };
 
   const scoreInfo = getScoreInfo(score);
@@ -188,78 +190,78 @@ export default function Dashboard() {
   // Feature cards with clear value propositions
   const featureCards = [
     {
-      title: 'Produits',
-      subtitle: 'Analysez et optimisez',
-      description: 'Découvrez pourquoi certains produits sont invisibles pour les IA et corrigez-les en un clic.',
+      title: t.features.products.title,
+      subtitle: t.features.products.subtitle,
+      description: t.features.products.description,
       icon: ProductIcon,
       href: '/admin/products',
       gradient: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
-      stat: hasAnalyzed ? `${data?.audit.auditedProducts} analysés` : 'Non analysé',
+      stat: hasAnalyzed ? `${data?.audit.auditedProducts} ${t.features.products.analyzed}` : t.common.notAnalyzed,
       statTone: hasAnalyzed ? (criticalCount > 0 ? 'critical' : 'success') : 'subdued',
     },
     {
-      title: 'Visibilité',
-      subtitle: 'Où vous apparaissez',
-      description: 'Testez si ChatGPT, Perplexity et autres IA recommandent votre boutique.',
+      title: t.features.visibility.title,
+      subtitle: t.features.visibility.subtitle,
+      description: t.features.visibility.description,
       icon: ViewIcon,
       href: '/admin/visibility',
       gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      stat: data?.visibility.totalChecks ? `${mentionRate}% de mentions` : 'Aucun test',
+      stat: data?.visibility.totalChecks ? `${mentionRate}% ${t.features.visibility.mentions}` : t.features.visibility.noTest,
       statTone: mentionRate > 50 ? 'success' : mentionRate > 20 ? 'warning' : 'subdued',
     },
     {
-      title: 'Concurrents',
-      subtitle: 'Comparez-vous',
-      description: 'Voyez exactement où vos concurrents apparaissent à votre place.',
+      title: t.features.competitors.title,
+      subtitle: t.features.competitors.subtitle,
+      description: t.features.competitors.description,
       icon: TargetIcon,
       href: '/admin/competitors',
       gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      stat: data?.competitors.tracked ? `${data.competitors.tracked} suivis` : 'Aucun suivi',
+      stat: data?.competitors.tracked ? `${data.competitors.tracked} ${t.features.competitors.tracked}` : t.features.competitors.noTracking,
       statTone: data?.competitors.tracked ? 'success' : 'subdued',
     },
     {
-      title: 'Tests A/B',
-      subtitle: 'Testez vos contenus',
-      description: 'Découvrez quelle version de vos descriptions fonctionne le mieux avec les IA.',
+      title: t.features.abTests.title,
+      subtitle: t.features.abTests.subtitle,
+      description: t.features.abTests.description,
       icon: ReplayIcon,
       href: '/admin/ab-tests',
       gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-      stat: 'Expérimentez',
+      stat: t.features.abTests.experiment,
       statTone: 'subdued',
     },
     {
-      title: 'Statistiques',
-      subtitle: 'Suivez vos progrès',
-      description: 'Visualisez l\'évolution de votre score et recevez des alertes importantes.',
+      title: t.features.insights.title,
+      subtitle: t.features.insights.subtitle,
+      description: t.features.insights.description,
       icon: ChartVerticalFilledIcon,
       href: '/admin/insights',
       gradient: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-      stat: 'Tableaux de bord',
+      stat: t.features.insights.dashboards,
       statTone: 'subdued',
     },
     {
-      title: 'Outils IA',
-      subtitle: 'llms.txt & JSON-LD',
-      description: 'Créez les fichiers qui aident les IA à comprendre et recommander votre boutique.',
+      title: t.features.tools.title,
+      subtitle: t.features.tools.subtitle,
+      description: t.features.tools.description,
       icon: CodeIcon,
       href: '/admin/tools',
       gradient: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-      stat: 'Configurer',
+      stat: t.common.configure,
       statTone: 'subdued',
     },
   ];
 
   return (
     <Page
-      title={`Bonjour${data?.shop.name ? `, ${data.shop.name}` : ''} !`}
+      title={`${t.dashboard.hello}${data?.shop.name ? `, ${data.shop.name}` : ''}!`}
       secondaryActions={[
         {
-          content: 'Paramètres',
+          content: t.common.settings,
           icon: SettingsIcon,
           url: '/admin/settings',
         },
         {
-          content: 'Aide',
+          content: t.common.help,
           icon: QuestionCircleIcon,
           url: '/help',
         },
@@ -291,9 +293,9 @@ export default function Dashboard() {
                     🚀
                   </div>
                   <BlockStack gap="100">
-                    <Text as="h2" variant="headingLg">Bienvenue sur Surfaced !</Text>
+                    <Text as="h2" variant="headingLg">{t.dashboard.welcome}</Text>
                     <Text as="p" tone="subdued">
-                      Surfaced aide votre boutique à être recommandée par les IA comme ChatGPT, Perplexity et Gemini.
+                      {t.dashboard.welcomeSubtitle}
                     </Text>
                   </BlockStack>
                 </InlineStack>
@@ -304,24 +306,24 @@ export default function Dashboard() {
                   borderRadius="200"
                 >
                   <BlockStack gap="300">
-                    <Text as="h3" variant="headingSm">💡 Comment ça marche ?</Text>
+                    <Text as="h3" variant="headingSm">💡 {t.dashboard.howItWorks}</Text>
                     <BlockStack gap="200">
                       <InlineStack gap="200" blockAlign="center">
                         <Badge tone="info">1</Badge>
                         <Text as="p" variant="bodyMd">
-                          <strong>Analysez</strong> vos produits pour voir leur score IA
+                          <strong>{t.dashboard.step1}</strong> {t.dashboard.step1Desc}
                         </Text>
                       </InlineStack>
                       <InlineStack gap="200" blockAlign="center">
                         <Badge tone="info">2</Badge>
                         <Text as="p" variant="bodyMd">
-                          <strong>Optimisez</strong> les descriptions avec l&apos;aide de l&apos;IA
+                          <strong>{t.dashboard.step2}</strong> {t.dashboard.step2Desc}
                         </Text>
                       </InlineStack>
                       <InlineStack gap="200" blockAlign="center">
                         <Badge tone="info">3</Badge>
                         <Text as="p" variant="bodyMd">
-                          <strong>Vérifiez</strong> si les IA vous recommandent
+                          <strong>{t.dashboard.step3}</strong> {t.dashboard.step3Desc}
                         </Text>
                       </InlineStack>
                     </BlockStack>
@@ -329,7 +331,7 @@ export default function Dashboard() {
                 </Box>
 
                 <Button variant="primary" onClick={runAudit} loading={auditing} size="large">
-                  Lancer ma première analyse
+                  {t.dashboard.firstAnalysis}
                 </Button>
               </BlockStack>
             </Box>
@@ -343,16 +345,16 @@ export default function Dashboard() {
               <InlineStack align="space-between" blockAlign="center">
                 <BlockStack gap="100">
                   <InlineStack gap="200" blockAlign="center">
-                    <Text as="h2" variant="headingMd">Votre Score IA</Text>
+                    <Text as="h2" variant="headingMd">{t.dashboard.aiScore}</Text>
                     <Badge tone={scoreInfo.tone}>{scoreInfo.text}</Badge>
                   </InlineStack>
                   <Text as="p" tone="subdued">
-                    Plus votre score est élevé, plus les IA peuvent recommander vos produits
+                    {t.dashboard.scoreDescription}
                   </Text>
                 </BlockStack>
                 {data?.shop.lastAuditAt && (
                   <Text as="span" variant="bodySm" tone="subdued">
-                    Mis à jour le {new Date(data.shop.lastAuditAt).toLocaleDateString('fr-FR')}
+                    {t.dashboard.updatedOn} {new Date(data.shop.lastAuditAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')}
                   </Text>
                 )}
               </InlineStack>
@@ -390,7 +392,7 @@ export default function Dashboard() {
                 {/* Score breakdown */}
                 <BlockStack gap="300">
                   <Text as="p" variant="bodyMd">
-                    <strong>{data?.audit.auditedProducts}</strong> produits analysés
+                    <strong>{data?.audit.auditedProducts}</strong> {t.dashboard.productsAnalyzed}
                   </Text>
 
                   {criticalCount > 0 && (
@@ -398,7 +400,7 @@ export default function Dashboard() {
                       <InlineStack gap="200" blockAlign="center">
                         <Icon source={AlertTriangleIcon} tone="critical" />
                         <Text as="span" variant="bodySm">
-                          <strong>{criticalCount}</strong> produits ont besoin d&apos;attention urgente
+                          <strong>{criticalCount}</strong> {t.dashboard.needsUrgentAttention}
                         </Text>
                       </InlineStack>
                     </Box>
@@ -409,7 +411,7 @@ export default function Dashboard() {
                       <InlineStack gap="200" blockAlign="center">
                         <Icon source={AlertTriangleIcon} tone="warning" />
                         <Text as="span" variant="bodySm">
-                          <strong>{warningCount}</strong> produits peuvent être améliorés
+                          <strong>{warningCount}</strong> {t.dashboard.canBeImproved}
                         </Text>
                       </InlineStack>
                     </Box>
@@ -420,7 +422,7 @@ export default function Dashboard() {
                       <InlineStack gap="200" blockAlign="center">
                         <Icon source={CheckCircleIcon} tone="success" />
                         <Text as="span" variant="bodySm" tone="success">
-                          Tous vos produits sont optimisés !
+                          {t.dashboard.allOptimized}
                         </Text>
                       </InlineStack>
                     </Box>
@@ -429,11 +431,11 @@ export default function Dashboard() {
                   <InlineStack gap="200">
                     <Link href="/admin/products">
                       <Button variant={criticalCount > 0 ? 'primary' : 'secondary'}>
-                        {criticalCount > 0 ? 'Corriger les problèmes' : 'Voir les produits'}
+                        {criticalCount > 0 ? t.dashboard.fixIssues : t.dashboard.viewProducts}
                       </Button>
                     </Link>
                     <Button onClick={runAudit} loading={auditing}>
-                      Relancer l&apos;analyse
+                      {t.dashboard.rerunAnalysis}
                     </Button>
                   </InlineStack>
                 </BlockStack>
@@ -450,13 +452,13 @@ export default function Dashboard() {
                 <BlockStack gap="200">
                   <InlineStack gap="200" blockAlign="center">
                     <Icon source={ViewIcon} tone="base" />
-                    <Text as="h3" variant="headingSm">Visibilité IA</Text>
+                    <Text as="h3" variant="headingSm">{t.dashboard.aiVisibility}</Text>
                   </InlineStack>
                   <Text as="p" variant="heading2xl" fontWeight="bold">
                     {mentionRate}%
                   </Text>
                   <Text as="p" variant="bodySm" tone="subdued">
-                    Taux de mention dans les IA
+                    {t.dashboard.mentionRate}
                   </Text>
                 </BlockStack>
               </Card>
@@ -466,13 +468,13 @@ export default function Dashboard() {
                 <BlockStack gap="200">
                   <InlineStack gap="200" blockAlign="center">
                     <Icon source={TargetIcon} tone="base" />
-                    <Text as="h3" variant="headingSm">Concurrents</Text>
+                    <Text as="h3" variant="headingSm">{t.dashboard.competitors}</Text>
                   </InlineStack>
                   <Text as="p" variant="heading2xl" fontWeight="bold">
                     {data?.competitors.tracked || 0}
                   </Text>
                   <Text as="p" variant="bodySm" tone="subdued">
-                    Concurrents suivis
+                    {t.dashboard.competitorsTracked}
                   </Text>
                 </BlockStack>
               </Card>
@@ -482,14 +484,14 @@ export default function Dashboard() {
                 <BlockStack gap="200">
                   <InlineStack gap="200" blockAlign="center">
                     <Icon source={StarFilledIcon} tone="base" />
-                    <Text as="h3" variant="headingSm">Plan actuel</Text>
+                    <Text as="h3" variant="headingSm">{t.dashboard.currentPlan}</Text>
                   </InlineStack>
                   <Text as="p" variant="heading2xl" fontWeight="bold">
                     {data?.shop.plan || 'FREE'}
                   </Text>
                   <Link href="/admin/settings">
                     <Text as="p" variant="bodySm" tone="subdued">
-                      Voir les options →
+                      {t.dashboard.seeOptions}
                     </Text>
                   </Link>
                 </BlockStack>
@@ -500,7 +502,7 @@ export default function Dashboard() {
 
         {/* Feature Cards */}
         <BlockStack gap="400">
-          <Text as="h2" variant="headingMd">Que souhaitez-vous faire ?</Text>
+          <Text as="h2" variant="headingMd">{t.dashboard.whatToDo}</Text>
 
           <div style={{
             display: 'grid',
@@ -541,7 +543,7 @@ export default function Dashboard() {
                       <Badge tone={card.statTone as 'success' | 'warning' | 'critical' | undefined}>
                         {card.stat}
                       </Badge>
-                      <Button variant="plain">Ouvrir →</Button>
+                      <Button variant="plain">{t.common.open} →</Button>
                     </InlineStack>
                   </BlockStack>
                 </Card>
@@ -569,7 +571,7 @@ export default function Dashboard() {
                 >
                   💡
                 </div>
-                <Text as="h3" variant="headingMd">Conseils pour améliorer votre score</Text>
+                <Text as="h3" variant="headingMd">{t.dashboard.tipsTitle}</Text>
               </InlineStack>
 
               <Divider />
@@ -579,13 +581,13 @@ export default function Dashboard() {
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <InlineStack align="space-between" blockAlign="center" gap="400">
                       <BlockStack gap="100">
-                        <Text as="p" fontWeight="semibold">Ajoutez des images à vos produits</Text>
+                        <Text as="p" fontWeight="semibold">{t.dashboard.tip1Title}</Text>
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Les produits sans images sont rarement recommandés par les IA.
+                          {t.dashboard.tip1Desc}
                         </Text>
                       </BlockStack>
                       <Link href="/admin/products">
-                        <Button size="slim">Corriger</Button>
+                        <Button size="slim">{t.dashboard.fix}</Button>
                       </Link>
                     </InlineStack>
                   </Box>
@@ -595,13 +597,13 @@ export default function Dashboard() {
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <InlineStack align="space-between" blockAlign="center" gap="400">
                       <BlockStack gap="100">
-                        <Text as="p" fontWeight="semibold">Rédigez des descriptions détaillées</Text>
+                        <Text as="p" fontWeight="semibold">{t.dashboard.tip2Title}</Text>
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Les IA ont besoin de texte pour comprendre vos produits. Visez 150+ mots.
+                          {t.dashboard.tip2Desc}
                         </Text>
                       </BlockStack>
                       <Link href="/admin/products">
-                        <Button size="slim">Optimiser</Button>
+                        <Button size="slim">{t.dashboard.optimize}</Button>
                       </Link>
                     </InlineStack>
                   </Box>
@@ -610,13 +612,13 @@ export default function Dashboard() {
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                   <InlineStack align="space-between" blockAlign="center" gap="400">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Configurez votre fichier llms.txt</Text>
+                      <Text as="p" fontWeight="semibold">{t.dashboard.tip3Title}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Ce fichier aide les IA à comprendre et recommander votre boutique.
+                        {t.dashboard.tip3Desc}
                       </Text>
                     </BlockStack>
                     <Link href="/admin/tools">
-                      <Button size="slim" variant="primary">Configurer</Button>
+                      <Button size="slim" variant="primary">{t.common.configure}</Button>
                     </Link>
                   </InlineStack>
                 </Box>
