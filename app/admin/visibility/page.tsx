@@ -20,17 +20,22 @@ import {
   Modal,
   Scrollable,
   ProgressBar,
+  SkeletonBodyText,
 } from '@shopify/polaris';
+import { SearchIcon, RefreshIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 // Types
+type Platform = 'chatgpt' | 'perplexity' | 'gemini' | 'claude' | 'copilot' | 'llama' | 'deepseek' | 'mistral' | 'qwen';
+
 type VisibilityCheck = {
   id: string;
-  platform: string;
+  platform: Platform;
   query: string;
-  isMentioned: boolean;
+  sessionId: string | null;
+  isMentioned: boolean | null;
   mentionContext: string | null;
   position: number | null;
   competitorsFound: { name: string; url?: string }[];
@@ -39,159 +44,195 @@ type VisibilityCheck = {
   checkedAt: string;
 };
 
-// Platform configuration
-const PLATFORMS: Record<string, { displayName: string; icon: string; free: boolean }> = {
-  chatgpt: { displayName: 'ChatGPT', icon: '🤖', free: false },
-  perplexity: { displayName: 'Perplexity', icon: '🔍', free: false },
-  gemini: { displayName: 'Gemini', icon: '✨', free: false },
-  claude: { displayName: 'Claude', icon: '🧠', free: false },
-  copilot: { displayName: 'Copilot', icon: '💻', free: true },
-  llama: { displayName: 'Llama 3.3', icon: '🦙', free: true },
-  deepseek: { displayName: 'DeepSeek', icon: '🔮', free: true },
-  mistral: { displayName: 'Mistral', icon: '🌪️', free: true },
-  qwen: { displayName: 'Gemma 12B', icon: '🐼', free: true },
+type HistorySession = {
+  sessionId: string;
+  query: string;
+  checkedAt: string;
+  checks: VisibilityCheck[];
+  summary: {
+    total: number;
+    mentioned: number;
+    percentage: number;
+  };
 };
 
-// Get status badge
-function getStatusBadge(check: VisibilityCheck | null, t: Record<string, string>) {
-  if (!check) {
-    return <Badge tone="info">{t.notChecked || 'Not checked'}</Badge>;
-  }
-  if (!check.isMentioned) {
-    return <Badge tone="critical">{t.absent || 'Absent'}</Badge>;
-  }
-  if (check.responseQuality === 'good') {
-    return <Badge tone="success">{t.recommended || 'Recommended'}</Badge>;
-  }
-  if (check.responseQuality === 'partial') {
-    return <Badge tone="warning">{t.mentioned || 'Mentioned'}</Badge>;
-  }
-  return <Badge tone="success">{t.mentioned || 'Mentioned'}</Badge>;
-}
+// Platform configuration with colors
+const PLATFORMS: Record<Platform, { displayName: string; icon: string; free: boolean; color: string }> = {
+  chatgpt: { displayName: 'ChatGPT', icon: '🤖', free: false, color: '#10A37F' },
+  perplexity: { displayName: 'Perplexity', icon: '🔍', free: false, color: '#1E88E5' },
+  gemini: { displayName: 'Gemini', icon: '✨', free: false, color: '#4285F4' },
+  claude: { displayName: 'Claude', icon: '🧠', free: false, color: '#D97706' },
+  copilot: { displayName: 'Copilot', icon: '💻', free: true, color: '#0078D4' },
+  llama: { displayName: 'Llama', icon: '🦙', free: true, color: '#7C3AED' },
+  deepseek: { displayName: 'DeepSeek', icon: '🔮', free: true, color: '#059669' },
+  mistral: { displayName: 'Mistral', icon: '🌪️', free: true, color: '#EA580C' },
+  qwen: { displayName: 'Gemma', icon: '💎', free: true, color: '#DB2777' },
+};
 
-// Get sentiment badge
-function getSentimentBadge(check: VisibilityCheck | null) {
-  if (!check || !check.isMentioned) {
-    return <Text as="span" tone="subdued">-</Text>;
+// Predefined query suggestions
+function getQuerySuggestions(brandName: string, locale: string): { label: string; query: string }[] {
+  if (locale === 'fr') {
+    return [
+      { label: 'Recommandation produit', query: `Quel est le meilleur produit de ${brandName} ?` },
+      { label: 'Avis marque', query: `Que pensez-vous de la marque ${brandName} ?` },
+      { label: 'Comparaison', query: `${brandName} vs ses concurrents, lequel choisir ?` },
+      { label: 'Découverte', query: `Connaissez-vous ${brandName} ? Que vendez-ils ?` },
+    ];
   }
-  if (check.responseQuality === 'good') {
-    return <Badge tone="success">Positif</Badge>;
-  }
-  if (check.responseQuality === 'partial') {
-    return <Badge tone="attention">Neutre</Badge>;
-  }
-  return <Badge tone="info">Neutre</Badge>;
+  return [
+    { label: 'Product recommendation', query: `What is the best product from ${brandName}?` },
+    { label: 'Brand review', query: `What do you think about ${brandName}?` },
+    { label: 'Comparison', query: `${brandName} vs competitors, which should I choose?` },
+    { label: 'Discovery', query: `Do you know ${brandName}? What do they sell?` },
+  ];
 }
 
 export default function VisibilityPage() {
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
-  const { t, locale } = useAdminLanguage();
+  const { locale } = useAdminLanguage();
 
   // State
-  const [history, setHistory] = useState<VisibilityCheck[]>([]);
+  const [sessions, setSessions] = useState<HistorySession[]>([]);
+  const [currentResults, setCurrentResults] = useState<VisibilityCheck[]>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
+  const [checkingPlatforms, setCheckingPlatforms] = useState<Set<Platform>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [customQuery, setCustomQuery] = useState('');
   const [selectedCheck, setSelectedCheck] = useState<VisibilityCheck | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [brandName, setBrandName] = useState<string>('');
+  const [selectedSession, setSelectedSession] = useState<HistorySession | null>(null);
+
+  // Translations
+  const t = {
+    title: locale === 'fr' ? 'Visibilité IA' : 'AI Visibility',
+    subtitle: locale === 'fr'
+      ? 'Votre marque est-elle recommandée par les assistants IA ?'
+      : 'Is your brand recommended by AI assistants?',
+    score: locale === 'fr' ? 'Score de Visibilité' : 'Visibility Score',
+    brand: locale === 'fr' ? 'Marque' : 'Brand',
+    query: locale === 'fr' ? 'Question à tester' : 'Question to test',
+    suggestions: locale === 'fr' ? 'Suggestions' : 'Suggestions',
+    test: locale === 'fr' ? 'Tester sur toutes les IA' : 'Test on all AIs',
+    testing: locale === 'fr' ? 'Test en cours...' : 'Testing...',
+    results: locale === 'fr' ? 'Résultats par Plateforme' : 'Results by Platform',
+    platform: locale === 'fr' ? 'Plateforme' : 'Platform',
+    status: locale === 'fr' ? 'Statut' : 'Status',
+    position: 'Position',
+    sentiment: locale === 'fr' ? 'Sentiment' : 'Sentiment',
+    action: 'Action',
+    details: locale === 'fr' ? 'Voir' : 'View',
+    history: locale === 'fr' ? 'Historique des tests' : 'Test History',
+    noHistory: locale === 'fr' ? 'Aucun test effectué' : 'No tests yet',
+    competitors: locale === 'fr' ? 'Concurrents détectés' : 'Competitors detected',
+    competitorsDesc: locale === 'fr'
+      ? 'Ces marques sont mentionnées à votre place'
+      : 'These brands are mentioned instead of yours',
+    mentioned: locale === 'fr' ? 'Mentionné' : 'Mentioned',
+    absent: locale === 'fr' ? 'Absent' : 'Absent',
+    recommended: locale === 'fr' ? 'Recommandé' : 'Recommended',
+    notChecked: locale === 'fr' ? 'Non testé' : 'Not tested',
+    positive: locale === 'fr' ? 'Positif' : 'Positive',
+    neutral: locale === 'fr' ? 'Neutre' : 'Neutral',
+    negative: locale === 'fr' ? 'Négatif' : 'Negative',
+    fullResponse: locale === 'fr' ? 'Réponse complète' : 'Full Response',
+    checkedOn: locale === 'fr' ? 'Vérifié le' : 'Checked on',
+    platforms: locale === 'fr' ? 'plateformes' : 'platforms',
+    loading: locale === 'fr' ? 'Chargement...' : 'Loading...',
+  };
 
   // Fetch history
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
       const response = await authenticatedFetch('/api/visibility');
-      if (!response.ok) throw new Error(t.common.error);
+      if (!response.ok) throw new Error('Failed to load');
       const result = await response.json();
       if (result.success) {
-        setHistory(result.data);
+        setSessions(result.sessions || []);
         if (result.brandName) setBrandName(result.brandName);
+        // Set current results from the most recent session
+        if (result.sessions && result.sessions.length > 0) {
+          setCurrentResults(result.sessions[0].checks);
+        }
       } else {
-        setError(result.error || t.common.error);
+        setError(result.error || 'Error');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.common.error);
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch, t.common.error]);
+  }, [authenticatedFetch]);
 
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
 
   // Run visibility check
-  const runCheck = async (queries?: string[]) => {
+  const runCheck = async (query: string) => {
+    if (!query.trim()) return;
+
     try {
       setChecking(true);
       setError(null);
+      setCurrentResults([]);
+      // Mark all platforms as checking
+      setCheckingPlatforms(new Set(Object.keys(PLATFORMS) as Platform[]));
+
       const response = await authenticatedFetch('/api/visibility', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queries }),
+        body: JSON.stringify({ queries: [query] }),
       });
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || t.common.error);
+        throw new Error(errorData.error || 'Error');
       }
+
       const result = await response.json();
       if (result.success) {
         if (result.data.brandName) setBrandName(result.data.brandName);
+        // Refresh to get updated history
         await fetchHistory();
       } else {
-        setError(result.error || t.common.error);
+        setError(result.error || 'Error');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.common.error);
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setChecking(false);
+      setCheckingPlatforms(new Set());
     }
   };
 
-  const handleCustomCheck = () => {
-    if (customQuery.trim()) {
-      runCheck([customQuery.trim()]);
+  // Get results by platform (from current results)
+  const resultsByPlatform = useMemo(() => {
+    const map: Record<Platform, VisibilityCheck | null> = {} as Record<Platform, VisibilityCheck | null>;
+    for (const platform of Object.keys(PLATFORMS) as Platform[]) {
+      map[platform] = currentResults.find(c => c.platform === platform) || null;
     }
-  };
-
-  // Get latest check for each platform
-  const latestByPlatform = useMemo(() => {
-    const latest: Record<string, VisibilityCheck> = {};
-    for (const check of history) {
-      if (!latest[check.platform] || new Date(check.checkedAt) > new Date(latest[check.platform].checkedAt)) {
-        latest[check.platform] = check;
-      }
-    }
-    return latest;
-  }, [history]);
+    return map;
+  }, [currentResults]);
 
   // Calculate score
   const score = useMemo(() => {
-    const platforms = Object.keys(PLATFORMS);
-    let mentioned = 0;
-    let checked = 0;
-
-    for (const platform of platforms) {
-      const check = latestByPlatform[platform];
-      if (check) {
-        checked++;
-        if (check.isMentioned) mentioned++;
-      }
-    }
-
+    const checked = currentResults.length;
+    const mentioned = currentResults.filter(c => c.isMentioned).length;
     return {
       mentioned,
       total: checked,
       percentage: checked > 0 ? Math.round((mentioned / checked) * 100) : 0,
     };
-  }, [latestByPlatform]);
+  }, [currentResults]);
 
-  // Get all competitors from latest checks
+  // Get all competitors from current results
   const allCompetitors = useMemo(() => {
     const competitors: Record<string, number> = {};
-    for (const check of Object.values(latestByPlatform)) {
+    for (const check of currentResults) {
       if (check.competitorsFound) {
         for (const comp of check.competitorsFound) {
           competitors[comp.name] = (competitors[comp.name] || 0) + 1;
@@ -201,13 +242,33 @@ export default function VisibilityPage() {
     return Object.entries(competitors)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
-  }, [latestByPlatform]);
+  }, [currentResults]);
 
-  // Get last query used
-  const lastQuery = useMemo(() => {
-    if (history.length === 0) return '';
-    return history[0].query;
-  }, [history]);
+  // Query suggestions
+  const suggestions = useMemo(() => getQuerySuggestions(brandName || 'YourBrand', locale), [brandName, locale]);
+
+  // Get status badge
+  const getStatusBadge = (check: VisibilityCheck | null) => {
+    if (!check) return <Badge tone="info">{t.notChecked}</Badge>;
+    if (!check.isMentioned) return <Badge tone="critical">{t.absent}</Badge>;
+    if (check.responseQuality === 'good') return <Badge tone="success">{t.recommended}</Badge>;
+    return <Badge tone="success">{t.mentioned}</Badge>;
+  };
+
+  // Get sentiment badge
+  const getSentimentBadge = (check: VisibilityCheck | null) => {
+    if (!check || !check.isMentioned) return <Text as="span" tone="subdued">-</Text>;
+    if (check.responseQuality === 'good') return <Badge tone="success">{t.positive}</Badge>;
+    if (check.responseQuality === 'partial') return <Badge tone="attention">{t.neutral}</Badge>;
+    return <Badge tone="info">{t.neutral}</Badge>;
+  };
+
+  // View session from history
+  const viewSession = (session: HistorySession) => {
+    setSelectedSession(session);
+    setCurrentResults(session.checks);
+    setCustomQuery(session.query);
+  };
 
   // Show authentication error
   if (shopDetectionFailed) {
@@ -217,14 +278,14 @@ export default function VisibilityPage() {
   // Loading state
   if (loading || shopLoading) {
     return (
-      <Page title={locale === 'fr' ? 'Visibilit\u00e9 AI' : 'AI Visibility'} backAction={{ content: 'Dashboard', url: '/admin' }}>
+      <Page title={t.title} backAction={{ content: 'Dashboard', url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
-              <Box padding="800">
+              <Box padding="600">
                 <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
-                  <Text as="p">{locale === 'fr' ? 'Chargement...' : 'Loading...'}</Text>
+                  <Text as="p">{t.loading}</Text>
                 </BlockStack>
               </Box>
             </Card>
@@ -236,129 +297,142 @@ export default function VisibilityPage() {
 
   return (
     <Page
-      title={locale === 'fr' ? 'Visibilit\u00e9 AI' : 'AI Visibility'}
-      subtitle={locale === 'fr'
-        ? 'Est-ce que les IA recommandent votre marque ?'
-        : 'Is your brand recommended by AI assistants?'}
+      title={t.title}
+      subtitle={t.subtitle}
       backAction={{ content: 'Dashboard', url: '/admin' }}
-      primaryAction={{
-        content: checking
-          ? (locale === 'fr' ? 'V\u00e9rification...' : 'Checking...')
-          : (locale === 'fr' ? 'Lancer le check' : 'Run Check'),
-        onAction: () => runCheck(),
-        loading: checking,
-      }}
     >
       <Layout>
         {/* Error Banner */}
         {error && (
           <Layout.Section>
-            <Banner tone="critical" title={t.common.error} onDismiss={() => setError(null)}>
+            <Banner tone="critical" onDismiss={() => setError(null)}>
               <p>{error}</p>
             </Banner>
           </Layout.Section>
         )}
 
-        {/* Score Card */}
+        {/* Query Input Section */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <InlineStack align="space-between" blockAlign="center">
-                <BlockStack gap="100">
-                  <Text as="h2" variant="headingMd">
-                    {locale === 'fr' ? 'Score de Visibilit\u00e9' : 'Visibility Score'}
-                  </Text>
-                  <Text as="p" tone="subdued">
-                    {brandName && (
-                      <>{locale === 'fr' ? 'Marque:' : 'Brand:'} <strong>{brandName}</strong></>
-                    )}
-                  </Text>
-                </BlockStack>
-                <BlockStack gap="100" inlineAlign="end">
-                  <Text as="p" variant="heading2xl" fontWeight="bold">
-                    {score.mentioned}/{score.total}
-                  </Text>
-                  <Badge tone={score.percentage >= 50 ? 'success' : score.percentage > 0 ? 'warning' : 'critical'}>
-                    {`${score.percentage}%`}
-                  </Badge>
-                </BlockStack>
-              </InlineStack>
-              <ProgressBar
-                progress={score.percentage}
-                tone={score.percentage >= 50 ? 'success' : score.percentage > 0 ? 'highlight' : 'critical'}
-                size="small"
-              />
-              <Text as="p" variant="bodySm" tone="subdued">
-                {locale === 'fr'
-                  ? `Votre marque est mentionn\u00e9e dans ${score.mentioned} plateforme(s) sur ${score.total} v\u00e9rifi\u00e9e(s).`
-                  : `Your brand is mentioned in ${score.mentioned} out of ${score.total} checked platform(s).`}
-              </Text>
+              {/* Brand info */}
+              {brandName && (
+                <InlineStack gap="200" blockAlign="center">
+                  <Text as="span" tone="subdued">{t.brand}:</Text>
+                  <Badge tone="info">{brandName}</Badge>
+                </InlineStack>
+              )}
+
+              {/* Query input */}
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">{t.query}</Text>
+                <InlineStack gap="300" blockAlign="end">
+                  <Box minWidth="100%" maxWidth="600px">
+                    <TextField
+                      label=""
+                      labelHidden
+                      placeholder={locale === 'fr'
+                        ? 'Ex: Quel est le meilleur produit bio ?'
+                        : 'E.g.: What is the best organic product?'}
+                      value={customQuery}
+                      onChange={setCustomQuery}
+                      autoComplete="off"
+                      connectedRight={
+                        <Button
+                          variant="primary"
+                          icon={SearchIcon}
+                          onClick={() => runCheck(customQuery)}
+                          disabled={!customQuery.trim() || checking}
+                          loading={checking}
+                        >
+                          {checking ? t.testing : t.test}
+                        </Button>
+                      }
+                    />
+                  </Box>
+                </InlineStack>
+              </BlockStack>
+
+              {/* Query suggestions */}
+              <BlockStack gap="200">
+                <Text as="span" variant="bodySm" tone="subdued">{t.suggestions}:</Text>
+                <InlineStack gap="200" wrap>
+                  {suggestions.map((s, i) => (
+                    <Button
+                      key={i}
+                      size="slim"
+                      onClick={() => {
+                        setCustomQuery(s.query);
+                        runCheck(s.query);
+                      }}
+                      disabled={checking}
+                    >
+                      {s.label}
+                    </Button>
+                  ))}
+                </InlineStack>
+              </BlockStack>
             </BlockStack>
           </Card>
         </Layout.Section>
 
-        {/* Query Input */}
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="300">
-              <Text as="h3" variant="headingMd">
-                {locale === 'fr' ? 'Requ\u00eate \u00e0 tester' : 'Query to Test'}
-              </Text>
-              <InlineStack gap="200" blockAlign="end" wrap>
-                <Box minWidth="400px">
-                  <TextField
-                    label={locale === 'fr' ? 'Question' : 'Question'}
-                    labelHidden
-                    placeholder={lastQuery || (locale === 'fr'
-                      ? 'Ex: Quel est le meilleur savon bio ?'
-                      : 'E.g.: What is the best organic soap?')}
-                    value={customQuery}
-                    onChange={setCustomQuery}
-                    autoComplete="off"
-                  />
-                </Box>
-                <Button
-                  onClick={handleCustomCheck}
-                  disabled={!customQuery.trim() || checking}
-                  loading={checking}
-                  variant="primary"
-                >
-                  {locale === 'fr' ? 'Tester' : 'Test'}
-                </Button>
-              </InlineStack>
-              {lastQuery && (
-                <Text as="p" variant="bodySm" tone="subdued">
-                  {locale === 'fr' ? 'Derni\u00e8re requ\u00eate:' : 'Last query:'} &quot;{lastQuery}&quot;
-                </Text>
-              )}
-            </BlockStack>
-          </Card>
-        </Layout.Section>
+        {/* Score Card - Only show if we have results */}
+        {currentResults.length > 0 && (
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="300">
+                <InlineStack align="space-between" blockAlign="center">
+                  <Text as="h2" variant="headingMd">{t.score}</Text>
+                  <InlineStack gap="200" blockAlign="center">
+                    <Text as="span" variant="heading2xl" fontWeight="bold">
+                      {score.mentioned}/{score.total}
+                    </Text>
+                    <Badge tone={score.percentage >= 50 ? 'success' : score.percentage > 0 ? 'warning' : 'critical'}>
+                      {`${score.percentage}%`}
+                    </Badge>
+                  </InlineStack>
+                </InlineStack>
+                <ProgressBar
+                  progress={score.percentage}
+                  tone={score.percentage >= 50 ? 'success' : score.percentage > 0 ? 'highlight' : 'critical'}
+                  size="small"
+                />
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+        )}
 
         {/* Results Table */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h3" variant="headingMd">
-                {locale === 'fr' ? 'R\u00e9sultats par Plateforme' : 'Results by Platform'}
-              </Text>
+              <InlineStack align="space-between" blockAlign="center">
+                <Text as="h2" variant="headingMd">{t.results}</Text>
+                {currentResults.length > 0 && (
+                  <Text as="span" variant="bodySm" tone="subdued">
+                    {currentResults[0]?.query && `"${currentResults[0].query.substring(0, 50)}${currentResults[0].query.length > 50 ? '...' : ''}"`}
+                  </Text>
+                )}
+              </InlineStack>
               <Divider />
 
               {/* Table Header */}
               <Box padding="200" background="bg-surface-secondary" borderRadius="200">
                 <InlineStack align="space-between">
-                  <Box width="25%"><Text as="span" variant="bodySm" fontWeight="semibold">{locale === 'fr' ? 'Plateforme' : 'Platform'}</Text></Box>
-                  <Box width="20%"><Text as="span" variant="bodySm" fontWeight="semibold">{locale === 'fr' ? 'Statut' : 'Status'}</Text></Box>
-                  <Box width="15%"><Text as="span" variant="bodySm" fontWeight="semibold">Position</Text></Box>
-                  <Box width="20%"><Text as="span" variant="bodySm" fontWeight="semibold">{locale === 'fr' ? 'Contexte' : 'Sentiment'}</Text></Box>
-                  <Box width="20%"><Text as="span" variant="bodySm" fontWeight="semibold">Action</Text></Box>
+                  <Box width="30%"><Text as="span" variant="bodySm" fontWeight="bold">{t.platform}</Text></Box>
+                  <Box width="20%"><Text as="span" variant="bodySm" fontWeight="bold">{t.status}</Text></Box>
+                  <Box width="15%"><Text as="span" variant="bodySm" fontWeight="bold">{t.position}</Text></Box>
+                  <Box width="20%"><Text as="span" variant="bodySm" fontWeight="bold">{t.sentiment}</Text></Box>
+                  <Box width="15%"><Text as="span" variant="bodySm" fontWeight="bold">{t.action}</Text></Box>
                 </InlineStack>
               </Box>
 
-              {/* Table Rows */}
+              {/* Platform rows */}
               <BlockStack gap="200">
-                {Object.entries(PLATFORMS).map(([key, platform]) => {
-                  const check = latestByPlatform[key];
+                {(Object.entries(PLATFORMS) as [Platform, typeof PLATFORMS[Platform]][]).map(([key, platform]) => {
+                  const check = resultsByPlatform[key];
+                  const isChecking = checkingPlatforms.has(key);
+
                   return (
                     <Box
                       key={key}
@@ -370,7 +444,7 @@ export default function VisibilityPage() {
                     >
                       <InlineStack align="space-between" blockAlign="center">
                         {/* Platform */}
-                        <Box width="25%">
+                        <Box width="30%">
                           <InlineStack gap="200" blockAlign="center">
                             <Text as="span" variant="headingMd">{platform.icon}</Text>
                             <BlockStack gap="050">
@@ -382,12 +456,14 @@ export default function VisibilityPage() {
 
                         {/* Status */}
                         <Box width="20%">
-                          {getStatusBadge(check, {
-                            notChecked: locale === 'fr' ? 'Non v\u00e9rifi\u00e9' : 'Not checked',
-                            absent: locale === 'fr' ? 'Absent' : 'Absent',
-                            recommended: locale === 'fr' ? 'Recommand\u00e9' : 'Recommended',
-                            mentioned: locale === 'fr' ? 'Mentionn\u00e9' : 'Mentioned',
-                          })}
+                          {isChecking ? (
+                            <InlineStack gap="100" blockAlign="center">
+                              <Spinner size="small" />
+                              <Text as="span" variant="bodySm" tone="subdued">...</Text>
+                            </InlineStack>
+                          ) : (
+                            getStatusBadge(check)
+                          )}
                         </Box>
 
                         {/* Position */}
@@ -405,7 +481,7 @@ export default function VisibilityPage() {
                         </Box>
 
                         {/* Action */}
-                        <Box width="20%">
+                        <Box width="15%">
                           <Button
                             size="slim"
                             onClick={() => {
@@ -414,9 +490,9 @@ export default function VisibilityPage() {
                                 setModalOpen(true);
                               }
                             }}
-                            disabled={!check}
+                            disabled={!check || isChecking}
                           >
-                            {locale === 'fr' ? 'D\u00e9tails' : 'Details'}
+                            {t.details}
                           </Button>
                         </Box>
                       </InlineStack>
@@ -424,6 +500,20 @@ export default function VisibilityPage() {
                   );
                 })}
               </BlockStack>
+
+              {/* Checking indicator */}
+              {checking && (
+                <Banner tone="info">
+                  <InlineStack gap="200" blockAlign="center">
+                    <Spinner size="small" />
+                    <Text as="span">
+                      {locale === 'fr'
+                        ? `Test en cours sur ${Object.keys(PLATFORMS).length} plateformes...`
+                        : `Testing on ${Object.keys(PLATFORMS).length} platforms...`}
+                    </Text>
+                  </InlineStack>
+                </Banner>
+              )}
             </BlockStack>
           </Card>
         </Layout.Section>
@@ -433,61 +523,74 @@ export default function VisibilityPage() {
           <Layout.Section>
             <Card>
               <BlockStack gap="300">
-                <Text as="h3" variant="headingMd">
-                  {locale === 'fr' ? 'Concurrents D\u00e9tect\u00e9s' : 'Competitors Detected'}
-                </Text>
+                <Text as="h2" variant="headingMd">{t.competitors}</Text>
                 <InlineStack gap="200" wrap>
                   {allCompetitors.map(([name, count]) => (
-                    <Badge key={name} tone="info">
+                    <Badge key={name} tone="attention">
                       {`${name} (${count}x)`}
                     </Badge>
                   ))}
                 </InlineStack>
-                <Text as="p" variant="bodySm" tone="subdued">
-                  {locale === 'fr'
-                    ? 'Ces marques sont mentionn\u00e9es dans les r\u00e9ponses AI \u00e0 la place de la v\u00f4tre.'
-                    : 'These brands are mentioned in AI responses instead of yours.'}
-                </Text>
+                <Text as="p" variant="bodySm" tone="subdued">{t.competitorsDesc}</Text>
               </BlockStack>
             </Card>
           </Layout.Section>
         )}
 
         {/* History Section */}
-        {history.length > 0 && (
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="300">
-                <Text as="h3" variant="headingMd">
-                  {locale === 'fr' ? 'Historique (10 derniers)' : 'History (last 10)'}
-                </Text>
-                <Divider />
-                <BlockStack gap="100">
-                  {history.slice(0, 10).map((check) => (
-                    <Box key={check.id} padding="200" background="bg-surface-secondary" borderRadius="100">
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="300">
+              <Text as="h2" variant="headingMd">{t.history}</Text>
+              <Divider />
+
+              {sessions.length === 0 ? (
+                <Box padding="400">
+                  <Text as="p" tone="subdued" alignment="center">{t.noHistory}</Text>
+                </Box>
+              ) : (
+                <BlockStack gap="200">
+                  {sessions.map((session) => (
+                    <Box
+                      key={session.sessionId}
+                      padding="300"
+                      background={selectedSession?.sessionId === session.sessionId ? 'bg-surface-selected' : 'bg-surface-secondary'}
+                      borderRadius="200"
+                      borderWidth={selectedSession?.sessionId === session.sessionId ? '025' : undefined}
+                      borderColor={selectedSession?.sessionId === session.sessionId ? 'border-success' : undefined}
+                    >
                       <InlineStack align="space-between" blockAlign="center">
-                        <InlineStack gap="200">
-                          <Text as="span">{PLATFORMS[check.platform]?.icon || '🤖'}</Text>
-                          <Text as="span" variant="bodySm" truncate>
-                            {check.query.length > 40 ? check.query.substring(0, 40) + '...' : check.query}
+                        <BlockStack gap="100">
+                          <Text as="span" variant="bodyMd" fontWeight="semibold">
+                            &quot;{session.query.length > 50 ? session.query.substring(0, 50) + '...' : session.query}&quot;
                           </Text>
-                        </InlineStack>
-                        <InlineStack gap="200">
-                          <Badge tone={check.isMentioned ? 'success' : 'critical'} size="small">
-                            {check.isMentioned ? '✓' : '✗'}
-                          </Badge>
-                          <Text as="span" variant="bodySm" tone="subdued">
-                            {new Date(check.checkedAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')}
-                          </Text>
-                        </InlineStack>
+                          <InlineStack gap="200">
+                            <Text as="span" variant="bodySm" tone="subdued">
+                              {new Date(session.checkedAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')}
+                            </Text>
+                            <Badge
+                              tone={session.summary.percentage >= 50 ? 'success' : session.summary.percentage > 0 ? 'warning' : 'critical'}
+                              size="small"
+                            >
+                              {`${session.summary.mentioned}/${session.summary.total} (${session.summary.percentage}%)`}
+                            </Badge>
+                          </InlineStack>
+                        </BlockStack>
+                        <Button
+                          size="slim"
+                          onClick={() => viewSession(session)}
+                          variant={selectedSession?.sessionId === session.sessionId ? 'primary' : undefined}
+                        >
+                          {locale === 'fr' ? 'Voir' : 'View'}
+                        </Button>
                       </InlineStack>
                     </Box>
                   ))}
                 </BlockStack>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
-        )}
+              )}
+            </BlockStack>
+          </Card>
+        </Layout.Section>
       </Layout>
 
       {/* Detail Modal */}
@@ -497,7 +600,7 @@ export default function VisibilityPage() {
           setModalOpen(false);
           setSelectedCheck(null);
         }}
-        title={selectedCheck ? `${PLATFORMS[selectedCheck.platform]?.icon} ${PLATFORMS[selectedCheck.platform]?.displayName || selectedCheck.platform}` : 'Details'}
+        title={selectedCheck ? `${PLATFORMS[selectedCheck.platform]?.icon} ${PLATFORMS[selectedCheck.platform]?.displayName}` : 'Details'}
         size="large"
       >
         <Modal.Section>
@@ -506,9 +609,7 @@ export default function VisibilityPage() {
               {/* Query */}
               <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                 <BlockStack gap="100">
-                  <Text as="span" variant="bodySm" tone="subdued">
-                    {locale === 'fr' ? 'Requ\u00eate:' : 'Query:'}
-                  </Text>
+                  <Text as="span" variant="bodySm" tone="subdued">{t.query}:</Text>
                   <Text as="p" fontWeight="semibold">&quot;{selectedCheck.query}&quot;</Text>
                 </BlockStack>
               </Box>
@@ -516,24 +617,23 @@ export default function VisibilityPage() {
               {/* Result Summary */}
               <InlineStack gap="400" wrap>
                 <BlockStack gap="100">
-                  <Text as="span" variant="bodySm" tone="subdued">{locale === 'fr' ? 'Statut' : 'Status'}</Text>
-                  {getStatusBadge(selectedCheck, {
-                    notChecked: locale === 'fr' ? 'Non v\u00e9rifi\u00e9' : 'Not checked',
-                    absent: locale === 'fr' ? 'Absent' : 'Absent',
-                    recommended: locale === 'fr' ? 'Recommand\u00e9' : 'Recommended',
-                    mentioned: locale === 'fr' ? 'Mentionn\u00e9' : 'Mentioned',
-                  })}
+                  <Text as="span" variant="bodySm" tone="subdued">{t.status}</Text>
+                  {getStatusBadge(selectedCheck)}
                 </BlockStack>
                 {selectedCheck.position && (
                   <BlockStack gap="100">
-                    <Text as="span" variant="bodySm" tone="subdued">Position</Text>
+                    <Text as="span" variant="bodySm" tone="subdued">{t.position}</Text>
                     <Badge tone="info">{`#${selectedCheck.position}`}</Badge>
                   </BlockStack>
                 )}
                 <BlockStack gap="100">
-                  <Text as="span" variant="bodySm" tone="subdued">{locale === 'fr' ? 'V\u00e9rifi\u00e9 le' : 'Checked on'}</Text>
+                  <Text as="span" variant="bodySm" tone="subdued">{t.sentiment}</Text>
+                  {getSentimentBadge(selectedCheck)}
+                </BlockStack>
+                <BlockStack gap="100">
+                  <Text as="span" variant="bodySm" tone="subdued">{t.checkedOn}</Text>
                   <Text as="p" variant="bodySm">
-                    {new Date(selectedCheck.checkedAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')}
+                    {new Date(selectedCheck.checkedAt).toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US')}
                   </Text>
                 </BlockStack>
               </InlineStack>
@@ -542,7 +642,7 @@ export default function VisibilityPage() {
               {selectedCheck.isMentioned && selectedCheck.mentionContext && (
                 <Box padding="300" background="bg-surface-success" borderRadius="200">
                   <BlockStack gap="200">
-                    <Badge tone="success">{locale === 'fr' ? 'Votre marque est mentionn\u00e9e' : 'Your brand is mentioned'}</Badge>
+                    <Badge tone="success">{t.mentioned}</Badge>
                     <Text as="p" variant="bodySm">&quot;...{selectedCheck.mentionContext}...&quot;</Text>
                   </BlockStack>
                 </Box>
@@ -550,24 +650,15 @@ export default function VisibilityPage() {
 
               {!selectedCheck.isMentioned && (
                 <Box padding="300" background="bg-surface-critical" borderRadius="200">
-                  <BlockStack gap="100">
-                    <Text as="p" fontWeight="semibold">{locale === 'fr' ? 'Marque non mentionn\u00e9e' : 'Brand not mentioned'}</Text>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      {locale === 'fr'
-                        ? 'Optimisez vos descriptions produits et votre contenu pour am\u00e9liorer votre visibilit\u00e9.'
-                        : 'Optimize your product descriptions and content to improve visibility.'}
-                    </Text>
-                  </BlockStack>
+                  <Text as="p" fontWeight="semibold">{t.absent}</Text>
                 </Box>
               )}
 
               {/* Competitors */}
               {selectedCheck.competitorsFound && selectedCheck.competitorsFound.length > 0 && (
                 <BlockStack gap="200">
-                  <Text as="span" variant="bodySm" tone="subdued">
-                    {locale === 'fr' ? 'Concurrents mentionn\u00e9s:' : 'Competitors mentioned:'}
-                  </Text>
-                  <InlineStack gap="100">
+                  <Text as="span" variant="bodySm" tone="subdued">{t.competitors}:</Text>
+                  <InlineStack gap="100" wrap>
                     {selectedCheck.competitorsFound.map((c) => (
                       <Badge key={c.name} tone="attention">{c.name}</Badge>
                     ))}
@@ -579,13 +670,11 @@ export default function VisibilityPage() {
 
               {/* Full Response */}
               <BlockStack gap="200">
-                <Text as="h4" variant="headingSm">
-                  {locale === 'fr' ? 'R\u00e9ponse compl\u00e8te de l\'AI' : 'Full AI Response'}
-                </Text>
+                <Text as="h4" variant="headingSm">{t.fullResponse}</Text>
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                   <Scrollable style={{ maxHeight: '300px' }}>
                     <Text as="p" variant="bodyMd">
-                      {selectedCheck.rawResponse || (locale === 'fr' ? 'R\u00e9ponse non disponible' : 'Response not available')}
+                      {selectedCheck.rawResponse || (locale === 'fr' ? 'Réponse non disponible' : 'Response not available')}
                     </Text>
                   </Scrollable>
                 </Box>

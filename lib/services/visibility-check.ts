@@ -545,11 +545,11 @@ export async function runVisibilityCheck(
   // Generate queries if not provided
   const searchQueries = queries || buildSearchQuery(brandName, productType);
 
-  // Determine which platforms to check
+  // Determine which platforms to check - ALL platforms by default
   const availablePlatforms = getAvailablePlatforms();
   const platformsToCheck = platforms
     ? platforms.filter((p) => availablePlatforms.includes(p))
-    : availablePlatforms.slice(0, 1); // Default to first available platform
+    : availablePlatforms; // Check ALL available platforms by default
 
   if (platformsToCheck.length === 0) {
     throw new Error('No AI platforms configured. Please add API keys in your environment.');
@@ -558,21 +558,24 @@ export async function runVisibilityCheck(
   // Calculate remaining checks
   const remainingChecks = planLimits.visibilityChecksPerMonth - currentMonthChecks;
 
-  // Limit queries based on remaining checks
-  const maxQueriesPerPlatform = Math.floor(remainingChecks / platformsToCheck.length);
-  const queriesToRun = searchQueries.slice(0, Math.min(maxQueriesPerPlatform, 3));
+  // For visibility checks: 1 query across ALL platforms counts as 1 "session"
+  // Each platform call is 1 check towards the limit
+  const checksNeeded = platformsToCheck.length;
 
-  if (queriesToRun.length === 0) {
-    throw new Error('Not enough remaining checks this month');
+  if (remainingChecks < checksNeeded) {
+    throw new Error(
+      `Not enough checks remaining. Need ${checksNeeded} for all platforms, but only ${remainingChecks} left this month. Upgrade your plan for more checks.`
+    );
   }
 
-  // Build all platform/query combinations for parallel execution
-  const checkTasks: { platform: Platform; query: string }[] = [];
-  for (const platform of platformsToCheck) {
-    for (const query of queriesToRun) {
-      checkTasks.push({ platform, query });
-    }
-  }
+  // Use ONE query for all platforms (the first one provided or generated)
+  const queryToRun = searchQueries[0];
+
+  // Build check tasks: same query across all platforms
+  const checkTasks: { platform: Platform; query: string }[] = platformsToCheck.map(platform => ({
+    platform,
+    query: queryToRun,
+  }));
 
   // Run all checks in parallel (different AI providers, no rate limit issue)
   const checkPromises = checkTasks.map(async ({ platform, query }) => {
@@ -588,9 +591,12 @@ export async function runVisibilityCheck(
   const checkResults = await Promise.all(checkPromises);
   const results: VisibilityResult[] = checkResults.filter((r): r is VisibilityResult => r !== null);
 
+  // Generate a session ID to group all checks from this run
+  const sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const now = new Date();
+
   // Batch save all results to database in a single transaction
   if (results.length > 0) {
-    const now = new Date();
     await prisma.visibilityCheck.createMany({
       data: results.map((result) => ({
         shopId: shop.id,
@@ -603,6 +609,7 @@ export async function runVisibilityCheck(
         rawResponse: result.rawResponse,
         responseQuality: result.responseQuality,
         checkedAt: now,
+        sessionId, // Group checks by session
       })),
     });
   }
@@ -613,9 +620,11 @@ export async function runVisibilityCheck(
       shopId: shop.id,
       action: 'visibility_check',
       details: {
-        queriesRun: queriesToRun.length,
+        sessionId,
+        query: queryToRun,
         platformsChecked: platformsToCheck,
         mentioned: results.filter((r) => r.isMentioned).length,
+        total: results.length,
       },
     },
   });
@@ -643,32 +652,104 @@ export async function runVisibilityCheck(
   };
 }
 
-export async function getVisibilityHistory(shopDomain: string) {
+export type HistoryCheck = {
+  id: string;
+  platform: Platform;
+  query: string;
+  sessionId: string | null;
+  isMentioned: boolean | null;
+  mentionContext: string | null;
+  position: number | null;
+  competitorsFound: { name: string; url?: string }[];
+  responseQuality: string | null;
+  rawResponse: string | null;
+  checkedAt: string;
+};
+
+export type HistorySession = {
+  sessionId: string;
+  query: string;
+  checkedAt: string;
+  checks: HistoryCheck[];
+  summary: {
+    total: number;
+    mentioned: number;
+    percentage: number;
+  };
+};
+
+export async function getVisibilityHistory(shopDomain: string): Promise<{
+  checks: HistoryCheck[];
+  sessions: HistorySession[];
+  brandName: string;
+}> {
   const shop = await prisma.shop.findUnique({
     where: { shopDomain },
-    select: { id: true },
+    select: { id: true, name: true },
   });
 
   if (!shop) {
     throw new Error('Shop not found');
   }
 
+  const brandName = shop.name || shopDomain.replace('.myshopify.com', '').replace(/-/g, ' ');
+
   const checks = await prisma.visibilityCheck.findMany({
     where: { shopId: shop.id },
     orderBy: { checkedAt: 'desc' },
-    take: 50,
+    take: 100, // Get more to group into sessions
   });
 
-  return checks.map((c) => ({
+  const mappedChecks: HistoryCheck[] = checks.map((c) => ({
     id: c.id,
-    platform: c.platform,
+    platform: c.platform as Platform,
     query: c.query,
+    sessionId: c.sessionId,
     isMentioned: c.isMentioned,
     mentionContext: c.mentionContext,
     position: c.position,
-    competitorsFound: c.competitorsFound,
+    competitorsFound: c.competitorsFound as { name: string; url?: string }[],
     responseQuality: c.responseQuality,
     rawResponse: c.rawResponse,
     checkedAt: c.checkedAt.toISOString(),
   }));
+
+  // Group by sessionId (or by checkedAt timestamp for legacy data)
+  const sessionMap = new Map<string, HistoryCheck[]>();
+
+  for (const check of mappedChecks) {
+    // Use sessionId if available, otherwise group by timestamp (within 1 minute)
+    const key = check.sessionId || `legacy-${check.checkedAt.substring(0, 16)}`;
+
+    if (!sessionMap.has(key)) {
+      sessionMap.set(key, []);
+    }
+    sessionMap.get(key)!.push(check);
+  }
+
+  // Convert to session array
+  const sessions: HistorySession[] = Array.from(sessionMap.entries())
+    .map(([sessionId, sessionChecks]) => {
+      const mentioned = sessionChecks.filter(c => c.isMentioned).length;
+      const total = sessionChecks.length;
+
+      return {
+        sessionId,
+        query: sessionChecks[0]?.query || '',
+        checkedAt: sessionChecks[0]?.checkedAt || '',
+        checks: sessionChecks,
+        summary: {
+          total,
+          mentioned,
+          percentage: total > 0 ? Math.round((mentioned / total) * 100) : 0,
+        },
+      };
+    })
+    .slice(0, 10); // Keep last 10 sessions
+
+  return {
+    checks: mappedChecks,
+    sessions,
+    brandName,
+  };
 }

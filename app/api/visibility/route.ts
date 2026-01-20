@@ -60,7 +60,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: history,
+      data: history.checks,
+      sessions: history.sessions,
+      brandName: history.brandName,
       availablePlatforms,
     });
   } catch (error) {

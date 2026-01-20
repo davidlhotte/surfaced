@@ -226,6 +226,7 @@ model VisibilityCheck {
 
   platform          Platform  // chatgpt, perplexity, gemini, copilot
   query             String    // The search query tested
+  sessionId         String?   // Groups checks from the same run together
 
   // Results
   isMentioned       Boolean?
@@ -243,6 +244,7 @@ model VisibilityCheck {
   @@index([shopId])
   @@index([platform])
   @@index([checkedAt(sort: Desc)])
+  @@index([sessionId])
 }
 
 model Competitor {
