@@ -4,34 +4,58 @@ import { prisma } from '@/lib/db/prisma';
 import { encryptToken, decryptToken } from '@/lib/security/encryption';
 import { logger } from '@/lib/monitoring/logger';
 
-if (
-  !process.env.SHOPIFY_API_KEY ||
-  !process.env.SHOPIFY_API_SECRET ||
-  !process.env.SHOPIFY_APP_URL
-) {
-  throw new Error('Missing required Shopify environment variables');
+// Lazy initialization to avoid build-time errors
+// Environment variables are only required at runtime, not during static page generation
+function getShopifyConfig() {
+  const apiKey = process.env.SHOPIFY_API_KEY?.trim();
+  const apiSecret = process.env.SHOPIFY_API_SECRET?.trim();
+  const appUrl = process.env.SHOPIFY_APP_URL?.trim();
+  const scopes = (process.env.SHOPIFY_SCOPES || 'read_content,write_content').trim();
+
+  if (!apiKey || !apiSecret || !appUrl) {
+    throw new Error('Missing required Shopify environment variables');
+  }
+
+  return { apiKey, apiSecret, appUrl, scopes };
 }
 
-// Ensure env vars are trimmed to avoid whitespace/newline issues
-const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY!.trim();
-const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET!.trim();
-const SHOPIFY_APP_URL = process.env.SHOPIFY_APP_URL!.trim();
-const SHOPIFY_SCOPES = (process.env.SHOPIFY_SCOPES || 'read_content,write_content').trim();
+// Lazy-loaded Shopify API instance
+let _shopify: ReturnType<typeof shopifyApi> | null = null;
+let _config: ReturnType<typeof getShopifyConfig> | null = null;
 
-logger.info({
-  apiKeyLength: SHOPIFY_API_KEY.length,
-  apiKeyPreview: SHOPIFY_API_KEY.substring(0, 8) + '...',
-  hostName: new URL(SHOPIFY_APP_URL).hostname,
-}, 'Shopify API initialized');
+function getConfig() {
+  if (!_config) {
+    _config = getShopifyConfig();
+    logger.info({
+      apiKeyLength: _config.apiKey.length,
+      apiKeyPreview: _config.apiKey.substring(0, 8) + '...',
+      hostName: new URL(_config.appUrl).hostname,
+    }, 'Shopify API initialized');
+  }
+  return _config;
+}
 
-export const shopify = shopifyApi({
-  apiKey: SHOPIFY_API_KEY,
-  apiSecretKey: SHOPIFY_API_SECRET,
-  scopes: SHOPIFY_SCOPES.split(','),
-  hostName: new URL(SHOPIFY_APP_URL).hostname,
-  hostScheme: 'https',
-  apiVersion: ApiVersion.October24,
-  isEmbeddedApp: true,
+export function getShopifyApi() {
+  if (!_shopify) {
+    const config = getConfig();
+    _shopify = shopifyApi({
+      apiKey: config.apiKey,
+      apiSecretKey: config.apiSecret,
+      scopes: config.scopes.split(','),
+      hostName: new URL(config.appUrl).hostname,
+      hostScheme: 'https',
+      apiVersion: ApiVersion.October24,
+      isEmbeddedApp: true,
+    });
+  }
+  return _shopify;
+}
+
+// For backward compatibility - lazy getter
+export const shopify = new Proxy({} as ReturnType<typeof shopifyApi>, {
+  get(_, prop) {
+    return getShopifyApi()[prop as keyof ReturnType<typeof shopifyApi>];
+  },
 });
 
 export async function getShopSession(shopDomain: string): Promise<Session | null> {
@@ -95,9 +119,10 @@ export async function deleteShopSession(shopDomain: string): Promise<void> {
 }
 
 export function getAuthUrl(shop: string, redirectUri: string): string {
+  const config = getConfig();
   const params = new URLSearchParams({
-    client_id: SHOPIFY_API_KEY,
-    scope: SHOPIFY_SCOPES,
+    client_id: config.apiKey,
+    scope: config.scopes,
     redirect_uri: redirectUri,
   });
 
@@ -118,6 +143,7 @@ export async function exchangeCodeForToken(
   shop: string,
   code: string
 ): Promise<{ accessToken: string; scope: string }> {
+  const config = getConfig();
   logger.info({ shop, codeLength: code.length }, 'Starting OAuth code exchange');
 
   const response = await fetch(`https://${shop}/admin/oauth/access_token`, {
@@ -126,8 +152,8 @@ export async function exchangeCodeForToken(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      client_id: SHOPIFY_API_KEY,
-      client_secret: SHOPIFY_API_SECRET,
+      client_id: config.apiKey,
+      client_secret: config.apiSecret,
       code,
     }),
   });
@@ -160,11 +186,12 @@ export async function exchangeSessionTokenForAccessToken(
   sessionToken: string,
   tokenType: 'online' | 'offline' = 'offline'
 ): Promise<{ accessToken: string; scope: string; expiresIn?: number }> {
+  const config = getConfig();
   logger.info({
     shop,
     tokenType,
     sessionTokenLength: sessionToken.length,
-    apiKeyLength: SHOPIFY_API_KEY.length,
+    apiKeyLength: config.apiKey.length,
   }, 'Starting session token exchange');
 
   const requestedTokenType = tokenType === 'online'
@@ -172,8 +199,8 @@ export async function exchangeSessionTokenForAccessToken(
     : 'urn:shopify:params:oauth:token-type:offline-access-token';
 
   const params = new URLSearchParams({
-    client_id: SHOPIFY_API_KEY,
-    client_secret: SHOPIFY_API_SECRET,
+    client_id: config.apiKey,
+    client_secret: config.apiSecret,
     grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
     subject_token: sessionToken,
     subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',

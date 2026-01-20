@@ -7,7 +7,12 @@
 
 import OpenAI from 'openai';
 
-const OPENROUTER_API_KEY = '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';
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+if (!OPENROUTER_API_KEY) {
+  console.error('ERROR: OPENROUTER_API_KEY environment variable is required');
+  console.error('Run: export OPENROUTER_API_KEY=your-key-here');
+  process.exit(1);
+}
 
 const openrouter = new OpenAI({
   apiKey: OPENROUTER_API_KEY,
