@@ -24,6 +24,7 @@ import {
 import { PlusCircleIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type ABTest = {
   id: string;
@@ -49,6 +50,7 @@ type Quota = {
 };
 
 export default function ABTestsPage() {
+  const { t } = useAdminLanguage();
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
   const [tests, setTests] = useState<ABTest[]>([]);
@@ -70,20 +72,20 @@ export default function ABTestsPage() {
     try {
       setLoading(true);
       const response = await authenticatedFetch('/api/ab-tests');
-      if (!response.ok) throw new Error('Impossible de charger les tests');
+      if (!response.ok) throw new Error(t.abTests.errorLoadingTests);
       const result = await response.json();
       if (result.success) {
         setTests(result.data.tests);
         setQuota(result.data.quota);
       } else {
-        setError(result.error || 'Erreur inconnue');
+        setError(result.error || t.abTests.errorUnknown);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de charger les tests');
+      setError(err instanceof Error ? err.message : t.abTests.errorLoadingTests);
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch]);
+  }, [authenticatedFetch, t.abTests.errorLoadingTests, t.abTests.errorUnknown]);
 
   useEffect(() => {
     fetchTests();
@@ -91,7 +93,7 @@ export default function ABTestsPage() {
 
   const createTest = async () => {
     if (!newTest.name || !newTest.productId || !newTest.variantB) {
-      setError('Veuillez remplir tous les champs obligatoires');
+      setError(t.abTests.errorFillAllFields);
       return;
     }
 
@@ -105,13 +107,13 @@ export default function ABTestsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Impossible de créer le test');
+        throw new Error(errorData.error || t.abTests.errorCreatingTest);
       }
       await fetchTests();
       setShowCreateModal(false);
       setNewTest({ name: '', productId: '', field: 'description', variantB: '' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de créer le test');
+      setError(err instanceof Error ? err.message : t.abTests.errorCreatingTest);
     } finally {
       setCreating(false);
     }
@@ -127,11 +129,11 @@ export default function ABTestsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Impossible de démarrer le test');
+        throw new Error(errorData.error || t.abTests.errorStartingTest);
       }
       await fetchTests();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de démarrer le test');
+      setError(err instanceof Error ? err.message : t.abTests.errorStartingTest);
     }
   };
 
@@ -145,11 +147,11 @@ export default function ABTestsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Impossible d\'annuler le test');
+        throw new Error(errorData.error || t.abTests.errorCancellingTest);
       }
       await fetchTests();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible d\'annuler le test');
+      setError(err instanceof Error ? err.message : t.abTests.errorCancellingTest);
     }
   };
 
@@ -163,11 +165,11 @@ export default function ABTestsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Impossible d\'appliquer le gagnant');
+        throw new Error(errorData.error || t.abTests.errorApplyingWinner);
       }
       await fetchTests();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible d\'appliquer le gagnant');
+      setError(err instanceof Error ? err.message : t.abTests.errorApplyingWinner);
     }
   };
 
@@ -179,11 +181,11 @@ export default function ABTestsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Impossible de supprimer le test');
+        throw new Error(errorData.error || t.abTests.errorDeletingTest);
       }
       await fetchTests();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de supprimer le test');
+      setError(err instanceof Error ? err.message : t.abTests.errorDeletingTest);
     }
   };
 
@@ -195,10 +197,10 @@ export default function ABTestsPage() {
       cancelled: 'critical',
     };
     const labels: Record<string, string> = {
-      draft: 'Brouillon',
-      running: 'En cours',
-      completed: 'Terminé',
-      cancelled: 'Annulé',
+      draft: t.abTests.statusDraft,
+      running: t.abTests.statusRunning,
+      completed: t.abTests.statusCompleted,
+      cancelled: t.abTests.statusCancelled,
     };
     return <Badge tone={tones[status]}>{labels[status]}</Badge>;
   };
@@ -206,19 +208,19 @@ export default function ABTestsPage() {
   const getWinnerBadge = (test: ABTest) => {
     if (!test.winner) return null;
     if (test.winner === 'tie') {
-      return <Badge>Égalité</Badge>;
+      return <Badge>{t.abTests.tie}</Badge>;
     }
     return (
-      <Badge tone="success">{`Variante ${test.winner} gagne`}</Badge>
+      <Badge tone="success">{`${t.abTests.variantWins} ${test.winner} ${t.abTests.wins}`}</Badge>
     );
   };
 
   const getFieldLabel = (field: string) => {
     const labels: Record<string, string> = {
-      description: 'Description',
-      seo_title: 'Titre SEO',
-      seo_description: 'Description SEO',
-      tags: 'Tags',
+      description: t.abTests.fieldDescription,
+      seo_title: t.abTests.fieldSeoTitle,
+      seo_description: t.abTests.fieldSeoDescription,
+      tags: t.abTests.fieldTags,
     };
     return labels[field] || field;
   };
@@ -230,14 +232,14 @@ export default function ABTestsPage() {
 
   if (loading || shopLoading) {
     return (
-      <Page title="Tests A/B" backAction={{ content: 'Accueil', url: '/admin' }}>
+      <Page title={t.abTests.title} backAction={{ content: t.abTests.home, url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
               <Box padding="800">
                 <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
-                  <Text as="p">Chargement des tests A/B...</Text>
+                  <Text as="p">{t.abTests.loading}</Text>
                 </BlockStack>
               </Box>
             </Card>
@@ -249,11 +251,11 @@ export default function ABTestsPage() {
 
   return (
     <Page
-      title="Tests A/B"
-      subtitle="Testez différentes versions de vos contenus pour optimiser votre visibilité IA"
-      backAction={{ content: 'Accueil', url: '/admin' }}
+      title={t.abTests.title}
+      subtitle={t.abTests.subtitle}
+      backAction={{ content: t.abTests.home, url: '/admin' }}
       primaryAction={{
-        content: 'Créer un test',
+        content: t.abTests.createTest,
         icon: PlusCircleIcon,
         onAction: () => setShowCreateModal(true),
         disabled: !quota?.canCreate,
@@ -262,7 +264,7 @@ export default function ABTestsPage() {
       <Layout>
         {error && (
           <Layout.Section>
-            <Banner tone="critical" title="Erreur" onDismiss={() => setError(null)}>
+            <Banner tone="critical" title={t.abTests.error} onDismiss={() => setError(null)}>
               <p>{error}</p>
             </Banner>
           </Layout.Section>
@@ -282,17 +284,16 @@ export default function ABTestsPage() {
                   }}>
                     <BlockStack gap="400">
                       <Text as="h2" variant="headingLg">
-                        Optimisez vos contenus avec des tests A/B
+                        {t.abTests.welcomeTitle}
                       </Text>
                       <Text as="p">
-                        Comparez deux versions d&apos;un contenu produit pour découvrir laquelle
-                        est la plus recommandée par les IA. Data-driven marketing pour votre boutique.
+                        {t.abTests.welcomeDesc}
                       </Text>
                     </BlockStack>
                   </div>
 
                   <BlockStack gap="300">
-                    <Text as="h3" variant="headingMd">Comment ça marche ?</Text>
+                    <Text as="h3" variant="headingMd">{t.abTests.howItWorks}</Text>
                     <InlineStack gap="400" wrap>
                       <Box minWidth="200px" maxWidth="280px">
                         <BlockStack gap="200">
@@ -307,9 +308,9 @@ export default function ABTestsPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>1</div>
-                          <Text as="p" fontWeight="semibold">Créez un test</Text>
+                          <Text as="p" fontWeight="semibold">{t.abTests.step1Title}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Choisissez un produit et écrivez une version alternative du contenu
+                            {t.abTests.step1Desc}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -326,9 +327,9 @@ export default function ABTestsPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>2</div>
-                          <Text as="p" fontWeight="semibold">Lancez le test</Text>
+                          <Text as="p" fontWeight="semibold">{t.abTests.step2Title}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Nous simulons des requêtes IA avec les deux versions
+                            {t.abTests.step2Desc}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -345,9 +346,9 @@ export default function ABTestsPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>3</div>
-                          <Text as="p" fontWeight="semibold">Appliquez le gagnant</Text>
+                          <Text as="p" fontWeight="semibold">{t.abTests.step3Title}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            La version la plus mentionnée peut être appliquée en 1 clic
+                            {t.abTests.step3Desc}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -356,7 +357,7 @@ export default function ABTestsPage() {
 
                   <Box paddingBlockStart="200">
                     <Button variant="primary" size="large" onClick={() => setShowCreateModal(true)}>
-                      Créer mon premier test A/B
+                      {t.abTests.createFirstTest}
                     </Button>
                   </Box>
                 </BlockStack>
@@ -371,9 +372,9 @@ export default function ABTestsPage() {
             <Card>
               <InlineStack align="space-between" blockAlign="center">
                 <BlockStack gap="100">
-                  <Text as="h3" variant="headingMd">Tests actifs</Text>
+                  <Text as="h3" variant="headingMd">{t.abTests.activeTests}</Text>
                   <Text as="p" variant="bodySm" tone="subdued">
-                    {quota?.used || 0} sur {quota?.limit || 0} tests utilisés
+                    {quota?.used || 0} {t.abTests.of} {quota?.limit || 0} {t.abTests.testsUsed}
                   </Text>
                 </BlockStack>
                 <Box minWidth="200px">
@@ -394,9 +395,9 @@ export default function ABTestsPage() {
             <Card>
               <BlockStack gap="400">
                 <BlockStack gap="200">
-                  <Text as="h3" variant="headingMd">Vos tests</Text>
+                  <Text as="h3" variant="headingMd">{t.abTests.yourTests}</Text>
                   <Text as="p" variant="bodySm" tone="subdued">
-                    Gérez vos tests A/B et appliquez les versions gagnantes
+                    {t.abTests.manageTests}
                   </Text>
                 </BlockStack>
                 <Divider />
@@ -406,7 +407,7 @@ export default function ABTestsPage() {
                   renderItem={(test) => (
                     <ResourceItem
                       id={test.id}
-                      accessibilityLabel={`Voir les détails de ${test.name}`}
+                      accessibilityLabel={`${t.abTests.viewDetails} ${test.name}`}
                       onClick={() => {}}
                     >
                       <BlockStack gap="300">
@@ -427,19 +428,19 @@ export default function ABTestsPage() {
                           <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                             <InlineStack gap="400" align="space-between" wrap>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm">Variante A (actuelle)</Text>
+                                <Text as="p" variant="bodySm">{t.abTests.variantACurrent}</Text>
                                 <Text as="p" fontWeight="semibold">
-                                  {test.variantAMentions} mention{test.variantAMentions !== 1 ? 's' : ''}
+                                  {test.variantAMentions} {test.variantAMentions !== 1 ? t.abTests.mentions : t.abTests.mention}
                                 </Text>
                               </BlockStack>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm">Variante B (test)</Text>
+                                <Text as="p" variant="bodySm">{t.abTests.variantBTest}</Text>
                                 <Text as="p" fontWeight="semibold">
-                                  {test.variantBMentions} mention{test.variantBMentions !== 1 ? 's' : ''}
+                                  {test.variantBMentions} {test.variantBMentions !== 1 ? t.abTests.mentions : t.abTests.mention}
                                 </Text>
                               </BlockStack>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm">Vérifications totales</Text>
+                                <Text as="p" variant="bodySm">{t.abTests.totalChecks}</Text>
                                 <Text as="p" fontWeight="semibold">{test.totalChecks}</Text>
                               </BlockStack>
                             </InlineStack>
@@ -450,20 +451,20 @@ export default function ABTestsPage() {
                           {test.status === 'draft' && (
                             <>
                               <Button size="slim" variant="primary" onClick={() => startTest(test.id)}>
-                                Démarrer
+                                {t.abTests.start}
                               </Button>
                               <Button
                                 size="slim"
                                 tone="critical"
                                 onClick={() => deleteTest(test.id)}
                               >
-                                Supprimer
+                                {t.abTests.delete}
                               </Button>
                             </>
                           )}
                           {test.status === 'running' && (
                             <Button size="slim" onClick={() => cancelTest(test.id)}>
-                              Annuler
+                              {t.abTests.cancel}
                             </Button>
                           )}
                           {test.status === 'completed' && !test.winnerApplied && test.winner !== 'tie' && (
@@ -472,11 +473,11 @@ export default function ABTestsPage() {
                               variant="primary"
                               onClick={() => applyWinner(test.id)}
                             >
-                              Appliquer le gagnant
+                              {t.abTests.applyWinner}
                             </Button>
                           )}
                           {test.status === 'completed' && test.winnerApplied && (
-                            <Badge tone="success">Gagnant appliqué</Badge>
+                            <Badge tone="success">{t.abTests.winnerApplied}</Badge>
                           )}
                           {(test.status === 'completed' || test.status === 'cancelled') && (
                             <Button
@@ -484,7 +485,7 @@ export default function ABTestsPage() {
                               tone="critical"
                               onClick={() => deleteTest(test.id)}
                             >
-                              Supprimer
+                              {t.abTests.delete}
                             </Button>
                           )}
                         </InlineStack>
@@ -502,30 +503,30 @@ export default function ABTestsPage() {
           <Layout.Section>
             <Card>
               <BlockStack gap="400">
-                <Text as="h3" variant="headingMd">Conseils pour des tests efficaces</Text>
+                <Text as="h3" variant="headingMd">{t.abTests.tipsTitle}</Text>
                 <Divider />
                 <BlockStack gap="200">
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Testez une seule variable à la fois</Text>
+                      <Text as="p" fontWeight="semibold">{t.abTests.tip1Title}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Pour des résultats fiables, ne changez qu&apos;un seul élément entre les deux versions.
+                        {t.abTests.tip1Desc}
                       </Text>
                     </BlockStack>
                   </Box>
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Laissez le test tourner suffisamment</Text>
+                      <Text as="p" fontWeight="semibold">{t.abTests.tip2Title}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Plus vous avez de vérifications, plus les résultats sont statistiquement fiables.
+                        {t.abTests.tip2Desc}
                       </Text>
                     </BlockStack>
                   </Box>
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Utilisez un langage naturel</Text>
+                      <Text as="p" fontWeight="semibold">{t.abTests.tip3Title}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Les IA préfèrent des descriptions fluides plutôt que des listes de mots-clés.
+                        {t.abTests.tip3Desc}
                       </Text>
                     </BlockStack>
                   </Box>
@@ -540,16 +541,16 @@ export default function ABTestsPage() {
       <Modal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Créer un test A/B"
+        title={t.abTests.createTestModal}
         primaryAction={{
-          content: 'Créer le test',
+          content: t.abTests.createTestAction,
           onAction: createTest,
           loading: creating,
           disabled: !newTest.name || !newTest.productId || !newTest.variantB,
         }}
         secondaryActions={[
           {
-            content: 'Annuler',
+            content: t.abTests.cancelAction,
             onAction: () => setShowCreateModal(false),
           },
         ]}
@@ -558,45 +559,44 @@ export default function ABTestsPage() {
           <BlockStack gap="400">
             <Banner tone="info">
               <Text as="p" variant="bodySm">
-                Créez une version alternative du contenu de votre produit.
-                Nous testerons les deux versions auprès des IA pour voir laquelle est la plus recommandée.
+                {t.abTests.createTestInfo}
               </Text>
             </Banner>
             <TextField
-              label="Nom du test"
-              placeholder="Ex: Test description Premium Widget v1"
+              label={t.abTests.testName}
+              placeholder={t.abTests.testNamePlaceholder}
               value={newTest.name}
               onChange={(value) => setNewTest({ ...newTest, name: value })}
               autoComplete="off"
-              helpText="Un nom pour identifier facilement ce test"
+              helpText={t.abTests.testNameHelp}
             />
             <TextField
-              label="ID du produit Shopify"
-              placeholder="123456789"
+              label={t.abTests.productId}
+              placeholder={t.abTests.productIdPlaceholder}
               value={newTest.productId}
               onChange={(value) => setNewTest({ ...newTest, productId: value })}
               autoComplete="off"
-              helpText="L'ID numérique de votre produit (visible dans l'URL du produit dans Shopify)"
+              helpText={t.abTests.productIdHelp}
             />
             <Select
-              label="Champ à tester"
+              label={t.abTests.fieldToTest}
               options={[
-                { label: 'Description', value: 'description' },
-                { label: 'Titre SEO', value: 'seo_title' },
-                { label: 'Description SEO', value: 'seo_description' },
-                { label: 'Tags', value: 'tags' },
+                { label: t.abTests.fieldDescription, value: 'description' },
+                { label: t.abTests.fieldSeoTitle, value: 'seo_title' },
+                { label: t.abTests.fieldSeoDescription, value: 'seo_description' },
+                { label: t.abTests.fieldTags, value: 'tags' },
               ]}
               value={newTest.field}
               onChange={(value) => setNewTest({ ...newTest, field: value })}
             />
             <TextField
-              label="Variante B (contenu alternatif)"
-              placeholder="Écrivez ici la version alternative que vous voulez tester..."
+              label={t.abTests.variantBContent}
+              placeholder={t.abTests.variantBPlaceholder}
               value={newTest.variantB}
               onChange={(value) => setNewTest({ ...newTest, variantB: value })}
               multiline={4}
               autoComplete="off"
-              helpText="Ce contenu sera comparé au contenu actuel (Variante A)"
+              helpText={t.abTests.variantBHelp}
             />
           </BlockStack>
         </Modal.Section>

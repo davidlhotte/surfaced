@@ -26,6 +26,7 @@ import {
   StarFilledIcon,
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 // AI services that can access your store
 const AI_SERVICES = [
@@ -65,6 +66,7 @@ type ToolType = 'llms' | 'jsonld';
 
 export default function ToolsPage() {
   const { fetch } = useAuthenticatedFetch();
+  const { t } = useAdminLanguage();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -155,7 +157,7 @@ export default function ToolsPage() {
       if (data.success) {
         setAiGuideConfig(data.data.config);
         setAiGuidePreview(data.data.content || '');
-        setSuccess('Fichier llms.txt généré avec succès !');
+        setSuccess(t.tools.llmsTxtSuccess);
       } else {
         setError(data.error || 'Failed to save');
       }
@@ -188,7 +190,7 @@ export default function ToolsPage() {
       if (data.success) {
         setStructuredDataConfig(data.data.config);
         await loadData();
-        setSuccess('Schémas JSON-LD générés avec succès !');
+        setSuccess(t.tools.jsonLdSuccess);
       } else {
         setError(data.error || 'Failed to save');
       }
@@ -250,7 +252,7 @@ export default function ToolsPage() {
 
   if (loading) {
     return (
-      <Page title="Outils IA" backAction={{ content: 'Accueil', url: '/admin' }}>
+      <Page title={t.tools.title} backAction={{ content: t.tools.home, url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -267,11 +269,11 @@ export default function ToolsPage() {
 
   return (
     <Page
-      title="Outils IA"
-      backAction={{ content: 'Accueil', url: '/admin' }}
+      title={t.tools.title}
+      backAction={{ content: t.tools.home, url: '/admin' }}
       secondaryActions={[
         {
-          content: 'Actualiser',
+          content: t.tools.refresh,
           icon: RefreshIcon,
           onAction: loadData,
         },
@@ -328,13 +330,13 @@ export default function ToolsPage() {
                           📄
                         </div>
                         {selectedTool === 'llms' && (
-                          <Badge tone="info">Sélectionné</Badge>
+                          <Badge tone="info">{t.tools.selected}</Badge>
                         )}
                       </InlineStack>
                       <BlockStack gap="200">
-                        <Text as="h2" variant="headingMd">Fichier llms.txt</Text>
+                        <Text as="h2" variant="headingMd">{t.tools.llmsTxt}</Text>
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Dites aux IA qui vous êtes et ce que vous vendez
+                          {t.tools.llmsTxtDesc}
                         </Text>
                       </BlockStack>
                       <Box
@@ -346,12 +348,11 @@ export default function ToolsPage() {
                           <InlineStack gap="100" blockAlign="center">
                             <Icon source={StarFilledIcon} tone="warning" />
                             <Text as="p" variant="bodySm" fontWeight="semibold">
-                              Pourquoi c&apos;est important
+                              {t.tools.whyImportant}
                             </Text>
                           </InlineStack>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Quand un client demande à ChatGPT &quot;où acheter X ?&quot;,
-                            ce fichier aide l&apos;IA à recommander votre boutique.
+                            {t.tools.llmsWhyImportant}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -389,13 +390,13 @@ export default function ToolsPage() {
                           🏷️
                         </div>
                         {selectedTool === 'jsonld' && (
-                          <Badge tone="info">Sélectionné</Badge>
+                          <Badge tone="info">{t.tools.selected}</Badge>
                         )}
                       </InlineStack>
                       <BlockStack gap="200">
-                        <Text as="h2" variant="headingMd">Schémas JSON-LD</Text>
+                        <Text as="h2" variant="headingMd">{t.tools.jsonLd}</Text>
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Affichez prix et avis directement dans Google
+                          {t.tools.jsonLdDesc}
                         </Text>
                       </BlockStack>
                       <Box
@@ -407,12 +408,11 @@ export default function ToolsPage() {
                           <InlineStack gap="100" blockAlign="center">
                             <Icon source={StarFilledIcon} tone="warning" />
                             <Text as="p" variant="bodySm" fontWeight="semibold">
-                              Pourquoi c&apos;est important
+                              {t.tools.whyImportant}
                             </Text>
                           </InlineStack>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Vos produits apparaissent avec prix, stock et étoiles
-                            directement dans les résultats Google.
+                            {t.tools.jsonLdWhyImportant}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -448,14 +448,14 @@ export default function ToolsPage() {
                         📄
                       </div>
                       <BlockStack gap="100">
-                        <Text as="h2" variant="headingLg">Générateur llms.txt</Text>
+                        <Text as="h2" variant="headingLg">{t.tools.llmsTxtGenerator}</Text>
                         <Text as="p" tone="subdued">
-                          Créez votre carte de visite pour les intelligences artificielles
+                          {t.tools.llmsTxtGeneratorDesc}
                         </Text>
                       </BlockStack>
                     </InlineStack>
                     <Badge tone={aiGuideEnabled ? 'success' : 'attention'}>
-                      {aiGuideEnabled ? 'Actif' : 'Inactif'}
+                      {aiGuideEnabled ? t.tools.active : t.tools.inactive}
                     </Badge>
                   </InlineStack>
                 </BlockStack>
@@ -468,25 +468,23 @@ export default function ToolsPage() {
                 >
                   <BlockStack gap="300">
                     <Text as="h3" variant="headingSm">
-                      💡 Comment ça marche ?
+                      💡 {t.tools.howItWorks}
                     </Text>
                     <Text as="p" variant="bodyMd">
-                      Le fichier <strong>llms.txt</strong> est comme un CV pour votre boutique.
-                      Quand quelqu&apos;un demande à une IA &quot;où acheter des chaussures de running ?&quot;,
-                      l&apos;IA consulte ce fichier pour savoir si vous êtes pertinent et comment vous présenter.
+                      {t.tools.llmsHowItWorks}
                     </Text>
                     <InlineStack gap="400" wrap>
                       <InlineStack gap="100" blockAlign="center">
                         <Icon source={CheckCircleIcon} tone="success" />
-                        <Text as="span" variant="bodySm">Plus de recommandations IA</Text>
+                        <Text as="span" variant="bodySm">{t.tools.moreAiRecommendations}</Text>
                       </InlineStack>
                       <InlineStack gap="100" blockAlign="center">
                         <Icon source={CheckCircleIcon} tone="success" />
-                        <Text as="span" variant="bodySm">Trafic gratuit et qualifié</Text>
+                        <Text as="span" variant="bodySm">{t.tools.freeQualifiedTraffic}</Text>
                       </InlineStack>
                       <InlineStack gap="100" blockAlign="center">
                         <Icon source={CheckCircleIcon} tone="success" />
-                        <Text as="span" variant="bodySm">Contrôle de votre image</Text>
+                        <Text as="span" variant="bodySm">{t.tools.controlYourImage}</Text>
                       </InlineStack>
                     </InlineStack>
                   </BlockStack>
@@ -496,8 +494,8 @@ export default function ToolsPage() {
 
                 {/* Enable toggle */}
                 <Checkbox
-                  label="Activer le fichier llms.txt"
-                  helpText="Les IA pourront découvrir et recommander votre boutique"
+                  label={t.tools.enableLlmsTxt}
+                  helpText={t.tools.enableLlmsTxtHelp}
                   checked={aiGuideEnabled}
                   onChange={setAiGuideEnabled}
                 />
@@ -505,7 +503,7 @@ export default function ToolsPage() {
                 {/* AI Services - Simplified */}
                 <BlockStack gap="300">
                   <Text as="h3" variant="headingSm">
-                    Quelles IA peuvent vous recommander ?
+                    {t.tools.whichAiCanRecommend}
                   </Text>
                   <div style={{
                     display: 'grid',
@@ -545,16 +543,16 @@ export default function ToolsPage() {
 
                 {/* Content Settings - Simplified */}
                 <BlockStack gap="300">
-                  <Text as="h3" variant="headingSm">Que partager avec les IA ?</Text>
+                  <Text as="h3" variant="headingSm">{t.tools.whatToShareWithAi}</Text>
                   <InlineStack gap="400" wrap>
                     <Checkbox
-                      label="Vos produits"
+                      label={t.tools.yourProducts}
                       checked={includeProducts}
                       onChange={setIncludeProducts}
                       disabled={!aiGuideEnabled}
                     />
                     <Checkbox
-                      label="Vos collections"
+                      label={t.tools.yourCollections}
                       checked={includeCollections}
                       onChange={setIncludeCollections}
                       disabled={!aiGuideEnabled}
@@ -564,14 +562,14 @@ export default function ToolsPage() {
 
                 {/* Custom Instructions */}
                 <TextField
-                  label="Message personnalisé (optionnel)"
-                  helpText="Ajoutez ce qui vous rend unique : livraison gratuite, fait main, made in France..."
+                  label={t.tools.customMessage}
+                  helpText={t.tools.customMessageHelp}
                   value={customInstructions}
                   onChange={setCustomInstructions}
                   multiline={2}
                   autoComplete="off"
                   disabled={!aiGuideEnabled}
-                  placeholder="Ex: Livraison gratuite dès 50€. Tous nos produits sont fabriqués en France."
+                  placeholder={t.tools.customMessagePlaceholder}
                 />
 
                 <Divider />
@@ -579,7 +577,7 @@ export default function ToolsPage() {
                 {/* Preview */}
                 <BlockStack gap="300">
                   <InlineStack align="space-between" blockAlign="center">
-                    <Text as="h3" variant="headingSm">Aperçu du fichier</Text>
+                    <Text as="h3" variant="headingSm">{t.tools.filePreview}</Text>
                     <InlineStack gap="200">
                       <Button
                         icon={ClipboardIcon}
@@ -587,7 +585,7 @@ export default function ToolsPage() {
                         disabled={!aiGuidePreview}
                         size="slim"
                       >
-                        {copied ? 'Copié !' : 'Copier'}
+                        {copied ? t.tools.copied : t.tools.copy}
                       </Button>
                       <Button
                         onClick={() => handleDownload(aiGuidePreview, 'llms.txt')}
@@ -595,7 +593,7 @@ export default function ToolsPage() {
                         size="slim"
                         variant="primary"
                       >
-                        Télécharger
+                        {t.tools.download}
                       </Button>
                     </InlineStack>
                   </InlineStack>
@@ -616,7 +614,7 @@ export default function ToolsPage() {
                         color: '#374151',
                       }}
                     >
-                      {aiGuidePreview || 'Cliquez sur "Générer" pour créer votre fichier'}
+                      {aiGuidePreview || t.tools.clickGenerateToCreate}
                     </pre>
                   </Box>
                 </BlockStack>
@@ -628,7 +626,7 @@ export default function ToolsPage() {
                   loading={saving}
                   size="large"
                 >
-                  Générer mon fichier llms.txt
+                  {t.tools.generateLlmsTxt}
                 </Button>
 
                 {/* Installation Steps - Clean and clear */}
@@ -639,7 +637,7 @@ export default function ToolsPage() {
                 >
                   <BlockStack gap="300">
                     <Text as="h3" variant="headingSm">
-                      📥 Installation en 3 étapes
+                      📥 {t.tools.installationSteps}
                     </Text>
                     <BlockStack gap="200">
                       <InlineStack gap="300" blockAlign="start">
@@ -656,7 +654,7 @@ export default function ToolsPage() {
                           fontWeight: 'bold',
                           flexShrink: 0,
                         }}>1</div>
-                        <Text as="p" variant="bodyMd">Téléchargez le fichier ci-dessus</Text>
+                        <Text as="p" variant="bodyMd">{t.tools.step1Download}</Text>
                       </InlineStack>
                       <InlineStack gap="300" blockAlign="start">
                         <div style={{
@@ -673,7 +671,7 @@ export default function ToolsPage() {
                           flexShrink: 0,
                         }}>2</div>
                         <Text as="p" variant="bodyMd">
-                          Allez dans <strong>Shopify → Boutique en ligne → Thèmes → Modifier le code</strong>
+                          {t.tools.step2Navigate}
                         </Text>
                       </InlineStack>
                       <InlineStack gap="300" blockAlign="start">
@@ -691,7 +689,7 @@ export default function ToolsPage() {
                           flexShrink: 0,
                         }}>3</div>
                         <Text as="p" variant="bodyMd">
-                          Uploadez dans le dossier <strong>Assets</strong> sous le nom <strong>llms.txt</strong>
+                          {t.tools.step3Upload}
                         </Text>
                       </InlineStack>
                     </BlockStack>
@@ -721,14 +719,14 @@ export default function ToolsPage() {
                         🏷️
                       </div>
                       <BlockStack gap="100">
-                        <Text as="h2" variant="headingLg">Générateur JSON-LD</Text>
+                        <Text as="h2" variant="headingLg">{t.tools.jsonLdGenerator}</Text>
                         <Text as="p" tone="subdued">
-                          Faites briller vos produits dans les résultats Google
+                          {t.tools.jsonLdGeneratorDesc}
                         </Text>
                       </BlockStack>
                     </InlineStack>
                     <Badge tone={structuredDataEnabled ? 'success' : 'attention'}>
-                      {structuredDataEnabled ? 'Actif' : 'Inactif'}
+                      {structuredDataEnabled ? t.tools.active : t.tools.inactive}
                     </Badge>
                   </InlineStack>
                 </BlockStack>
@@ -741,12 +739,10 @@ export default function ToolsPage() {
                 >
                   <BlockStack gap="300">
                     <Text as="h3" variant="headingSm">
-                      💡 Qu&apos;est-ce que ça change ?
+                      💡 {t.tools.jsonLdWhatChanges}
                     </Text>
                     <Text as="p" variant="bodyMd">
-                      Les <strong>schémas JSON-LD</strong> transforment vos résultats Google.
-                      Au lieu d&apos;un simple lien, vos produits affichent le prix, la disponibilité et les avis clients
-                      directement dans la recherche.
+                      {t.tools.jsonLdWhatChangesDesc}
                     </Text>
 
                     {/* Visual comparison */}
@@ -758,7 +754,7 @@ export default function ToolsPage() {
                         minWidth="200px"
                       >
                         <BlockStack gap="100">
-                          <Text as="p" variant="bodySm" tone="subdued">❌ Sans JSON-LD</Text>
+                          <Text as="p" variant="bodySm" tone="subdued">❌ {t.tools.withoutJsonLd}</Text>
                           <Text as="p" variant="bodySm" fontWeight="semibold">Chaussures Running - Ma Boutique</Text>
                           <Text as="p" variant="bodySm" tone="subdued">www.maboutique.com/chaussures</Text>
                         </BlockStack>
@@ -770,7 +766,7 @@ export default function ToolsPage() {
                         minWidth="200px"
                       >
                         <BlockStack gap="100">
-                          <Text as="p" variant="bodySm" tone="success">✅ Avec JSON-LD</Text>
+                          <Text as="p" variant="bodySm" tone="success">✅ {t.tools.withJsonLd}</Text>
                           <Text as="p" variant="bodySm" fontWeight="semibold">Chaussures Running - Ma Boutique</Text>
                           <Text as="p" variant="bodySm">⭐⭐⭐⭐⭐ (127 avis) · 89,00 € · En stock</Text>
                           <Text as="p" variant="bodySm" tone="subdued">www.maboutique.com/chaussures</Text>
@@ -784,33 +780,33 @@ export default function ToolsPage() {
 
                 {/* Enable toggle */}
                 <Checkbox
-                  label="Activer les schémas JSON-LD"
-                  helpText="Vos produits apparaîtront avec plus de détails dans Google"
+                  label={t.tools.enableJsonLd}
+                  helpText={t.tools.enableJsonLdHelp}
                   checked={structuredDataEnabled}
                   onChange={setStructuredDataEnabled}
                 />
 
                 {/* Schema Types - Simplified with benefits */}
                 <BlockStack gap="300">
-                  <Text as="h3" variant="headingSm">Que voulez-vous afficher dans Google ?</Text>
+                  <Text as="h3" variant="headingSm">{t.tools.whatToDisplayInGoogle}</Text>
                   <BlockStack gap="200">
                     <Checkbox
-                      label="Informations de votre entreprise"
-                      helpText="Nom, logo, coordonnées → Renforce la confiance"
+                      label={t.tools.companyInfo}
+                      helpText={t.tools.companyInfoHelp}
                       checked={includeOrganization}
                       onChange={setIncludeOrganization}
                       disabled={!structuredDataEnabled}
                     />
                     <Checkbox
-                      label="Détails des produits"
-                      helpText="Prix, stock, images → Augmente les clics"
+                      label={t.tools.productDetails}
+                      helpText={t.tools.productDetailsHelp}
                       checked={includeProductSchema}
                       onChange={setIncludeProductSchema}
                       disabled={!structuredDataEnabled}
                     />
                     <Checkbox
-                      label="Fil d'Ariane (breadcrumbs)"
-                      helpText="Navigation claire → Meilleur référencement"
+                      label={t.tools.breadcrumbs}
+                      helpText={t.tools.breadcrumbsHelp}
                       checked={includeBreadcrumbs}
                       onChange={setIncludeBreadcrumbs}
                       disabled={!structuredDataEnabled}
@@ -823,7 +819,7 @@ export default function ToolsPage() {
                 {/* Preview */}
                 <BlockStack gap="300">
                   <InlineStack align="space-between" blockAlign="center">
-                    <Text as="h3" variant="headingSm">Aperçu du code</Text>
+                    <Text as="h3" variant="headingSm">{t.tools.codePreview}</Text>
                     <InlineStack gap="200">
                       <Button
                         icon={ClipboardIcon}
@@ -831,7 +827,7 @@ export default function ToolsPage() {
                         disabled={!structuredDataPreview}
                         size="slim"
                       >
-                        {copied ? 'Copié !' : 'Copier'}
+                        {copied ? t.tools.copied : t.tools.copy}
                       </Button>
                       <Button
                         onClick={() => setShowPreviewModal(true)}
@@ -839,7 +835,7 @@ export default function ToolsPage() {
                         size="slim"
                         variant="primary"
                       >
-                        Voir le code complet
+                        {t.tools.viewFullCode}
                       </Button>
                     </InlineStack>
                   </InlineStack>
@@ -862,7 +858,7 @@ export default function ToolsPage() {
                     >
                       {structuredDataPreview
                         ? JSON.stringify(structuredDataPreview.organization, null, 2).substring(0, 300) + '...'
-                        : 'Cliquez sur "Générer" pour créer vos schémas'}
+                        : t.tools.clickGenerateToCreateSchemas}
                     </pre>
                   </Box>
                 </BlockStack>
@@ -874,7 +870,7 @@ export default function ToolsPage() {
                   loading={saving}
                   size="large"
                 >
-                  Générer mes schémas JSON-LD
+                  {t.tools.generateJsonLd}
                 </Button>
 
                 {/* Installation Steps */}
@@ -885,7 +881,7 @@ export default function ToolsPage() {
                 >
                   <BlockStack gap="300">
                     <Text as="h3" variant="headingSm">
-                      📥 Installation en 3 étapes
+                      📥 {t.tools.installationSteps}
                     </Text>
                     <BlockStack gap="200">
                       <InlineStack gap="300" blockAlign="start">
@@ -902,7 +898,7 @@ export default function ToolsPage() {
                           fontWeight: 'bold',
                           flexShrink: 0,
                         }}>1</div>
-                        <Text as="p" variant="bodyMd">Copiez le code généré</Text>
+                        <Text as="p" variant="bodyMd">{t.tools.step1Copy}</Text>
                       </InlineStack>
                       <InlineStack gap="300" blockAlign="start">
                         <div style={{
@@ -919,7 +915,7 @@ export default function ToolsPage() {
                           flexShrink: 0,
                         }}>2</div>
                         <Text as="p" variant="bodyMd">
-                          Allez dans <strong>Shopify → Thèmes → Modifier le code → theme.liquid</strong>
+                          {t.tools.step2Themes}
                         </Text>
                       </InlineStack>
                       <InlineStack gap="300" blockAlign="start">
@@ -937,12 +933,12 @@ export default function ToolsPage() {
                           flexShrink: 0,
                         }}>3</div>
                         <Text as="p" variant="bodyMd">
-                          Collez juste avant <strong>&lt;/head&gt;</strong>
+                          {t.tools.step3Paste}
                         </Text>
                       </InlineStack>
                     </BlockStack>
                     <Banner tone="info">
-                      Testez votre code sur <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6ac4' }}>Google Rich Results Test</a>
+                      {t.tools.testOnGoogle} <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6ac4' }}>Google Rich Results Test</a>
                     </Banner>
                   </BlockStack>
                 </Box>
@@ -956,14 +952,14 @@ export default function ToolsPage() {
       <Modal
         open={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
-        title="Code JSON-LD complet"
+        title={t.tools.fullJsonLdCode}
         primaryAction={{
-          content: 'Copier tout',
+          content: t.tools.copyAll,
           onAction: () => handleCopy(getStructuredDataContent()),
         }}
         secondaryActions={[
           {
-            content: 'Télécharger',
+            content: t.tools.download,
             onAction: () => handleDownload(getStructuredDataContent(), 'structured-data.html'),
           },
         ]}

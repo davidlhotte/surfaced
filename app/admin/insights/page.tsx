@@ -25,6 +25,7 @@ import {
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type TimePeriod = '7d' | '30d' | '90d' | '365d';
 
@@ -99,6 +100,7 @@ interface WeeklyReport {
 
 export default function InsightsPage() {
   const { fetch } = useAuthenticatedFetch();
+  const { t, locale } = useAdminLanguage();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -142,11 +144,11 @@ export default function InsightsPage() {
         setWeeklyReport(alertsData.data.preferences?.weeklyReport ?? true);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Impossible de charger les données');
+      setError(e instanceof Error ? e.message : t.insights.errorLoadingData);
     } finally {
       setLoading(false);
     }
-  }, [fetch, period]);
+  }, [fetch, period, t.insights.errorLoadingData]);
 
   useEffect(() => {
     loadData();
@@ -167,10 +169,10 @@ export default function InsightsPage() {
       if (data.success) {
         setPreferences(data.data.preferences);
       } else {
-        setError(data.error || 'Échec de la sauvegarde');
+        setError(data.error || t.insights.errorSaving);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Échec de la sauvegarde');
+      setError(e instanceof Error ? e.message : t.insights.errorSaving);
     } finally {
       setSaving(false);
     }
@@ -200,41 +202,41 @@ export default function InsightsPage() {
       low: 'success',
     };
     const labels: Record<Alert['priority'], string> = {
-      critical: 'Urgent',
-      high: 'Important',
-      medium: 'Info',
-      low: 'Conseil',
+      critical: t.insights.priorityUrgent,
+      high: t.insights.priorityImportant,
+      medium: t.insights.priorityInfo,
+      low: t.insights.priorityTip,
     };
     return <Badge tone={tones[priority]}>{labels[priority]}</Badge>;
   };
 
   const getIssueLabel = (code: string): string => {
     const labels: Record<string, string> = {
-      NO_DESCRIPTION: 'Description manquante',
-      SHORT_DESCRIPTION: 'Description trop courte',
-      BRIEF_DESCRIPTION: 'Description insuffisante',
-      NO_IMAGES: 'Images manquantes',
-      MISSING_ALT_TEXT: 'Texte alt manquant',
-      NO_SEO_TITLE: 'Titre SEO manquant',
-      NO_SEO_DESCRIPTION: 'Description SEO manquante',
-      NO_PRODUCT_TYPE: 'Type de produit manquant',
-      NO_TAGS: 'Tags manquants',
-      NO_METAFIELDS: 'Métadonnées manquantes',
-      NO_VENDOR: 'Marque manquante',
+      NO_DESCRIPTION: t.insights.issueNoDescription,
+      SHORT_DESCRIPTION: t.insights.issueShortDescription,
+      BRIEF_DESCRIPTION: t.insights.issueBriefDescription,
+      NO_IMAGES: t.insights.issueNoImages,
+      MISSING_ALT_TEXT: t.insights.issueMissingAltText,
+      NO_SEO_TITLE: t.insights.issueNoSeoTitle,
+      NO_SEO_DESCRIPTION: t.insights.issueNoSeoDescription,
+      NO_PRODUCT_TYPE: t.insights.issueNoProductType,
+      NO_TAGS: t.insights.issueNoTags,
+      NO_METAFIELDS: t.insights.issueNoMetafields,
+      NO_VENDOR: t.insights.issueNoVendor,
     };
     return labels[code] || code;
   };
 
   const periodOptions = [
-    { label: '7 derniers jours', value: '7d' },
-    { label: '30 derniers jours', value: '30d' },
-    { label: '90 derniers jours', value: '90d' },
-    { label: 'Cette année', value: '365d' },
+    { label: t.insights.last7Days, value: '7d' },
+    { label: t.insights.last30Days, value: '30d' },
+    { label: t.insights.last90Days, value: '90d' },
+    { label: t.insights.thisYear, value: '365d' },
   ];
 
   if (loading) {
     return (
-      <Page title="Tableau de bord" backAction={{ content: 'Accueil', url: '/admin' }}>
+      <Page title={t.insights.title} backAction={{ content: t.insights.home, url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -250,9 +252,9 @@ export default function InsightsPage() {
   }
 
   const tabs = [
-    { id: 'progress', content: 'Votre progression' },
-    { id: 'alerts', content: `Alertes (${alerts.length})` },
-    { id: 'report', content: 'Rapport hebdo' },
+    { id: 'progress', content: t.insights.tabProgress },
+    { id: 'alerts', content: `${t.insights.tabAlerts} (${alerts.length})` },
+    { id: 'report', content: t.insights.tabReport },
   ];
 
   const hasAlerts = alerts.length > 0;
@@ -260,12 +262,12 @@ export default function InsightsPage() {
 
   return (
     <Page
-      title="Tableau de bord"
-      subtitle="Suivez votre progression et restez informé"
-      backAction={{ content: 'Accueil', url: '/admin' }}
+      title={t.insights.title}
+      subtitle={t.insights.subtitle}
+      backAction={{ content: t.insights.home, url: '/admin' }}
       secondaryActions={[
         {
-          content: 'Actualiser',
+          content: t.insights.refresh,
           icon: RefreshIcon,
           onAction: loadData,
         },
@@ -285,8 +287,8 @@ export default function InsightsPage() {
           <Layout.Section>
             <Banner
               tone="warning"
-              title={`Vous avez ${criticalAlerts.length} alerte${criticalAlerts.length > 1 ? 's' : ''} importante${criticalAlerts.length > 1 ? 's' : ''}`}
-              action={{ content: 'Voir les alertes', onAction: () => setSelectedTab(1) }}
+              title={`${t.insights.youHaveImportantAlerts} ${criticalAlerts.length} ${criticalAlerts.length > 1 ? t.insights.importantAlerts : t.insights.importantAlert}`}
+              action={{ content: t.insights.viewAlerts, onAction: () => setSelectedTab(1) }}
             >
               {criticalAlerts[0].message}
             </Banner>
@@ -302,10 +304,10 @@ export default function InsightsPage() {
                   <BlockStack gap="600">
                     {/* Period Selector */}
                     <InlineStack align="space-between" blockAlign="center">
-                      <Text as="h2" variant="headingMd">Votre progression IA</Text>
+                      <Text as="h2" variant="headingMd">{t.insights.yourAiProgress}</Text>
                       <Box minWidth="150px">
                         <Select
-                          label="Période"
+                          label={t.insights.period}
                           labelHidden
                           options={periodOptions}
                           value={period}
@@ -320,7 +322,7 @@ export default function InsightsPage() {
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">Score IA</Text>
+                            <Text as="h3" variant="bodySm" tone="subdued">{t.insights.aiScore}</Text>
                             <InlineStack gap="200" blockAlign="center">
                               <Text as="p" variant="heading2xl" fontWeight="bold">
                                 {metrics?.currentScore ?? 0}
@@ -346,12 +348,12 @@ export default function InsightsPage() {
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">Taux de mention</Text>
+                            <Text as="h3" variant="bodySm" tone="subdued">{t.insights.mentionRate}</Text>
                             <Text as="p" variant="heading2xl" fontWeight="bold">
                               {metrics?.visibility.mentionRate ?? 0}%
                             </Text>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              {metrics?.visibility.mentioned ?? 0} sur {metrics?.visibility.totalChecks ?? 0}
+                              {metrics?.visibility.mentioned ?? 0} {t.insights.outOf} {metrics?.visibility.totalChecks ?? 0}
                             </Text>
                           </BlockStack>
                         </Card>
@@ -361,12 +363,12 @@ export default function InsightsPage() {
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">Produits améliorés</Text>
+                            <Text as="h3" variant="bodySm" tone="subdued">{t.insights.productsImproved}</Text>
                             <Text as="p" variant="heading2xl" fontWeight="bold">
                               {metrics?.productsImproved ?? 0}
                             </Text>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              sur {metrics?.totalProducts ?? 0} au total
+                              {t.insights.outOf} {metrics?.totalProducts ?? 0} {t.insights.total}
                             </Text>
                           </BlockStack>
                         </Card>
@@ -376,12 +378,12 @@ export default function InsightsPage() {
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">Suggestions IA utilisées</Text>
+                            <Text as="h3" variant="bodySm" tone="subdued">{t.insights.aiSuggestionsUsed}</Text>
                             <Text as="p" variant="heading2xl" fontWeight="bold">
                               {metrics?.optimizationsUsed ?? 0}
                             </Text>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              cette période
+                              {t.insights.thisPeriod}
                             </Text>
                           </BlockStack>
                         </Card>
@@ -392,21 +394,21 @@ export default function InsightsPage() {
 
                     {/* Next Steps - More actionable than vague impact metrics */}
                     <BlockStack gap="300">
-                      <Text as="h3" variant="headingSm">Actions recommandées</Text>
+                      <Text as="h3" variant="headingSm">{t.insights.recommendedActions}</Text>
                       <BlockStack gap="200">
                         {(metrics?.productsWithCriticalIssues ?? 0) > 0 && (
                           <Box padding="300" background="bg-surface-critical" borderRadius="200">
                             <InlineStack align="space-between" blockAlign="center" wrap>
                               <BlockStack gap="100">
                                 <Text as="p" fontWeight="semibold">
-                                  {metrics?.productsWithCriticalIssues} produit{(metrics?.productsWithCriticalIssues ?? 0) > 1 ? 's' : ''} nécessite{(metrics?.productsWithCriticalIssues ?? 0) > 1 ? 'nt' : ''} une action urgente
+                                  {metrics?.productsWithCriticalIssues} {(metrics?.productsWithCriticalIssues ?? 0) > 1 ? t.insights.productsNeedUrgentActionPlural : t.insights.productsNeedUrgentAction}
                                 </Text>
                                 <Text as="p" variant="bodySm" tone="subdued">
-                                  Les images ou descriptions manquantes nuisent à votre visibilité IA
+                                  {t.insights.missingContentHurtsVisibility}
                                 </Text>
                               </BlockStack>
                               <Link href="/admin/products">
-                                <Button variant="primary">Corriger maintenant</Button>
+                                <Button variant="primary">{t.insights.fixNow}</Button>
                               </Link>
                             </InlineStack>
                           </Box>
@@ -417,14 +419,14 @@ export default function InsightsPage() {
                             <InlineStack align="space-between" blockAlign="center" wrap>
                               <BlockStack gap="100">
                                 <Text as="p" fontWeight="semibold">
-                                  Vérifiez si les IA vous mentionnent
+                                  {t.insights.checkIfAiMentionsYou}
                                 </Text>
                                 <Text as="p" variant="bodySm" tone="subdued">
-                                  Découvrez quels assistants IA recommandent vos produits
+                                  {t.insights.discoverWhichAiRecommends}
                                 </Text>
                               </BlockStack>
                               <Link href="/admin/visibility">
-                                <Button>Vérifier ma visibilité</Button>
+                                <Button>{t.insights.checkMyVisibility}</Button>
                               </Link>
                             </InlineStack>
                           </Box>
@@ -435,14 +437,14 @@ export default function InsightsPage() {
                             <InlineStack align="space-between" blockAlign="center" wrap>
                               <BlockStack gap="100">
                                 <Text as="p" fontWeight="semibold">
-                                  Améliorez vos contenus produits
+                                  {t.insights.improveProductContent}
                                 </Text>
                                 <Text as="p" variant="bodySm" tone="subdued">
-                                  Utilisez l&apos;IA pour suggérer de meilleures descriptions et SEO
+                                  {t.insights.useAiToSuggestBetter}
                                 </Text>
                               </BlockStack>
                               <Link href="/admin/products">
-                                <Button>Optimiser mes produits</Button>
+                                <Button>{t.insights.optimizeMyProducts}</Button>
                               </Link>
                             </InlineStack>
                           </Box>
@@ -452,10 +454,10 @@ export default function InsightsPage() {
                           <Box padding="300" background="bg-surface-success" borderRadius="200">
                             <BlockStack gap="100">
                               <Text as="p" fontWeight="semibold">
-                                Votre boutique est en bonne forme !
+                                {t.insights.storeInGoodShape}
                               </Text>
                               <Text as="p" variant="bodySm" tone="subdued">
-                                Continuez à surveiller votre visibilité et à améliorer vos contenus
+                                {t.insights.keepMonitoring}
                               </Text>
                             </BlockStack>
                           </Box>
@@ -467,12 +469,12 @@ export default function InsightsPage() {
 
                     {/* Product Quality Distribution */}
                     <BlockStack gap="300">
-                      <Text as="h3" variant="headingSm">Répartition de la qualité des produits</Text>
+                      <Text as="h3" variant="headingSm">{t.insights.productQualityDistribution}</Text>
                       <BlockStack gap="200">
                         <InlineStack align="space-between">
                           <InlineStack gap="200" blockAlign="center">
                             <Box width="12px" minHeight="12px" background="bg-fill-success" borderRadius="full" />
-                            <Text as="p">Excellent (90+)</Text>
+                            <Text as="p">{t.insights.excellent}</Text>
                           </InlineStack>
                           <Text as="p" fontWeight="semibold">{metrics?.scoreDistribution.excellent ?? 0}</Text>
                         </InlineStack>
@@ -480,7 +482,7 @@ export default function InsightsPage() {
                         <InlineStack align="space-between">
                           <InlineStack gap="200" blockAlign="center">
                             <Box width="12px" minHeight="12px" background="bg-fill-success" borderRadius="full" />
-                            <Text as="p">Bon (70-89)</Text>
+                            <Text as="p">{t.insights.good}</Text>
                           </InlineStack>
                           <Text as="p" fontWeight="semibold">{metrics?.scoreDistribution.good ?? 0}</Text>
                         </InlineStack>
@@ -488,7 +490,7 @@ export default function InsightsPage() {
                         <InlineStack align="space-between">
                           <InlineStack gap="200" blockAlign="center">
                             <Box width="12px" minHeight="12px" background="bg-fill-warning" borderRadius="full" />
-                            <Text as="p">À améliorer (40-69)</Text>
+                            <Text as="p">{t.insights.needsImprovement}</Text>
                           </InlineStack>
                           <Text as="p" fontWeight="semibold">{metrics?.scoreDistribution.needsWork ?? 0}</Text>
                         </InlineStack>
@@ -496,7 +498,7 @@ export default function InsightsPage() {
                         <InlineStack align="space-between">
                           <InlineStack gap="200" blockAlign="center">
                             <Box width="12px" minHeight="12px" background="bg-fill-critical" borderRadius="full" />
-                            <Text as="p">Urgent (&lt;40)</Text>
+                            <Text as="p">{t.insights.urgent}</Text>
                           </InlineStack>
                           <Text as="p" fontWeight="semibold">{metrics?.scoreDistribution.critical ?? 0}</Text>
                         </InlineStack>
@@ -508,7 +510,7 @@ export default function InsightsPage() {
                       <>
                         <Divider />
                         <BlockStack gap="300">
-                          <Text as="h3" variant="headingSm">Où apparaissez-vous ?</Text>
+                          <Text as="h3" variant="headingSm">{t.insights.whereYouAppear}</Text>
                           <BlockStack gap="300">
                             {metrics.visibility.byPlatform.map((platform) => (
                               <BlockStack key={platform.platform} gap="100">
@@ -540,7 +542,7 @@ export default function InsightsPage() {
                     <InlineStack align="space-between" blockAlign="center">
                       <InlineStack gap="200" blockAlign="center">
                         <AlertTriangleIcon />
-                        <Text as="h2" variant="headingMd">Alertes actives</Text>
+                        <Text as="h2" variant="headingMd">{t.insights.activeAlerts}</Text>
                       </InlineStack>
                       <Badge>{String(alerts.length)}</Badge>
                     </InlineStack>
@@ -550,9 +552,9 @@ export default function InsightsPage() {
                     {!hasAlerts ? (
                       <Box padding="600">
                         <BlockStack gap="200" inlineAlign="center">
-                          <Text as="p" variant="headingMd" tone="success">Tout va bien !</Text>
+                          <Text as="p" variant="headingMd" tone="success">{t.insights.allGood}</Text>
                           <Text as="p" tone="subdued">
-                            Aucun problème détecté. Continuez comme ça !
+                            {t.insights.noProblemsDetected}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -582,7 +584,7 @@ export default function InsightsPage() {
                               {alert.actionUrl && (
                                 <Box paddingBlockStart="200">
                                   <Link href={alert.actionUrl}>
-                                    <Button size="slim">{alert.actionLabel || 'Corriger'}</Button>
+                                    <Button size="slim">{alert.actionLabel || t.insights.fix}</Button>
                                   </Link>
                                 </Box>
                               )}
@@ -596,17 +598,17 @@ export default function InsightsPage() {
 
                     {/* Notification Preferences */}
                     <BlockStack gap="300">
-                      <Text as="h3" variant="headingSm">Paramètres de notification</Text>
+                      <Text as="h3" variant="headingSm">{t.insights.notificationSettings}</Text>
                       <BlockStack gap="200">
                         <Checkbox
-                          label="M'envoyer un email pour les problèmes importants"
-                          helpText="Recevez une notification quand quelque chose nécessite votre attention"
+                          label={t.insights.emailForImportantIssues}
+                          helpText={t.insights.emailForImportantIssuesHelp}
                           checked={emailAlerts}
                           onChange={setEmailAlerts}
                         />
                         <Checkbox
-                          label="Envoyer un résumé hebdomadaire"
-                          helpText="Recevez un rapport de votre progression chaque semaine"
+                          label={t.insights.sendWeeklySummary}
+                          helpText={t.insights.sendWeeklySummaryHelp}
                           checked={weeklyReport}
                           onChange={setWeeklyReport}
                         />
@@ -620,7 +622,7 @@ export default function InsightsPage() {
                             preferences?.weeklyReport === weeklyReport
                           }
                         >
-                          Enregistrer
+                          {t.insights.save}
                         </Button>
                       </Box>
                     </BlockStack>
@@ -631,11 +633,11 @@ export default function InsightsPage() {
                 {selectedTab === 2 && (
                   <BlockStack gap="600">
                     <Text as="h2" variant="headingMd">
-                      Résumé hebdomadaire
+                      {t.insights.weeklySummary}
                     </Text>
                     {report && (
                       <Text as="p" tone="subdued" variant="bodySm">
-                        Du {new Date(report.period.start).toLocaleDateString('fr-FR')} au {new Date(report.period.end).toLocaleDateString('fr-FR')}
+                        {t.insights.fromTo} {new Date(report.period.start).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')} {t.insights.to} {new Date(report.period.end).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')}
                       </Text>
                     )}
 
@@ -645,7 +647,7 @@ export default function InsightsPage() {
                       <Box padding="600">
                         <BlockStack gap="200" inlineAlign="center">
                           <Text as="p" tone="subdued">
-                            Pas encore de rapport disponible. Revenez après votre première semaine d&apos;utilisation.
+                            {t.insights.noReportYet}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -656,7 +658,7 @@ export default function InsightsPage() {
                           <Box minWidth="140px">
                             <Card>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm" tone="subdued">Score IA</Text>
+                                <Text as="p" variant="bodySm" tone="subdued">{t.insights.aiScore}</Text>
                                 <InlineStack gap="100" blockAlign="center">
                                   <Text as="p" variant="headingLg" fontWeight="bold">
                                     {report.metrics.aiScore}
@@ -674,7 +676,7 @@ export default function InsightsPage() {
                           <Box minWidth="140px">
                             <Card>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm" tone="subdued">Produits</Text>
+                                <Text as="p" variant="bodySm" tone="subdued">{t.insights.products}</Text>
                                 <Text as="p" variant="headingLg" fontWeight="bold">
                                   {report.metrics.productsAudited}
                                 </Text>
@@ -685,7 +687,7 @@ export default function InsightsPage() {
                           <Box minWidth="140px">
                             <Card>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm" tone="subdued">Problèmes</Text>
+                                <Text as="p" variant="bodySm" tone="subdued">{t.insights.issues}</Text>
                                 <Text as="p" variant="headingLg" fontWeight="bold" tone={report.metrics.criticalIssues > 0 ? 'critical' : undefined}>
                                   {report.metrics.criticalIssues}
                                 </Text>
@@ -696,7 +698,7 @@ export default function InsightsPage() {
                           <Box minWidth="140px">
                             <Card>
                               <BlockStack gap="100">
-                                <Text as="p" variant="bodySm" tone="subdued">Taux de mention</Text>
+                                <Text as="p" variant="bodySm" tone="subdued">{t.insights.mentionRate}</Text>
                                 <Text as="p" variant="headingLg" fontWeight="bold">
                                   {Math.round(report.metrics.mentionRate)}%
                                 </Text>
@@ -710,12 +712,12 @@ export default function InsightsPage() {
                           <>
                             <Divider />
                             <BlockStack gap="300">
-                              <Text as="h3" variant="headingSm">Problèmes les plus fréquents</Text>
+                              <Text as="h3" variant="headingSm">{t.insights.mostFrequentIssues}</Text>
                               <BlockStack gap="200">
                                 {report.topIssues.map((issue) => (
                                   <InlineStack key={issue.code} align="space-between">
                                     <Text as="p">{getIssueLabel(issue.code)}</Text>
-                                    <Badge>{`${issue.count} produit${issue.count > 1 ? 's' : ''}`}</Badge>
+                                    <Badge>{`${issue.count} ${t.insights.products.toLowerCase()}`}</Badge>
                                   </InlineStack>
                                 ))}
                               </BlockStack>
@@ -728,7 +730,7 @@ export default function InsightsPage() {
                           <>
                             <Divider />
                             <BlockStack gap="300">
-                              <Text as="h3" variant="headingSm">Prochaines étapes suggérées</Text>
+                              <Text as="h3" variant="headingSm">{t.insights.suggestedNextSteps}</Text>
                               <BlockStack gap="200">
                                 {report.recommendations.map((rec, index) => (
                                   <Box key={index} padding="300" background="bg-surface-info" borderRadius="200">
@@ -752,58 +754,58 @@ export default function InsightsPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">Comment s&apos;améliorer</Text>
+              <Text as="h2" variant="headingMd">{t.insights.howToImprove}</Text>
               <Divider />
               <BlockStack gap="300">
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                   <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Vérifiez vos produits régulièrement</Text>
+                      <Text as="p" fontWeight="semibold">{t.insights.checkProductsRegularly}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Lancez une analyse pour détecter les nouveaux problèmes rapidement
+                        {t.insights.checkProductsRegularlyDesc}
                       </Text>
                     </BlockStack>
                     <Link href="/admin/products">
-                      <Button>Voir les produits</Button>
+                      <Button>{t.insights.viewProducts}</Button>
                     </Link>
                   </InlineStack>
                 </Box>
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                   <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Utilisez les suggestions IA</Text>
+                      <Text as="p" fontWeight="semibold">{t.insights.useAiSuggestions}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Laissez l&apos;IA vous aider à écrire de meilleures descriptions
+                        {t.insights.useAiSuggestionsDesc}
                       </Text>
                     </BlockStack>
                     <Link href="/admin/products">
-                      <Button>Optimiser maintenant</Button>
+                      <Button>{t.insights.optimizeNow}</Button>
                     </Link>
                   </InlineStack>
                 </Box>
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                   <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Surveillez votre visibilité</Text>
+                      <Text as="p" fontWeight="semibold">{t.insights.monitorVisibility}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Vérifiez si les assistants IA recommandent votre boutique
+                        {t.insights.monitorVisibilityDesc}
                       </Text>
                     </BlockStack>
                     <Link href="/admin/visibility">
-                      <Button>Vérifier la visibilité</Button>
+                      <Button>{t.insights.checkVisibility}</Button>
                     </Link>
                   </InlineStack>
                 </Box>
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                   <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Configurez vos outils IA</Text>
+                      <Text as="p" fontWeight="semibold">{t.insights.configureAiTools}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Aidez les crawlers IA à mieux comprendre votre boutique
+                        {t.insights.configureAiToolsDesc}
                       </Text>
                     </BlockStack>
                     <Link href="/admin/tools">
-                      <Button variant="primary">Configurer les outils</Button>
+                      <Button variant="primary">{t.insights.configureTools}</Button>
                     </Link>
                   </InlineStack>
                 </Box>
