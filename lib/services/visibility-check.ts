@@ -5,7 +5,27 @@ import { PLAN_LIMITS } from '@/lib/constants/plans';
 import { logger } from '@/lib/monitoring/logger';
 import type { Plan, Platform, ResponseQuality } from '@prisma/client';
 
-// OpenAI client for ChatGPT
+// OpenRouter client (unified gateway for all AI providers)
+const openrouter = process.env.OPENROUTER_API_KEY
+  ? new OpenAI({
+      apiKey: process.env.OPENROUTER_API_KEY,
+      baseURL: 'https://openrouter.ai/api/v1',
+      defaultHeaders: {
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://surfaced.vercel.app',
+        'X-Title': 'Surfaced',
+      },
+    })
+  : null;
+
+// OpenRouter model mapping for each platform
+const OPENROUTER_MODELS: Record<Platform, string> = {
+  chatgpt: 'openai/gpt-4o-mini',
+  perplexity: 'perplexity/sonar', // Has web search built-in
+  gemini: 'google/gemini-2.0-flash-001', // Google Gemini Flash
+  copilot: 'nvidia/nemotron-nano-12b-v2-vl:free', // Free alternative for Copilot-like responses
+};
+
+// Fallback: Direct API clients (used if OpenRouter not configured)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -23,6 +43,12 @@ const gemini = process.env.GOOGLE_AI_API_KEY
 
 // Platform availability checks
 export function getAvailablePlatforms(): Platform[] {
+  // If OpenRouter is configured, all platforms are available
+  if (process.env.OPENROUTER_API_KEY) {
+    return ['chatgpt', 'perplexity', 'gemini', 'copilot'];
+  }
+
+  // Fallback to direct API keys
   const platforms: Platform[] = [];
 
   if (process.env.OPENAI_API_KEY) {
@@ -34,12 +60,13 @@ export function getAvailablePlatforms(): Platform[] {
   if (process.env.GOOGLE_AI_API_KEY) {
     platforms.push('gemini');
   }
-  // Copilot requires Microsoft/Azure integration - coming soon
-  // if (process.env.AZURE_OPENAI_API_KEY) {
-  //   platforms.push('copilot');
-  // }
 
   return platforms;
+}
+
+// Check if using OpenRouter
+export function isUsingOpenRouter(): boolean {
+  return !!process.env.OPENROUTER_API_KEY;
 }
 
 export type VisibilityResult = {
@@ -184,11 +211,69 @@ function analyzeResponse(
   };
 }
 
+/**
+ * Check visibility via OpenRouter (unified gateway)
+ * Works for all platforms: ChatGPT, Perplexity, Gemini, Copilot
+ */
+async function checkViaOpenRouter(
+  platform: Platform,
+  query: string,
+  brandName: string,
+  shopDomain: string
+): Promise<VisibilityResult> {
+  if (!openrouter) {
+    throw new Error('OpenRouter API key not configured');
+  }
+
+  const model = OPENROUTER_MODELS[platform];
+
+  try {
+    logger.info({ platform, model, query }, 'Checking visibility via OpenRouter');
+
+    const completion = await openrouter.chat.completions.create({
+      model,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a helpful shopping assistant. Provide detailed, honest recommendations based on your knowledge. Include specific brand names and stores when relevant.',
+        },
+        {
+          role: 'user',
+          content: query,
+        },
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+    });
+
+    const rawResponse = completion.choices[0]?.message?.content || '';
+    const analysis = analyzeResponse(rawResponse, brandName, shopDomain);
+
+    logger.info({ platform, isMentioned: analysis.isMentioned }, 'OpenRouter check completed');
+
+    return {
+      platform,
+      query,
+      rawResponse,
+      ...analysis,
+    };
+  } catch (error) {
+    logger.error({ error, platform, model, query }, 'OpenRouter visibility check failed');
+    throw error;
+  }
+}
+
 async function checkChatGPT(
   query: string,
   brandName: string,
   shopDomain: string
 ): Promise<VisibilityResult> {
+  // Use OpenRouter if available
+  if (openrouter) {
+    return checkViaOpenRouter('chatgpt', query, brandName, shopDomain);
+  }
+
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -232,6 +317,11 @@ async function checkPerplexity(
   brandName: string,
   shopDomain: string
 ): Promise<VisibilityResult> {
+  // Use OpenRouter if available
+  if (openrouter) {
+    return checkViaOpenRouter('perplexity', query, brandName, shopDomain);
+  }
+
   if (!process.env.PERPLEXITY_API_KEY) {
     throw new Error('Perplexity API key not configured');
   }
@@ -278,6 +368,11 @@ async function checkGemini(
   brandName: string,
   shopDomain: string
 ): Promise<VisibilityResult> {
+  // Use OpenRouter if available
+  if (openrouter) {
+    return checkViaOpenRouter('gemini', query, brandName, shopDomain);
+  }
+
   if (!gemini) {
     throw new Error('Gemini API key not configured');
   }
@@ -311,6 +406,22 @@ async function checkGemini(
 }
 
 /**
+ * Check visibility on Microsoft Copilot (via OpenRouter)
+ */
+async function checkCopilot(
+  query: string,
+  brandName: string,
+  shopDomain: string
+): Promise<VisibilityResult> {
+  // Copilot only available via OpenRouter
+  if (openrouter) {
+    return checkViaOpenRouter('copilot', query, brandName, shopDomain);
+  }
+
+  throw new Error('Copilot requires OpenRouter API key');
+}
+
+/**
  * Check visibility on a specific platform
  */
 async function checkPlatform(
@@ -327,8 +438,7 @@ async function checkPlatform(
     case 'gemini':
       return checkGemini(query, brandName, shopDomain);
     case 'copilot':
-      // Copilot not yet implemented
-      throw new Error('Copilot integration coming soon');
+      return checkCopilot(query, brandName, shopDomain);
     default:
       throw new Error(`Unknown platform: ${platform}`);
   }
