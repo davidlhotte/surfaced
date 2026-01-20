@@ -19,6 +19,7 @@ import {
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
+import type { AdminLocale } from '@/lib/i18n/translations';
 
 interface ShopInfo {
   shopDomain: string;
@@ -218,7 +219,7 @@ function getPlanFeatures(t: ReturnType<typeof useAdminLanguage>['t']): PlanFeatu
 }
 
 export default function SettingsPage() {
-  const { t, locale } = useAdminLanguage();
+  const { t, locale, setLanguage } = useAdminLanguage();
   const [shopInfo, setShopInfo] = useState<ShopInfo | null>(null);
   const [usage, setUsage] = useState<UsageInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -775,6 +776,47 @@ export default function SettingsPage() {
                       : 'N/A'}
                   </Text>
                 </InlineStack>
+              </BlockStack>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+
+        {/* Language Preferences */}
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <Text as="h2" variant="headingMd">
+                {locale === 'fr' ? 'Langue' : 'Language'}
+              </Text>
+              <Divider />
+
+              <BlockStack gap="300">
+                <Text as="p" tone="subdued">
+                  {locale === 'fr'
+                    ? 'Choisissez la langue de l\'interface. Ce paramètre sera sauvegardé pour vos prochaines visites.'
+                    : 'Choose the interface language. This setting will be saved for your next visits.'}
+                </Text>
+
+                <InlineStack gap="200">
+                  <Button
+                    variant={locale === 'en' ? 'primary' : 'secondary'}
+                    onClick={() => setLanguage('en' as AdminLocale)}
+                  >
+                    English
+                  </Button>
+                  <Button
+                    variant={locale === 'fr' ? 'primary' : 'secondary'}
+                    onClick={() => setLanguage('fr' as AdminLocale)}
+                  >
+                    Français
+                  </Button>
+                </InlineStack>
+
+                <Text as="p" variant="bodySm" tone="subdued">
+                  {locale === 'fr'
+                    ? `Langue actuelle: Français (détectée depuis ${typeof localStorage !== 'undefined' && localStorage.getItem('surfaced-admin-language') ? 'vos préférences' : 'votre navigateur'})`
+                    : `Current language: English (detected from ${typeof localStorage !== 'undefined' && localStorage.getItem('surfaced-admin-language') ? 'your preferences' : 'your browser'})`}
+                </Text>
               </BlockStack>
             </BlockStack>
           </Card>

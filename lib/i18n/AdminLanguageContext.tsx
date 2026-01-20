@@ -1,12 +1,15 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { adminTranslations, AdminLocale } from './translations';
+
+const LANGUAGE_STORAGE_KEY = 'surfaced-admin-language';
 
 type AdminLanguageContextType = {
   locale: AdminLocale;
   t: typeof adminTranslations.en | typeof adminTranslations.fr;
+  setLanguage: (lang: AdminLocale) => void;
 };
 
 const AdminLanguageContext = createContext<AdminLanguageContextType | undefined>(undefined);
@@ -16,7 +19,16 @@ export function AdminLanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<AdminLocale>('en');
 
   useEffect(() => {
-    // Get locale from Shopify's URL parameter
+    // Priority 1: Check localStorage for user preference
+    if (typeof localStorage !== 'undefined') {
+      const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY) as AdminLocale | null;
+      if (savedLang && (savedLang === 'en' || savedLang === 'fr')) {
+        setLocale(savedLang);
+        return;
+      }
+    }
+
+    // Priority 2: Get locale from Shopify's URL parameter
     const shopifyLocale = searchParams.get('locale');
 
     if (shopifyLocale) {
@@ -28,7 +40,7 @@ export function AdminLanguageProvider({ children }: { children: ReactNode }) {
         setLocale('en'); // Default to English for all other languages
       }
     } else {
-      // Fallback: check browser language (for development/testing)
+      // Priority 3: Fallback to browser language (for development/testing)
       if (typeof navigator !== 'undefined') {
         const browserLang = navigator.language.toLowerCase();
         if (browserLang.startsWith('fr')) {
@@ -38,10 +50,17 @@ export function AdminLanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [searchParams]);
 
+  const setLanguage = useCallback((lang: AdminLocale) => {
+    setLocale(lang);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+    }
+  }, []);
+
   const t = adminTranslations[locale];
 
   return (
-    <AdminLanguageContext.Provider value={{ locale, t }}>
+    <AdminLanguageContext.Provider value={{ locale, t, setLanguage }}>
       {children}
     </AdminLanguageContext.Provider>
   );
