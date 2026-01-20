@@ -132,32 +132,71 @@ chore: Maintenance
 
 ## Deployment Workflow
 
-**IMPORTANT: After every modification, follow this workflow:**
+**IMPORTANT: After every modification, follow this COMPLETE workflow:**
 
-### 1. Commit & Push
+### 1. Lint & Type Check
+```bash
+npm run lint                           # Check for ESLint errors
+npx tsc --noEmit                       # Check for TypeScript errors
+```
+
+### 2. Commit & Push
 ```bash
 git add -A
 git commit -m "feat/fix: Description"
 git push origin main
 ```
 
-### 2. Deploy to Shopify
+### 3. Deploy to Shopify
 ```bash
 npx shopify app deploy --force
 ```
 
-### 3. Verify Deployment
-- **Vercel**: Check https://vercel.com/dashboard for build status
-- **Shopify Partners**: Check Apps > Surfaced > Versions for new version
-
-### Complete Example
+### 4. Verify Vercel Build (MANDATORY)
 ```bash
-# After making changes:
-npm run lint                           # Check for errors
-git add -A && git commit -m "feat: Add new feature" && git push origin main
-npx shopify app deploy --force         # Deploy to Shopify (creates new version)
-# Then verify on Vercel dashboard and Shopify Partners > Apps > Versions
+# Check if pages are accessible (should return 200)
+curl -s -o /dev/null -w "%{http_code}" https://surfaced.vercel.app
+curl -s -o /dev/null -w "%{http_code}" https://surfaced.vercel.app/admin
+curl -s -o /dev/null -w "%{http_code}" https://surfaced.vercel.app/admin/settings
+
+# If any returns non-200, check Vercel dashboard for error logs
 ```
+
+### 5. Fix Errors if Build Failed
+- Check Vercel dashboard: https://vercel.com/davids-projects-611f5421/surfaced
+- Read error logs
+- Fix the code
+- Repeat steps 1-4
+
+### 6. Test Functionality
+- Test the feature manually in the app
+- Run relevant tests: `npm run test`
+
+### Complete Workflow Example
+```bash
+# 1. Lint and type check
+npm run lint && npx tsc --noEmit
+
+# 2. Commit and push
+git add -A && git commit -m "feat: Add new feature" && git push origin main
+
+# 3. Deploy to Shopify
+npx shopify app deploy --force
+
+# 4. Verify Vercel deployment
+curl -s -o /dev/null -w "%{http_code}" https://surfaced.vercel.app/admin
+
+# 5. If 200, deployment successful!
+# If not 200, check Vercel logs and fix errors
+```
+
+### Verification Checklist
+- [ ] `npm run lint` passes
+- [ ] `npx tsc --noEmit` passes
+- [ ] Git push successful
+- [ ] Shopify deploy shows "New version released"
+- [ ] Vercel pages return HTTP 200
+- [ ] Feature works as expected
 
 ## App URLs
 
