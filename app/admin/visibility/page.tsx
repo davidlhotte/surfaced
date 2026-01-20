@@ -131,7 +131,7 @@ export default function VisibilityPage() {
       ? 'Ces marques sont mentionnées à votre place'
       : 'These brands are mentioned instead of yours',
     mentioned: locale === 'fr' ? 'Mentionné' : 'Mentioned',
-    absent: locale === 'fr' ? 'Absent' : 'Absent',
+    absent: locale === 'fr' ? 'Non mentionné' : 'Not mentioned',
     recommended: locale === 'fr' ? 'Recommandé' : 'Recommended',
     notChecked: locale === 'fr' ? 'Non testé' : 'Not tested',
     positive: locale === 'fr' ? 'Positif' : 'Positive',
