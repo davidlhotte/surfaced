@@ -20,10 +20,40 @@ import { ShopProvider } from '@/components/providers/ShopProvider';
 import { AdminLanguageProvider } from '@/lib/i18n/AdminLanguageContext';
 
 /**
- * Skeleton loading state that matches the page structure
- * This prevents CLS by reserving the correct space
+ * Simple loading fallback that doesn't require Polaris context
+ * Used for the outer Suspense boundary before AppProvider is ready
  */
-function LoadingFallback() {
+function SimpleLoadingFallback() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #e1e3e5',
+          borderTopColor: '#5c6ac4',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto 16px',
+        }} />
+        <p style={{ color: '#6d7175', margin: 0 }}>Loading...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Skeleton loading state that matches the page structure
+ * This requires Polaris context and is used inside AppProvider
+ */
+function PolarisLoadingFallback() {
   return (
     <SkeletonPage primaryAction>
       <BlockStack gap="400">
@@ -70,7 +100,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         <ShopProvider>
           <AdminLanguageProvider>
             <ErrorBoundary>
-              <Suspense fallback={<LoadingFallback />}>
+              <Suspense fallback={<PolarisLoadingFallback />}>
                 {children}
               </Suspense>
             </ErrorBoundary>
@@ -83,7 +113,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
 export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <Suspense fallback={<SimpleLoadingFallback />}>
       <AdminLayoutInner>{children}</AdminLayoutInner>
     </Suspense>
   );
