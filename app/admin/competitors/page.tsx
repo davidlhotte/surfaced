@@ -24,6 +24,7 @@ import {
 import { PlusCircleIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type Competitor = {
   id: string;
@@ -80,6 +81,7 @@ type CompetitorAnalysis = {
 export default function CompetitorsPage() {
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
+  const { t } = useAdminLanguage();
   const [data, setData] = useState<CompetitorsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -96,19 +98,19 @@ export default function CompetitorsPage() {
     try {
       setLoading(true);
       const response = await authenticatedFetch('/api/competitors');
-      if (!response.ok) throw new Error('Impossible de charger les concurrents');
+      if (!response.ok) throw new Error(t.common.error);
       const result = await response.json();
       if (result.success) {
         setData(result.data);
       } else {
-        setError(result.error || 'Erreur inconnue');
+        setError(result.error || t.common.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de charger les concurrents');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch]);
+  }, [authenticatedFetch, t.common.error]);
 
   useEffect(() => {
     fetchCompetitors();
@@ -130,7 +132,7 @@ export default function CompetitorsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Impossible d\'ajouter le concurrent');
+        throw new Error(errorData.error || t.common.error);
       }
       const result = await response.json();
       if (result.success) {
@@ -139,10 +141,10 @@ export default function CompetitorsPage() {
         setNewName('');
         setShowAddModal(false);
       } else {
-        setError(result.error || 'Erreur inconnue');
+        setError(result.error || t.common.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible d\'ajouter le concurrent');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setAdding(false);
     }
@@ -156,16 +158,16 @@ export default function CompetitorsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Impossible de supprimer le concurrent');
+        throw new Error(errorData.error || t.common.error);
       }
       const result = await response.json();
       if (result.success) {
         setData(result.data);
       } else {
-        setError(result.error || 'Erreur inconnue');
+        setError(result.error || t.common.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de supprimer le concurrent');
+      setError(err instanceof Error ? err.message : t.common.error);
     }
   };
 
@@ -180,16 +182,16 @@ export default function CompetitorsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Analyse échouée');
+        throw new Error(errorData.error || t.common.error);
       }
       const result = await response.json();
       if (result.success) {
         setAnalysis(result.data);
       } else {
-        setError(result.error || 'Erreur inconnue');
+        setError(result.error || t.common.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analyse échouée');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setAnalyzing(false);
     }
@@ -206,9 +208,9 @@ export default function CompetitorsPage() {
 
   const getInsightLabel = (type: string) => {
     const labels: Record<string, string> = {
-      danger: 'Action requise',
-      warning: 'Attention',
-      opportunity: 'Opportunité',
+      danger: t.competitors.actionRequired,
+      warning: t.competitors.attention,
+      opportunity: t.competitors.opportunity,
     };
     return labels[type] || type;
   };
@@ -220,14 +222,14 @@ export default function CompetitorsPage() {
 
   if (loading || shopLoading) {
     return (
-      <Page title="Veille concurrentielle" backAction={{ content: 'Accueil', url: '/admin' }}>
+      <Page title={t.competitors.title} backAction={{ content: t.dashboard.title, url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
               <Box padding="800">
                 <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
-                  <Text as="p">Chargement de vos concurrents...</Text>
+                  <Text as="p">{t.competitors.loading}</Text>
                 </BlockStack>
               </Box>
             </Card>
@@ -239,18 +241,18 @@ export default function CompetitorsPage() {
 
   return (
     <Page
-      title="Veille concurrentielle"
-      subtitle="Comparez votre visibilité IA à celle de vos concurrents"
-      backAction={{ content: 'Accueil', url: '/admin' }}
+      title={t.competitors.title}
+      subtitle={t.competitors.subtitle}
+      backAction={{ content: t.dashboard.title, url: '/admin' }}
       primaryAction={{
-        content: analyzing ? 'Analyse...' : 'Lancer l\'analyse',
+        content: analyzing ? t.competitors.analyzing : t.competitors.runAnalysis,
         onAction: runAnalysis,
         loading: analyzing,
         disabled: !data?.competitors.length,
       }}
       secondaryActions={[
         {
-          content: 'Ajouter un concurrent',
+          content: t.competitors.addCompetitor,
           icon: PlusCircleIcon,
           onAction: () => setShowAddModal(true),
           disabled: data?.remaining === 0,
@@ -260,7 +262,7 @@ export default function CompetitorsPage() {
       <Layout>
         {error && (
           <Layout.Section>
-            <Banner tone="critical" title="Erreur" onDismiss={() => setError(null)}>
+            <Banner tone="critical" title={t.common.error} onDismiss={() => setError(null)}>
               <p>{error}</p>
             </Banner>
           </Layout.Section>
@@ -280,17 +282,16 @@ export default function CompetitorsPage() {
                   }}>
                     <BlockStack gap="400">
                       <Text as="h2" variant="headingLg">
-                        Surveillez vos concurrents
+                        {t.competitors.watchCompetitors}
                       </Text>
                       <Text as="p">
-                        Découvrez où vos concurrents apparaissent dans les recommandations IA
-                        et identifiez les opportunités pour les dépasser.
+                        {t.competitors.watchCompetitorsDesc}
                       </Text>
                     </BlockStack>
                   </div>
 
                   <BlockStack gap="300">
-                    <Text as="h3" variant="headingMd">Comment ça marche ?</Text>
+                    <Text as="h3" variant="headingMd">{t.competitors.howItWorksTitle}</Text>
                     <InlineStack gap="400" wrap>
                       <Box minWidth="200px" maxWidth="300px">
                         <BlockStack gap="200">
@@ -305,9 +306,9 @@ export default function CompetitorsPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>1</div>
-                          <Text as="p" fontWeight="semibold">Ajoutez vos concurrents</Text>
+                          <Text as="p" fontWeight="semibold">{t.competitors.step1}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Entrez le domaine des boutiques que vous voulez surveiller
+                            {t.competitors.step1Desc}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -324,9 +325,9 @@ export default function CompetitorsPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>2</div>
-                          <Text as="p" fontWeight="semibold">Analyse comparative</Text>
+                          <Text as="p" fontWeight="semibold">{t.competitors.step2}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Nous interrogeons les IA et comparons qui est le plus recommandé
+                            {t.competitors.step2Desc}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -343,9 +344,9 @@ export default function CompetitorsPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>3</div>
-                          <Text as="p" fontWeight="semibold">Insights actionnables</Text>
+                          <Text as="p" fontWeight="semibold">{t.competitors.step3}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Recevez des recommandations pour améliorer votre positionnement
+                            {t.competitors.step3Desc}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -354,7 +355,7 @@ export default function CompetitorsPage() {
 
                   <Box paddingBlockStart="200">
                     <Button variant="primary" size="large" onClick={() => setShowAddModal(true)}>
-                      Ajouter mon premier concurrent
+                      {t.competitors.addFirstCompetitor}
                     </Button>
                   </Box>
                 </BlockStack>
@@ -370,9 +371,9 @@ export default function CompetitorsPage() {
               <Card>
                 <BlockStack gap="400">
                   <InlineStack align="space-between" blockAlign="center">
-                    <Text as="h2" variant="headingLg">Résultats de l&apos;analyse</Text>
+                    <Text as="h2" variant="headingLg">{t.competitors.analysisResults}</Text>
                     <Button variant="plain" onClick={() => setAnalysis(null)}>
-                      Fermer
+                      {t.competitors.close}
                     </Button>
                   </InlineStack>
                   <Divider />
@@ -382,12 +383,12 @@ export default function CompetitorsPage() {
                     <Box minWidth="180px">
                       <Card>
                         <BlockStack gap="200">
-                          <Text as="p" variant="bodySm" tone="subdued">Votre taux de mention</Text>
+                          <Text as="p" variant="bodySm" tone="subdued">{t.competitors.yourMentionRate}</Text>
                           <Text as="p" variant="heading2xl" fontWeight="bold" tone={analysis.summary.yourMentionRate > 30 ? 'success' : 'critical'}>
                             {analysis.summary.yourMentionRate}%
                           </Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Fréquence de recommandation par les IA
+                            {t.competitors.recommendationFrequency}
                           </Text>
                         </BlockStack>
                       </Card>
@@ -395,12 +396,12 @@ export default function CompetitorsPage() {
                     <Box minWidth="180px">
                       <Card>
                         <BlockStack gap="200">
-                          <Text as="p" variant="bodySm" tone="subdued">Meilleur concurrent</Text>
+                          <Text as="p" variant="bodySm" tone="subdued">{t.competitors.bestCompetitor}</Text>
                           <Text as="p" variant="heading2xl" fontWeight="bold">
                             {analysis.summary.bestCompetitorMentionRate}%
                           </Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Le concurrent le plus mentionné
+                            {t.competitors.mostMentioned}
                           </Text>
                         </BlockStack>
                       </Card>
@@ -408,7 +409,7 @@ export default function CompetitorsPage() {
                     <Box minWidth="180px">
                       <Card>
                         <BlockStack gap="200">
-                          <Text as="p" variant="bodySm" tone="subdued">Écart</Text>
+                          <Text as="p" variant="bodySm" tone="subdued">{t.competitors.gap}</Text>
                           <Text
                             as="p"
                             variant="heading2xl"
@@ -418,7 +419,7 @@ export default function CompetitorsPage() {
                             {analysis.summary.gapPercentage > 0 ? '-' : '+'}{Math.abs(analysis.summary.gapPercentage)}%
                           </Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            {analysis.summary.gapPercentage > 0 ? 'Vous êtes en retard' : 'Vous êtes en avance'}
+                            {analysis.summary.gapPercentage > 0 ? t.competitors.youAreBehind : t.competitors.youAreAhead}
                           </Text>
                         </BlockStack>
                       </Card>
@@ -434,9 +435,9 @@ export default function CompetitorsPage() {
                 <Card>
                   <BlockStack gap="400">
                     <BlockStack gap="200">
-                      <Text as="h3" variant="headingMd">Insights clés</Text>
+                      <Text as="h3" variant="headingMd">{t.competitors.keyInsights}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Actions recommandées basées sur l&apos;analyse comparative
+                        {t.competitors.keyInsightsDesc}
                       </Text>
                     </BlockStack>
                     <Divider />
@@ -478,9 +479,9 @@ export default function CompetitorsPage() {
               <Card>
                 <BlockStack gap="400">
                   <BlockStack gap="200">
-                    <Text as="h3" variant="headingMd">Comparaison des taux de mention</Text>
+                    <Text as="h3" variant="headingMd">{t.competitors.mentionRateComparison}</Text>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      Plus la barre est longue, plus la marque est recommandée par les IA
+                      {t.competitors.mentionRateComparisonDesc}
                     </Text>
                   </BlockStack>
                   <Divider />
@@ -488,7 +489,7 @@ export default function CompetitorsPage() {
                     <Box padding="300" background="bg-surface-success" borderRadius="200">
                       <InlineStack align="space-between" blockAlign="center">
                         <InlineStack gap="200" blockAlign="center">
-                          <Badge tone="success">Vous</Badge>
+                          <Badge tone="success">{t.competitors.you}</Badge>
                           <Text as="p" fontWeight="semibold">{analysis.brandName}</Text>
                         </InlineStack>
                         <InlineStack gap="200" blockAlign="center">
@@ -532,9 +533,9 @@ export default function CompetitorsPage() {
               <Card>
                 <BlockStack gap="400">
                   <BlockStack gap="200">
-                    <Text as="h3" variant="headingMd">Résultats par question</Text>
+                    <Text as="h3" variant="headingMd">{t.competitors.queryResults}</Text>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      Voyez qui gagne sur chaque requête type
+                      {t.competitors.queryResultsDesc}
                     </Text>
                   </BlockStack>
                   <Divider />
@@ -548,7 +549,7 @@ export default function CompetitorsPage() {
                             </Text>
                             {comp.winner && (
                               <Badge tone={comp.winner === analysis.brandName ? 'success' : 'critical'}>
-                                {`Gagnant : ${comp.winner}`}
+                                {`${t.competitors.winner}: ${comp.winner}`}
                               </Badge>
                             )}
                           </InlineStack>
@@ -557,11 +558,11 @@ export default function CompetitorsPage() {
                           </Text>
                           <InlineStack gap="200" wrap>
                             <Badge tone={comp.yourBrand.isMentioned ? 'success' : 'critical'}>
-                              {`Vous : ${comp.yourBrand.isMentioned ? `#${comp.yourBrand.position || '?'}` : 'Non trouvé'}`}
+                              {`${t.competitors.you}: ${comp.yourBrand.isMentioned ? `#${comp.yourBrand.position || '?'}` : t.visibility.notFound}`}
                             </Badge>
                             {comp.competitors.slice(0, 3).map((c) => (
                               <Badge key={c.domain} tone={c.isMentioned ? 'attention' : 'new'}>
-                                {`${c.name || c.domain} : ${c.isMentioned ? `#${c.position || '?'}` : 'Non trouvé'}`}
+                                {`${c.name || c.domain}: ${c.isMentioned ? `#${c.position || '?'}` : t.visibility.notFound}`}
                               </Badge>
                             ))}
                           </InlineStack>
@@ -582,9 +583,9 @@ export default function CompetitorsPage() {
               <BlockStack gap="400">
                 <InlineStack align="space-between" blockAlign="center">
                   <BlockStack gap="100">
-                    <Text as="h3" variant="headingMd">Concurrents suivis</Text>
+                    <Text as="h3" variant="headingMd">{t.competitors.competitorsTracked}</Text>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      Les marques que vous surveillez dans les recommandations IA
+                      {t.competitors.competitorsTrackedDesc}
                     </Text>
                   </BlockStack>
                   <Badge tone={data.remaining > 0 ? 'info' : 'warning'}>
@@ -598,7 +599,7 @@ export default function CompetitorsPage() {
                   renderItem={(item) => (
                     <ResourceItem
                       id={item.id}
-                      accessibilityLabel={`Voir les détails de ${item.name || item.domain}`}
+                      accessibilityLabel={`${item.name || item.domain}`}
                       onClick={() => {}}
                       media={
                         <Avatar
@@ -609,7 +610,7 @@ export default function CompetitorsPage() {
                       }
                       shortcutActions={[
                         {
-                          content: 'Supprimer',
+                          content: t.competitors.remove,
                           onAction: () => removeCompetitor(item.id),
                         },
                       ]}
@@ -629,7 +630,7 @@ export default function CompetitorsPage() {
                 {data.remaining > 0 && (
                   <Box paddingBlockStart="200">
                     <Button onClick={() => setShowAddModal(true)} icon={PlusCircleIcon}>
-                      {`Ajouter un concurrent (${data.remaining} restant${data.remaining > 1 ? 's' : ''})`}
+                      {`${t.competitors.addCompetitor} (${data.remaining} ${t.competitors.remaining})`}
                     </Button>
                   </Box>
                 )}
@@ -643,33 +644,30 @@ export default function CompetitorsPage() {
           <Layout.Section>
             <Card>
               <BlockStack gap="400">
-                <Text as="h3" variant="headingMd">Pourquoi surveiller vos concurrents ?</Text>
+                <Text as="h3" variant="headingMd">{t.competitors.whyTrackCompetitors}</Text>
                 <Divider />
                 <BlockStack gap="200">
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Identifiez les opportunités</Text>
+                      <Text as="p" fontWeight="semibold">{t.competitors.identifyOpportunities}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Découvrez les requêtes où vos concurrents apparaissent mais pas vous.
-                        Ce sont des opportunités d&apos;amélioration de votre contenu.
+                        {t.competitors.identifyOpportunitiesDesc}
                       </Text>
                     </BlockStack>
                   </Box>
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Comprenez votre positionnement</Text>
+                      <Text as="p" fontWeight="semibold">{t.competitors.understandPositioning}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Voyez exactement où vous vous situez par rapport à vos concurrents
-                        dans les recommandations IA.
+                        {t.competitors.understandPositioningDesc}
                       </Text>
                     </BlockStack>
                   </Box>
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Améliorez votre stratégie</Text>
+                      <Text as="p" fontWeight="semibold">{t.competitors.improveStrategy}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Recevez des recommandations concrètes pour dépasser vos concurrents
-                        dans les résultats IA.
+                        {t.competitors.improveStrategyDesc}
                       </Text>
                     </BlockStack>
                   </Box>
@@ -677,7 +675,7 @@ export default function CompetitorsPage() {
 
                 <Box paddingBlockStart="200">
                   <Button variant="primary" onClick={runAnalysis} loading={analyzing}>
-                    Lancer l&apos;analyse comparative
+                    {t.competitors.runComparativeAnalysis}
                   </Button>
                 </Box>
               </BlockStack>
@@ -690,16 +688,16 @@ export default function CompetitorsPage() {
       <Modal
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Ajouter un concurrent"
+        title={t.competitors.addCompetitorTitle}
         primaryAction={{
-          content: 'Ajouter',
+          content: t.common.add,
           onAction: addCompetitor,
           loading: adding,
           disabled: !newDomain.trim(),
         }}
         secondaryActions={[
           {
-            content: 'Annuler',
+            content: t.common.cancel,
             onAction: () => setShowAddModal(false),
           },
         ]}
@@ -708,25 +706,24 @@ export default function CompetitorsPage() {
           <BlockStack gap="400">
             <Banner tone="info">
               <Text as="p" variant="bodySm">
-                Ajoutez le domaine d&apos;un concurrent pour voir comment il se positionne
-                par rapport à vous dans les recommandations des IA.
+                {t.competitors.addCompetitorDesc}
               </Text>
             </Banner>
             <TextField
-              label="Domaine du concurrent"
-              placeholder="concurrent.com ou concurrent.myshopify.com"
+              label={t.competitors.competitorDomain}
+              placeholder={t.competitors.domainPlaceholder}
               value={newDomain}
               onChange={setNewDomain}
               autoComplete="off"
-              helpText="L'adresse du site web de votre concurrent"
+              helpText={t.competitors.domainHelp}
             />
             <TextField
-              label="Nom du concurrent (optionnel)"
-              placeholder="Nom de la marque"
+              label={t.competitors.competitorName}
+              placeholder={t.competitors.namePlaceholder}
               value={newName}
               onChange={setNewName}
               autoComplete="off"
-              helpText="Un nom convivial pour identifier ce concurrent"
+              helpText={t.competitors.nameHelp}
             />
           </BlockStack>
         </Modal.Section>

@@ -22,6 +22,7 @@ import {
 import Link from 'next/link';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type VisibilityCheck = {
   id: string;
@@ -51,6 +52,7 @@ type VisibilityResult = {
 export default function VisibilityPage() {
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
+  const { t, locale } = useAdminLanguage();
   const [history, setHistory] = useState<VisibilityCheck[]>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
@@ -64,19 +66,19 @@ export default function VisibilityPage() {
     try {
       setLoading(true);
       const response = await authenticatedFetch('/api/visibility');
-      if (!response.ok) throw new Error('Impossible de charger l\'historique');
+      if (!response.ok) throw new Error(t.common.error);
       const result = await response.json();
       if (result.success) {
         setHistory(result.data);
       } else {
-        setError(result.error || 'Erreur inconnue');
+        setError(result.error || t.common.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de charger l\'historique');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch]);
+  }, [authenticatedFetch, t.common.error]);
 
   useEffect(() => {
     fetchHistory();
@@ -93,17 +95,17 @@ export default function VisibilityPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Vérification échouée');
+        throw new Error(errorData.error || t.common.error);
       }
       const result = await response.json();
       if (result.success) {
         setLastResult(result.data);
         await fetchHistory();
       } else {
-        setError(result.error || 'Erreur inconnue');
+        setError(result.error || t.common.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Vérification échouée');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setChecking(false);
     }
@@ -134,15 +136,15 @@ export default function VisibilityPage() {
 
   const getQualityBadge = (quality: string | null, isMentioned: boolean) => {
     if (!isMentioned) {
-      return <Badge tone="critical">Non trouvé</Badge>;
+      return <Badge tone="critical">{t.visibility.notFound}</Badge>;
     }
     if (quality === 'good') {
-      return <Badge tone="success">Recommandé</Badge>;
+      return <Badge tone="success">{t.visibility.recommended}</Badge>;
     }
     if (quality === 'partial') {
-      return <Badge tone="warning">Mentionné</Badge>;
+      return <Badge tone="warning">{t.visibility.mentioned}</Badge>;
     }
-    return <Badge tone="info">Trouvé</Badge>;
+    return <Badge tone="info">{t.visibility.found}</Badge>;
   };
 
   const openResponseModal = (check: VisibilityCheck) => {
@@ -198,14 +200,14 @@ export default function VisibilityPage() {
 
   if (loading || shopLoading) {
     return (
-      <Page title="Visibilité IA" backAction={{ content: 'Accueil', url: '/admin' }}>
+      <Page title={t.visibility.title} backAction={{ content: t.dashboard.title, url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
               <Box padding="800">
                 <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
-                  <Text as="p">Chargement de vos données de visibilité...</Text>
+                  <Text as="p">{t.visibility.loading}</Text>
                 </BlockStack>
               </Box>
             </Card>
@@ -220,24 +222,24 @@ export default function VisibilityPage() {
     <Text key={check.id} as="p" variant="bodySm" truncate>{check.query}</Text>,
     getQualityBadge(check.responseQuality, check.isMentioned),
     check.position ? `#${check.position}` : '-',
-    new Date(check.checkedAt).toLocaleDateString('fr-FR'),
+    new Date(check.checkedAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US'),
     <Button
       key={`view-${check.id}`}
       size="slim"
       onClick={() => openResponseModal(check)}
       disabled={!check.rawResponse}
     >
-      Voir la réponse
+      {t.visibility.viewResponse}
     </Button>,
   ]);
 
   return (
     <Page
-      title="Visibilité IA"
-      subtitle="Vérifiez si les IA recommandent votre boutique"
-      backAction={{ content: 'Accueil', url: '/admin' }}
+      title={t.visibility.title}
+      subtitle={t.visibility.subtitle}
+      backAction={{ content: t.dashboard.title, url: '/admin' }}
       primaryAction={{
-        content: checking ? 'Vérification...' : 'Lancer une vérification',
+        content: checking ? t.visibility.checking : t.visibility.runCheck,
         onAction: () => runCheck(),
         loading: checking,
       }}
@@ -245,7 +247,7 @@ export default function VisibilityPage() {
       <Layout>
         {error && (
           <Layout.Section>
-            <Banner tone="critical" title="Erreur" onDismiss={() => setError(null)}>
+            <Banner tone="critical" title={t.common.error} onDismiss={() => setError(null)}>
               <p>{error}</p>
             </Banner>
           </Layout.Section>
@@ -255,17 +257,17 @@ export default function VisibilityPage() {
           <Layout.Section>
             <Banner
               tone={lastResult.summary.mentioned > 0 ? 'success' : 'warning'}
-              title="Vérification terminée"
+              title={t.visibility.checkComplete}
               onDismiss={() => setLastResult(null)}
             >
               <BlockStack gap="200">
                 <Text as="p">
-                  Votre marque a été mentionnée dans {lastResult.summary.mentioned} réponse{lastResult.summary.mentioned !== 1 ? 's' : ''} sur{' '}
+                  {t.visibility.brandMentioned} {lastResult.summary.mentioned} {t.visibility.responses} {t.visibility.outOf}{' '}
                   {lastResult.summary.totalChecks}.
                 </Text>
                 {lastResult.summary.competitorsFound.length > 0 && (
                   <Text as="p" tone="subdued">
-                    Concurrents détectés : {lastResult.summary.competitorsFound.join(', ')}
+                    {t.visibility.competitorsDetected}: {lastResult.summary.competitorsFound.join(', ')}
                   </Text>
                 )}
               </BlockStack>
@@ -287,17 +289,16 @@ export default function VisibilityPage() {
                   }}>
                     <BlockStack gap="400">
                       <Text as="h2" variant="headingLg">
-                        Vérifiez votre visibilité sur les IA
+                        {t.visibility.checkYourVisibility}
                       </Text>
                       <Text as="p">
-                        Découvrez si ChatGPT, Perplexity, Gemini et les autres assistants IA
-                        recommandent votre boutique quand les utilisateurs posent des questions.
+                        {t.visibility.checkYourVisibilityDesc}
                       </Text>
                     </BlockStack>
                   </div>
 
                   <BlockStack gap="300">
-                    <Text as="h3" variant="headingMd">Comment ça marche ?</Text>
+                    <Text as="h3" variant="headingMd">{t.visibility.howItWorksTitle}</Text>
                     <InlineStack gap="400" wrap>
                       <Box minWidth="200px" maxWidth="300px">
                         <BlockStack gap="200">
@@ -312,9 +313,9 @@ export default function VisibilityPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>1</div>
-                          <Text as="p" fontWeight="semibold">Nous interrogeons les IA</Text>
+                          <Text as="p" fontWeight="semibold">{t.visibility.step1}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Nous posons des questions type que vos clients pourraient poser
+                            {t.visibility.step1Desc}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -331,9 +332,9 @@ export default function VisibilityPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>2</div>
-                          <Text as="p" fontWeight="semibold">Analyse des réponses</Text>
+                          <Text as="p" fontWeight="semibold">{t.visibility.step2}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Nous vérifions si votre marque est mentionnée dans les recommandations
+                            {t.visibility.step2Desc}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -350,9 +351,9 @@ export default function VisibilityPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>3</div>
-                          <Text as="p" fontWeight="semibold">Rapport détaillé</Text>
+                          <Text as="p" fontWeight="semibold">{t.visibility.step3}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Vous voyez exactement ce que l&apos;IA répond et où vous êtes positionné
+                            {t.visibility.step3Desc}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -361,7 +362,7 @@ export default function VisibilityPage() {
 
                   <Box paddingBlockStart="200">
                     <Button variant="primary" size="large" onClick={() => runCheck()} loading={checking}>
-                      Lancer ma première vérification
+                      {t.visibility.firstCheck}
                     </Button>
                   </Box>
                 </BlockStack>
@@ -378,13 +379,13 @@ export default function VisibilityPage() {
                 <Card>
                   <BlockStack gap="200">
                     <Text as="h3" variant="bodySm" tone="subdued">
-                      Taux de mention
+                      {t.visibility.mentionRate}
                     </Text>
                     <Text as="p" variant="heading2xl" fontWeight="bold" tone={mentionRate > 30 ? 'success' : mentionRate > 0 ? 'caution' : 'critical'}>
                       {mentionRate}%
                     </Text>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      {mentionedCount} mention{mentionedCount !== 1 ? 's' : ''} sur {totalChecks} vérifications
+                      {mentionedCount} {t.visibility.mentions} {t.visibility.outOf} {totalChecks} {t.visibility.checks}
                     </Text>
                   </BlockStack>
                 </Card>
@@ -394,13 +395,13 @@ export default function VisibilityPage() {
                 <Card>
                   <BlockStack gap="200">
                     <Text as="h3" variant="bodySm" tone="subdued">
-                      Vérifications ce mois
+                      {t.visibility.checksThisMonth}
                     </Text>
                     <Text as="p" variant="heading2xl" fontWeight="bold">
                       {totalChecks}
                     </Text>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      requêtes envoyées aux IA
+                      {t.visibility.requestsSent}
                     </Text>
                   </BlockStack>
                 </Card>
@@ -410,13 +411,13 @@ export default function VisibilityPage() {
                 <Card>
                   <BlockStack gap="200">
                     <Text as="h3" variant="bodySm" tone="subdued">
-                      Meilleure plateforme
+                      {t.visibility.bestPlatform}
                     </Text>
                     <Text as="p" variant="heading2xl" fontWeight="bold">
                       {bestPlatform || '-'}
                     </Text>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      {bestPlatform ? 'vous mentionne le plus' : 'aucune mention encore'}
+                      {bestPlatform ? t.visibility.mentionsYouMost : t.visibility.noMentionsYet}
                     </Text>
                   </BlockStack>
                 </Card>
@@ -430,18 +431,18 @@ export default function VisibilityPage() {
           <Card>
             <BlockStack gap="400">
               <BlockStack gap="200">
-                <Text as="h3" variant="headingMd">Testez une question personnalisée</Text>
+                <Text as="h3" variant="headingMd">{t.visibility.customQuestion}</Text>
                 <Text as="p" tone="subdued">
-                  Tapez une question que vos clients pourraient poser à une IA et voyez si votre boutique est mentionnée.
+                  {t.visibility.customQuestionDesc}
                 </Text>
               </BlockStack>
               <Divider />
               <InlineStack gap="200" blockAlign="end" wrap>
                 <Box minWidth="300px" maxWidth="500px">
                   <TextField
-                    label="Votre question"
+                    label={t.visibility.yourQuestion}
                     labelHidden
-                    placeholder="Ex: Quels sont les meilleurs sites pour acheter des chaussures de running ?"
+                    placeholder={t.visibility.questionPlaceholder}
                     value={customQuery}
                     onChange={setCustomQuery}
                     autoComplete="off"
@@ -453,11 +454,11 @@ export default function VisibilityPage() {
                   loading={checking}
                   variant="primary"
                 >
-                  Tester cette question
+                  {t.visibility.testQuestion}
                 </Button>
               </InlineStack>
               <Text as="p" variant="bodySm" tone="subdued">
-                Conseil : Posez des questions génériques sur votre secteur, pas des questions qui mentionnent directement votre marque.
+                {t.visibility.questionTip}
               </Text>
             </BlockStack>
           </Card>
@@ -469,15 +470,15 @@ export default function VisibilityPage() {
             <Card>
               <BlockStack gap="400">
                 <BlockStack gap="200">
-                  <Text as="h3" variant="headingMd">Historique des vérifications</Text>
+                  <Text as="h3" variant="headingMd">{t.visibility.checkHistory}</Text>
                   <Text as="p" variant="bodySm" tone="subdued">
-                    Consultez les réponses complètes des IA pour comprendre comment elles perçoivent votre marque.
+                    {t.visibility.checkHistoryDesc}
                   </Text>
                 </BlockStack>
                 <Divider />
                 <DataTable
                   columnContentTypes={['text', 'text', 'text', 'text', 'text', 'text']}
-                  headings={['Plateforme', 'Question', 'Résultat', 'Position', 'Date', 'Réponse IA']}
+                  headings={[t.visibility.platform, t.visibility.question, t.visibility.result, t.visibility.position, t.visibility.date, t.visibility.aiResponse]}
                   rows={tableRows}
                 />
               </BlockStack>
@@ -490,9 +491,9 @@ export default function VisibilityPage() {
           <Card>
             <BlockStack gap="400">
               <BlockStack gap="200">
-                <Text as="h3" variant="headingMd">Comment être plus souvent recommandé ?</Text>
+                <Text as="h3" variant="headingMd">{t.visibility.howToBeRecommended}</Text>
                 <Text as="p" variant="bodySm" tone="subdued">
-                  Les IA apprennent de votre contenu. Plus vos produits sont bien décrits, plus vous avez de chances d&apos;être mentionné.
+                  {t.visibility.howToBeRecommendedDesc}
                 </Text>
               </BlockStack>
               <Divider />
@@ -513,14 +514,14 @@ export default function VisibilityPage() {
                         fontSize: '14px',
                       }}>1</div>
                       <BlockStack gap="100">
-                        <Text as="p" fontWeight="semibold">Optimisez vos descriptions produits</Text>
+                        <Text as="p" fontWeight="semibold">{t.visibility.tip1Title}</Text>
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Des descriptions détaillées et naturelles aident les IA à comprendre vos produits.
+                          {t.visibility.tip1Desc}
                         </Text>
                       </BlockStack>
                     </InlineStack>
                     <Link href="/admin/products">
-                      <Button>Optimiser mes produits</Button>
+                      <Button>{t.visibility.optimizeProducts}</Button>
                     </Link>
                   </InlineStack>
                 </Box>
@@ -540,14 +541,14 @@ export default function VisibilityPage() {
                         fontSize: '14px',
                       }}>2</div>
                       <BlockStack gap="100">
-                        <Text as="p" fontWeight="semibold">Soyez cohérent avec votre nom de marque</Text>
+                        <Text as="p" fontWeight="semibold">{t.visibility.tip2Title}</Text>
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Utilisez toujours le même nom partout pour que les IA vous reconnaissent.
+                          {t.visibility.tip2Desc}
                         </Text>
                       </BlockStack>
                     </InlineStack>
                     <Link href="/admin/settings">
-                      <Button>Vérifier mes paramètres</Button>
+                      <Button>{t.visibility.checkSettings}</Button>
                     </Link>
                   </InlineStack>
                 </Box>
@@ -567,14 +568,14 @@ export default function VisibilityPage() {
                         fontSize: '14px',
                       }}>3</div>
                       <BlockStack gap="100">
-                        <Text as="p" fontWeight="semibold">Configurez vos outils IA</Text>
+                        <Text as="p" fontWeight="semibold">{t.visibility.tip3Title}</Text>
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Le fichier llms.txt et les schémas JSON-LD aident les IA à mieux vous référencer.
+                          {t.visibility.tip3Desc}
                         </Text>
                       </BlockStack>
                     </InlineStack>
                     <Link href="/admin/tools">
-                      <Button variant="primary">Configurer les outils</Button>
+                      <Button variant="primary">{t.visibility.configureTools}</Button>
                     </Link>
                   </InlineStack>
                 </Box>
@@ -590,8 +591,8 @@ export default function VisibilityPage() {
         onClose={closeModal}
         title={
           selectedCheck
-            ? `${getPlatformIcon(selectedCheck.platform)} Réponse de ${selectedCheck.platform.charAt(0).toUpperCase() + selectedCheck.platform.slice(1)}`
-            : 'Réponse IA'
+            ? `${getPlatformIcon(selectedCheck.platform)} ${t.visibility.responseFrom} ${selectedCheck.platform.charAt(0).toUpperCase() + selectedCheck.platform.slice(1)}`
+            : t.visibility.aiResponse
         }
         size="large"
       >
@@ -602,7 +603,7 @@ export default function VisibilityPage() {
               <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                 <BlockStack gap="200">
                   <Text as="h4" variant="headingSm" tone="subdued">
-                    Question posée
+                    {t.visibility.questionAsked}
                   </Text>
                   <Text as="p" fontWeight="semibold">
                     &quot;{selectedCheck.query}&quot;
@@ -614,14 +615,14 @@ export default function VisibilityPage() {
               <InlineStack gap="300" align="start" wrap>
                 <Box>
                   <BlockStack gap="100">
-                    <Text as="span" variant="bodySm" tone="subdued">Résultat</Text>
+                    <Text as="span" variant="bodySm" tone="subdued">{t.visibility.result}</Text>
                     {getQualityBadge(selectedCheck.responseQuality, selectedCheck.isMentioned)}
                   </BlockStack>
                 </Box>
                 {selectedCheck.position && (
                   <Box>
                     <BlockStack gap="100">
-                      <Text as="span" variant="bodySm" tone="subdued">Position</Text>
+                      <Text as="span" variant="bodySm" tone="subdued">{t.visibility.position}</Text>
                       <Badge tone="info">{`#${selectedCheck.position}`}</Badge>
                     </BlockStack>
                   </Box>
@@ -629,7 +630,7 @@ export default function VisibilityPage() {
                 {selectedCheck.competitorsFound && selectedCheck.competitorsFound.length > 0 && (
                   <Box>
                     <BlockStack gap="100">
-                      <Text as="span" variant="bodySm" tone="subdued">Concurrents détectés</Text>
+                      <Text as="span" variant="bodySm" tone="subdued">{t.visibility.competitorsDetected}</Text>
                       <Text as="p" variant="bodySm">
                         {selectedCheck.competitorsFound.map(c => c.name).join(', ')}
                       </Text>
@@ -643,7 +644,7 @@ export default function VisibilityPage() {
                 <Box padding="300" background="bg-surface-success" borderRadius="200">
                   <BlockStack gap="200">
                     <InlineStack gap="200" blockAlign="center">
-                      <Badge tone="success">Votre marque a été mentionnée</Badge>
+                      <Badge tone="success">{t.visibility.yourBrandMentioned}</Badge>
                     </InlineStack>
                     <Text as="p" variant="bodySm">
                       &quot;...{selectedCheck.mentionContext}...&quot;
@@ -655,10 +656,9 @@ export default function VisibilityPage() {
               {!selectedCheck.isMentioned && (
                 <Box padding="300" background="bg-surface-critical" borderRadius="200">
                   <BlockStack gap="200">
-                    <Text as="p" fontWeight="semibold">Votre marque n&apos;a pas été mentionnée</Text>
+                    <Text as="p" fontWeight="semibold">{t.visibility.yourBrandNotMentioned}</Text>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      L&apos;IA n&apos;a pas recommandé votre boutique pour cette question.
-                      Améliorez vos descriptions produits pour augmenter vos chances.
+                      {t.visibility.notMentionedDesc}
                     </Text>
                   </BlockStack>
                 </Box>
@@ -669,7 +669,7 @@ export default function VisibilityPage() {
               {/* Full AI Response */}
               <BlockStack gap="200">
                 <Text as="h4" variant="headingSm">
-                  Réponse complète de l&apos;IA
+                  {t.visibility.fullAiResponse}
                 </Text>
                 <Box
                   padding="400"
@@ -680,7 +680,7 @@ export default function VisibilityPage() {
                 >
                   <Scrollable style={{ maxHeight: '400px' }}>
                     <Text as="p" variant="bodyMd">
-                      {selectedCheck.rawResponse || 'Réponse non disponible'}
+                      {selectedCheck.rawResponse || t.visibility.responseNotAvailable}
                     </Text>
                   </Scrollable>
                 </Box>
@@ -688,7 +688,7 @@ export default function VisibilityPage() {
 
               {/* Timestamp */}
               <Text as="p" variant="bodySm" tone="subdued">
-                Vérifié le {new Date(selectedCheck.checkedAt).toLocaleDateString('fr-FR')} à {new Date(selectedCheck.checkedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                {t.visibility.checkedOn} {new Date(selectedCheck.checkedAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')} {t.visibility.at} {new Date(selectedCheck.checkedAt).toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </BlockStack>
           )}

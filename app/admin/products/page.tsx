@@ -32,6 +32,7 @@ import {
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type ProductIssue = {
   code: string;
@@ -149,6 +150,7 @@ export default function ProductsPage() {
 
   const { fetch: authFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, isAuthenticated, shopDetectionFailed, error: shopError } = useShopContext();
+  const { t, locale } = useAdminLanguage();
 
   const fetchData = useCallback(async () => {
     try {
@@ -158,14 +160,14 @@ export default function ProductsPage() {
         authFetch('/api/optimize'),
       ]);
 
-      if (!auditResponse.ok) throw new Error('Impossible de charger vos produits');
+      if (!auditResponse.ok) throw new Error(t.products.loading);
 
       const auditResult = await auditResponse.json();
       if (auditResult.success) {
         setData(auditResult.data);
         setError(null);
       } else {
-        setError(auditResult.error || 'Une erreur est survenue');
+        setError(auditResult.error || t.common.error);
       }
 
       if (optimizeResponse.ok) {
@@ -176,11 +178,11 @@ export default function ProductsPage() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de charger vos produits');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setLoading(false);
     }
-  }, [authFetch]);
+  }, [authFetch, t.common.error, t.products.loading]);
 
   useEffect(() => {
     if (!shopLoading && isAuthenticated) {
@@ -195,12 +197,12 @@ export default function ProductsPage() {
       const response = await authFetch('/api/audit', { method: 'POST' });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Analyse échouée');
+        throw new Error(errorData.error || t.common.error);
       }
       await fetchData();
-      setSuccess('Produits analysés avec succès !');
+      setSuccess(locale === 'fr' ? 'Produits analysés avec succès !' : 'Products analyzed successfully!');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analyse échouée');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setAuditing(false);
     }
@@ -231,16 +233,16 @@ export default function ProductsPage() {
         result.data.optimization.suggestions.forEach((_: OptimizationSuggestion, i: number) => allSelected.add(i));
         setSelectedSuggestions(allSelected);
       } else {
-        setError(result.error || 'Impossible de générer les suggestions');
+        setError(result.error || t.common.error);
         setShowModal(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Optimisation échouée');
+      setError(err instanceof Error ? err.message : t.common.error);
       setShowModal(false);
     } finally {
       setOptimizing(false);
     }
-  }, [authFetch]);
+  }, [authFetch, t.common.error]);
 
   const handleCopy = async (text: string, field: string) => {
     try {
@@ -248,7 +250,7 @@ export default function ProductsPage() {
       setCopied(field);
       setTimeout(() => setCopied(null), 2000);
     } catch {
-      setError('Échec de la copie');
+      setError(locale === 'fr' ? 'Echec de la copie' : 'Copy failed');
     }
   };
 
@@ -271,7 +273,7 @@ export default function ProductsPage() {
     if (!optimization) return;
     const selected = optimization.suggestions.filter((_, i) => selectedSuggestions.has(i));
     if (selected.length === 0) {
-      setError('Veuillez sélectionner au moins une suggestion à appliquer');
+      setError(locale === 'fr' ? 'Veuillez selectionner au moins une suggestion a appliquer' : 'Please select at least one suggestion to apply');
       return;
     }
     setSuggestionsToApply(selected);
@@ -307,17 +309,20 @@ export default function ProductsPage() {
         }
         setShowApplyConfirm(false);
         setShowModal(false);
+        const appliedText = locale === 'fr'
+          ? `${data.data.applied} modification${data.data.applied !== 1 ? 's' : ''} appliquee${data.data.applied !== 1 ? 's' : ''} !`
+          : `${data.data.applied} change${data.data.applied !== 1 ? 's' : ''} applied!`;
         setSuccess(
-          `${data.data.applied} modification${data.data.applied !== 1 ? 's' : ''} appliquée${data.data.applied !== 1 ? 's' : ''} ! ` +
-            `Score : ${data.data.scoreBefore ?? '?'} → ${data.data.scoreAfter ?? '?'}`
+          `${appliedText} ` +
+            `${locale === 'fr' ? 'Score' : 'Score'}: ${data.data.scoreBefore ?? '?'} → ${data.data.scoreAfter ?? '?'}`
         );
         // Reload data to refresh product list
         fetchData();
       } else {
-        setError(data.error || 'Échec de l\'application des modifications');
+        setError(data.error || t.common.error);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Échec de l\'application');
+      setError(e instanceof Error ? e.message : t.common.error);
     } finally {
       setApplying(false);
     }
@@ -335,24 +340,27 @@ export default function ProductsPage() {
       const data = await response.json();
 
       if (data.success) {
-        setSuccess(`Modification annulée : ${getFieldLabel(data.data.field)} restauré`);
+        const undoneText = locale === 'fr'
+          ? `Modification annulee : ${getFieldLabel(data.data.field)} restaure`
+          : `Change undone: ${getFieldLabel(data.data.field)} restored`;
+        setSuccess(undoneText);
         setLastAppliedHistoryIds([]);
         fetchData();
       } else {
-        setError(data.error || 'Échec de l\'annulation');
+        setError(data.error || t.common.error);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Échec de l\'annulation');
+      setError(e instanceof Error ? e.message : t.common.error);
     } finally {
       setApplying(false);
     }
   };
 
   const getScoreBadge = (score: number) => {
-    if (score >= 90) return <Badge tone="success">Excellent</Badge>;
-    if (score >= 70) return <Badge tone="success">Bon</Badge>;
-    if (score >= 40) return <Badge tone="warning">À améliorer</Badge>;
-    return <Badge tone="critical">Urgent</Badge>;
+    if (score >= 90) return <Badge tone="success">{t.products.excellent}</Badge>;
+    if (score >= 70) return <Badge tone="success">{t.products.good}</Badge>;
+    if (score >= 40) return <Badge tone="warning">{t.products.warning}</Badge>;
+    return <Badge tone="critical">{t.products.critical}</Badge>;
   };
 
   const getScoreColor = (score: number): "success" | "highlight" | "critical" => {
@@ -362,7 +370,7 @@ export default function ProductsPage() {
   };
 
   const getFieldLabel = (field: string) => {
-    const labels: Record<string, string> = {
+    const labels: Record<string, string> = locale === 'fr' ? {
       description: 'Description',
       seo_title: 'Titre SEO',
       seoTitle: 'Titre SEO',
@@ -372,6 +380,16 @@ export default function ProductsPage() {
       altText: 'Texte alt image',
       productType: 'Type de produit',
       vendor: 'Vendeur',
+    } : {
+      description: 'Description',
+      seo_title: 'SEO Title',
+      seoTitle: 'SEO Title',
+      seo_description: 'SEO Description',
+      seoDescription: 'SEO Description',
+      tags: 'Tags',
+      altText: 'Image alt text',
+      productType: 'Product type',
+      vendor: 'Vendor',
     };
     return labels[field] || field;
   };
@@ -454,10 +472,10 @@ export default function ProductsPage() {
 
   // Tabs - memoized (must be before early returns per rules of hooks)
   const tabs = useMemo(() => [
-    { id: 'all', content: `Tous les produits (${sortedProducts.length})` },
-    { id: 'improve', content: `À améliorer (${productsNeedingWork.length})` },
-    { id: 'history', content: `Historique (${activeHistory.length})` },
-  ], [sortedProducts.length, productsNeedingWork.length, activeHistory.length]);
+    { id: 'all', content: locale === 'fr' ? `Tous les produits (${sortedProducts.length})` : `All products (${sortedProducts.length})` },
+    { id: 'improve', content: locale === 'fr' ? `A ameliorer (${productsNeedingWork.length})` : `Needs improvement (${productsNeedingWork.length})` },
+    { id: 'history', content: locale === 'fr' ? `Historique (${activeHistory.length})` : `History (${activeHistory.length})` },
+  ], [sortedProducts.length, productsNeedingWork.length, activeHistory.length, locale]);
 
   // Display products based on selected tab - memoized
   const displayProducts = useMemo(() => {
@@ -484,10 +502,10 @@ export default function ProductsPage() {
     </InlineStack>,
     getScoreBadge(product.aiScore),
     <InlineStack key={`status-${product.id}`} gap="100">
-      {!product.hasImages && <Badge tone="critical">Sans image</Badge>}
-      {!product.hasDescription && <Badge tone="critical">Sans description</Badge>}
+      {!product.hasImages && <Badge tone="critical">{t.products.noImages}</Badge>}
+      {!product.hasDescription && <Badge tone="critical">{t.products.noDescription}</Badge>}
       {product.hasImages && product.hasDescription && product.aiScore >= 70 && (
-        <Badge tone="success">Prêt</Badge>
+        <Badge tone="success">{locale === 'fr' ? 'Pret' : 'Ready'}</Badge>
       )}
     </InlineStack>,
     <Button
@@ -497,9 +515,9 @@ export default function ProductsPage() {
       disabled={!quota?.available || product.aiScore >= 90}
       size="slim"
     >
-      Optimiser
+      {t.products.optimize}
     </Button>,
-  ]), [displayProducts, quota?.available, handleOptimize]);
+  ]), [displayProducts, quota?.available, handleOptimize, t.products.noImages, t.products.noDescription, t.products.optimize, locale]);
 
   // Show authentication error if shop detection failed
   if (shopDetectionFailed) {
@@ -509,14 +527,14 @@ export default function ProductsPage() {
   // Loading state
   if (loading || shopLoading) {
     return (
-      <Page title="Produits" backAction={{ content: 'Accueil', url: '/admin' }}>
+      <Page title={t.products.title} backAction={{ content: t.dashboard.title, url: '/admin' }}>
         <Layout>
           <Layout.Section>
             <Card>
               <Box padding="1000">
                 <BlockStack gap="400" inlineAlign="center">
                   <Spinner size="large" />
-                  <Text as="p" variant="bodyLg">Chargement de vos produits...</Text>
+                  <Text as="p" variant="bodyLg">{t.products.loading}</Text>
                 </BlockStack>
               </Box>
             </Card>
@@ -532,17 +550,17 @@ export default function ProductsPage() {
 
   return (
     <Page
-      title="Produits"
-      subtitle="Analysez et optimisez vos produits pour être recommandé par les IA"
-      backAction={{ content: 'Accueil', url: '/admin' }}
+      title={t.products.title}
+      subtitle={t.products.subtitle}
+      backAction={{ content: t.dashboard.title, url: '/admin' }}
       primaryAction={{
-        content: auditing ? 'Analyse...' : 'Analyser mes produits',
+        content: auditing ? t.products.analyzing : t.products.runAnalysis,
         onAction: runAudit,
         loading: auditing,
       }}
       secondaryActions={[
         {
-          content: 'Actualiser',
+          content: locale === 'fr' ? 'Actualiser' : 'Refresh',
           icon: RefreshIcon,
           onAction: fetchData,
         },
@@ -551,7 +569,7 @@ export default function ProductsPage() {
       <Layout>
         {error && (
           <Layout.Section>
-            <Banner tone="critical" title="Une erreur est survenue" onDismiss={() => setError(null)}>
+            <Banner tone="critical" title={t.common.error} onDismiss={() => setError(null)}>
               <p>{error}</p>
             </Banner>
           </Layout.Section>
@@ -569,7 +587,7 @@ export default function ProductsPage() {
                     onClick={() => handleUndo(lastAppliedHistoryIds[0])}
                     loading={applying}
                   >
-                    Annuler
+                    {locale === 'fr' ? 'Annuler' : 'Undo'}
                   </Button>
                 )}
               </InlineStack>
@@ -591,17 +609,18 @@ export default function ProductsPage() {
                   }}>
                     <BlockStack gap="400">
                       <Text as="h2" variant="headingLg">
-                        Bienvenue dans l&apos;analyse de produits
+                        {locale === 'fr' ? 'Bienvenue dans l\'analyse de produits' : 'Welcome to product analysis'}
                       </Text>
                       <Text as="p">
-                        Découvrez comment vos produits sont perçus par ChatGPT, Perplexity et les autres IA.
-                        Nous analysons chaque produit et vous donnons un score de visibilité.
+                        {locale === 'fr'
+                          ? 'Decouvrez comment vos produits sont percus par ChatGPT, Perplexity et les autres IA. Nous analysons chaque produit et vous donnons un score de visibilite.'
+                          : 'Discover how your products are perceived by ChatGPT, Perplexity and other AI. We analyze each product and give you a visibility score.'}
                       </Text>
                     </BlockStack>
                   </div>
 
                   <BlockStack gap="300">
-                    <Text as="h3" variant="headingMd">Comment ça marche ?</Text>
+                    <Text as="h3" variant="headingMd">{locale === 'fr' ? 'Comment ca marche ?' : 'How does it work?'}</Text>
                     <InlineStack gap="400" wrap>
                       <Box minWidth="200px" maxWidth="300px">
                         <BlockStack gap="200">
@@ -616,9 +635,9 @@ export default function ProductsPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>1</div>
-                          <Text as="p" fontWeight="semibold">Analyse automatique</Text>
+                          <Text as="p" fontWeight="semibold">{locale === 'fr' ? 'Analyse automatique' : 'Automatic analysis'}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Nous analysons vos descriptions, images, SEO et métadonnées
+                            {locale === 'fr' ? 'Nous analysons vos descriptions, images, SEO et metadonnees' : 'We analyze your descriptions, images, SEO and metadata'}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -635,9 +654,9 @@ export default function ProductsPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>2</div>
-                          <Text as="p" fontWeight="semibold">Score de visibilité IA</Text>
+                          <Text as="p" fontWeight="semibold">{locale === 'fr' ? 'Score de visibilite IA' : 'AI visibility score'}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            Chaque produit reçoit un score de 0 à 100 basé sur sa lisibilité par les IA
+                            {locale === 'fr' ? 'Chaque produit recoit un score de 0 a 100 base sur sa lisibilite par les IA' : 'Each product receives a score from 0 to 100 based on its readability by AI'}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -654,9 +673,9 @@ export default function ProductsPage() {
                             justifyContent: 'center',
                             fontWeight: 'bold',
                           }}>3</div>
-                          <Text as="p" fontWeight="semibold">Optimisation en 1 clic</Text>
+                          <Text as="p" fontWeight="semibold">{locale === 'fr' ? 'Optimisation en 1 clic' : 'One-click optimization'}</Text>
                           <Text as="p" variant="bodySm" tone="subdued">
-                            L&apos;IA génère des suggestions que vous appliquez directement à Shopify
+                            {locale === 'fr' ? 'L\'IA genere des suggestions que vous appliquez directement a Shopify' : 'AI generates suggestions that you apply directly to Shopify'}
                           </Text>
                         </BlockStack>
                       </Box>
@@ -665,7 +684,7 @@ export default function ProductsPage() {
 
                   <Box paddingBlockStart="200">
                     <Button variant="primary" size="large" onClick={runAudit} loading={auditing}>
-                      Lancer ma première analyse
+                      {locale === 'fr' ? 'Lancer ma premiere analyse' : 'Run my first analysis'}
                     </Button>
                   </Box>
                 </BlockStack>
@@ -677,19 +696,19 @@ export default function ProductsPage() {
         {/* Plan Limit Banner */}
         {data?.plan?.isAtLimit && (
           <Layout.Section>
-            <Banner tone="warning" title="Limite de plan atteinte">
+            <Banner tone="warning" title={locale === 'fr' ? 'Limite de plan atteinte' : 'Plan limit reached'}>
               <BlockStack gap="200">
                 <Text as="p">
-                  Votre plan {data.plan.current} permet d&apos;analyser jusqu&apos;à{' '}
-                  <strong>{data.plan.productLimit} produits</strong>.
-                  Vous avez {data.plan.productsNotAnalyzed} produits supplémentaires non analysés.
+                  {locale === 'fr'
+                    ? `Votre plan ${data.plan.current} permet d'analyser jusqu'a ${data.plan.productLimit} produits. Vous avez ${data.plan.productsNotAnalyzed} produits supplementaires non analyses.`
+                    : `Your ${data.plan.current} plan allows analyzing up to ${data.plan.productLimit} products. You have ${data.plan.productsNotAnalyzed} additional products not analyzed.`}
                 </Text>
                 <InlineStack gap="200">
                   <Button url="/admin/settings" variant="primary">
-                    Passer à un plan supérieur
+                    {locale === 'fr' ? 'Passer a un plan superieur' : 'Upgrade plan'}
                   </Button>
                   <Text as="span" tone="subdued" variant="bodySm">
-                    pour analyser vos {data.totalProducts} produits
+                    {locale === 'fr' ? `pour analyser vos ${data.totalProducts} produits` : `to analyze your ${data.totalProducts} products`}
                   </Text>
                 </InlineStack>
               </BlockStack>
@@ -704,7 +723,7 @@ export default function ProductsPage() {
               <Box minWidth="180px">
                 <Card>
                   <BlockStack gap="200">
-                    <Text as="h3" variant="bodySm" tone="subdued">Score moyen</Text>
+                    <Text as="h3" variant="bodySm" tone="subdued">{locale === 'fr' ? 'Score moyen' : 'Average score'}</Text>
                     <InlineStack gap="200" blockAlign="center">
                       <Text as="p" variant="heading2xl" fontWeight="bold">
                         {data?.averageScore ?? 0}
@@ -719,7 +738,7 @@ export default function ProductsPage() {
                       />
                     </Box>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      Plus le score est élevé, plus les IA peuvent recommander vos produits
+                      {locale === 'fr' ? 'Plus le score est eleve, plus les IA peuvent recommander vos produits' : 'The higher the score, the more AI can recommend your products'}
                     </Text>
                   </BlockStack>
                 </Card>
@@ -728,15 +747,15 @@ export default function ProductsPage() {
               <Box minWidth="140px">
                 <Card>
                   <BlockStack gap="200">
-                    <Text as="h3" variant="bodySm" tone="subdued">Produits analysés</Text>
+                    <Text as="h3" variant="bodySm" tone="subdued">{t.products.productsAnalyzed}</Text>
                     <Text as="p" variant="heading2xl" fontWeight="bold">
                       {data?.auditedProducts ?? 0}
                     </Text>
                     <Text as="p" variant="bodySm" tone={data?.plan?.isAtLimit ? 'critical' : 'subdued'}>
                       {data?.plan?.isAtLimit ? (
-                        <>sur {data?.plan?.productLimit} (limite)</>
+                        <>{locale === 'fr' ? `sur ${data?.plan?.productLimit} (limite)` : `of ${data?.plan?.productLimit} (limit)`}</>
                       ) : (
-                        <>sur {data?.totalProducts ?? 0} au total</>
+                        <>{locale === 'fr' ? `sur ${data?.totalProducts ?? 0} au total` : `of ${data?.totalProducts ?? 0} total`}</>
                       )}
                     </Text>
                   </BlockStack>
@@ -746,12 +765,12 @@ export default function ProductsPage() {
               <Box minWidth="140px">
                 <Card>
                   <BlockStack gap="200">
-                    <Text as="h3" variant="bodySm" tone="subdued">À améliorer</Text>
+                    <Text as="h3" variant="bodySm" tone="subdued">{t.products.needAttention}</Text>
                     <Text as="p" variant="heading2xl" fontWeight="bold" tone={productsNeedingWork.length > 0 ? 'critical' : 'success'}>
                       {productsNeedingWork.length}
                     </Text>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      produits avec un score &lt; 70
+                      {locale === 'fr' ? 'produits avec un score < 70' : 'products with score < 70'}
                     </Text>
                   </BlockStack>
                 </Card>
@@ -760,17 +779,17 @@ export default function ProductsPage() {
               <Box minWidth="160px">
                 <Card>
                   <BlockStack gap="200">
-                    <Text as="h3" variant="bodySm" tone="subdued">Crédits IA</Text>
+                    <Text as="h3" variant="bodySm" tone="subdued">{locale === 'fr' ? 'Credits IA' : 'AI Credits'}</Text>
                     <InlineStack gap="200" blockAlign="center">
                       <Text as="p" variant="heading2xl" fontWeight="bold">
                         {quota?.remaining ?? 0}
                       </Text>
                       <Badge tone={quota?.available ? 'success' : 'critical'}>
-                        {quota?.available ? 'Disponibles' : 'Épuisés'}
+                        {quota?.available ? (locale === 'fr' ? 'Disponibles' : 'Available') : (locale === 'fr' ? 'Epuises' : 'Exhausted')}
                       </Badge>
                     </InlineStack>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      sur {quota?.limit ?? 0} ce mois-ci
+                      {locale === 'fr' ? `sur ${quota?.limit ?? 0} ce mois-ci` : `of ${quota?.limit ?? 0} this month`}
                     </Text>
                   </BlockStack>
                 </Card>
@@ -793,15 +812,15 @@ export default function ProductsPage() {
                           filters={[
                             {
                               key: 'status',
-                              label: 'Statut',
+                              label: t.products.status,
                               filter: (
                                 <ChoiceList
-                                  title="Statut"
+                                  title={t.products.status}
                                   titleHidden
                                   choices={[
-                                    { label: 'Urgent (score < 40)', value: 'critical' },
-                                    { label: 'À améliorer (40-69)', value: 'warning' },
-                                    { label: 'Bon (70+)', value: 'good' },
+                                    { label: locale === 'fr' ? 'Urgent (score < 40)' : 'Urgent (score < 40)', value: 'critical' },
+                                    { label: locale === 'fr' ? 'A ameliorer (40-69)' : 'Needs improvement (40-69)', value: 'warning' },
+                                    { label: locale === 'fr' ? 'Bon (70+)' : 'Good (70+)', value: 'good' },
                                   ]}
                                   selected={selectedFilter}
                                   onChange={handleFilterChange}
@@ -813,7 +832,7 @@ export default function ProductsPage() {
                           ]}
                           appliedFilters={selectedFilter.map((filter) => ({
                             key: filter,
-                            label: filter === 'critical' ? 'Urgent' : filter === 'warning' ? 'À améliorer' : 'Bon',
+                            label: filter === 'critical' ? t.products.critical : filter === 'warning' ? t.products.warning : t.products.good,
                             onRemove: () => handleFilterChange(selectedFilter.filter((f) => f !== filter)),
                           }))}
                           onClearAll={() => handleFilterChange([])}
@@ -832,10 +851,11 @@ export default function ProductsPage() {
                   history.length === 0 ? (
                     <Box padding="600">
                       <BlockStack gap="300" inlineAlign="center">
-                        <Text as="p" variant="headingMd">Pas encore d&apos;historique</Text>
+                        <Text as="p" variant="headingMd">{locale === 'fr' ? 'Pas encore d\'historique' : 'No history yet'}</Text>
                         <Text as="p" tone="subdued">
-                          Quand vous appliquez des suggestions IA à vos produits, elles apparaîtront ici.
-                          Vous pourrez annuler n&apos;importe quelle modification.
+                          {locale === 'fr'
+                            ? 'Quand vous appliquez des suggestions IA a vos produits, elles apparaitront ici. Vous pourrez annuler n\'importe quelle modification.'
+                            : 'When you apply AI suggestions to your products, they will appear here. You can undo any change.'}
                         </Text>
                       </BlockStack>
                     </Box>
@@ -843,7 +863,9 @@ export default function ProductsPage() {
                     <BlockStack gap="300">
                       <Box padding="200">
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Retrouvez ici toutes vos modifications. Vous pouvez annuler une modification à tout moment pour restaurer la valeur originale.
+                          {locale === 'fr'
+                            ? 'Retrouvez ici toutes vos modifications. Vous pouvez annuler une modification a tout moment pour restaurer la valeur originale.'
+                            : 'Find all your changes here. You can undo a change at any time to restore the original value.'}
                         </Text>
                       </Box>
                       {history.slice(0, 20).map((entry) => (
@@ -858,18 +880,18 @@ export default function ProductsPage() {
                               <InlineStack gap="200" blockAlign="center">
                                 <Text as="p" fontWeight="semibold">{entry.productTitle}</Text>
                                 <Badge tone={entry.status === 'applied' ? 'success' : 'info'}>
-                                  {entry.status === 'applied' ? 'Actif' : 'Annulé'}
+                                  {entry.status === 'applied' ? (locale === 'fr' ? 'Actif' : 'Active') : (locale === 'fr' ? 'Annule' : 'Undone')}
                                 </Badge>
                               </InlineStack>
                               <InlineStack gap="200">
                                 <Badge>{getFieldLabel(entry.field)}</Badge>
                                 <Text as="span" variant="bodySm" tone="subdued">
-                                  {new Date(entry.createdAt).toLocaleDateString('fr-FR')} à{' '}
-                                  {new Date(entry.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                  {new Date(entry.createdAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')} {locale === 'fr' ? 'a' : 'at'}{' '}
+                                  {new Date(entry.createdAt).toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                                 </Text>
                                 {entry.scoreBefore !== null && entry.scoreAfter !== null && (
                                   <Text as="span" variant="bodySm">
-                                    Score : {entry.scoreBefore} → {entry.scoreAfter}
+                                    Score: {entry.scoreBefore} → {entry.scoreAfter}
                                   </Text>
                                 )}
                               </InlineStack>
@@ -881,7 +903,7 @@ export default function ProductsPage() {
                                 onClick={() => handleUndo(entry.id)}
                                 loading={applying}
                               >
-                                Annuler
+                                {locale === 'fr' ? 'Annuler' : 'Undo'}
                               </Button>
                             )}
                           </InlineStack>
@@ -892,9 +914,9 @@ export default function ProductsPage() {
                 ) : displayProducts.length === 0 ? (
                   <Box padding="600">
                     <BlockStack gap="300" inlineAlign="center">
-                      <Text as="p" variant="headingMd" tone="success">Tous vos produits sont bien optimisés !</Text>
+                      <Text as="p" variant="headingMd" tone="success">{locale === 'fr' ? 'Tous vos produits sont bien optimises !' : 'All your products are well optimized!'}</Text>
                       <Text as="p" tone="subdued">
-                        Tous vos produits ont un score de 70 ou plus. Excellent travail !
+                        {locale === 'fr' ? 'Tous vos produits ont un score de 70 ou plus. Excellent travail !' : 'All your products have a score of 70 or higher. Great job!'}
                       </Text>
                     </BlockStack>
                   </Box>
@@ -905,21 +927,21 @@ export default function ProductsPage() {
                       headings={[
                         <InlineStack key="h-product" gap="100" blockAlign="center">
                           <Button variant="plain" onClick={() => handleSort('title')}>
-                            {`Produit ${sortColumn === 'title' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
+                            {`${locale === 'fr' ? 'Produit' : 'Product'} ${sortColumn === 'title' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
                           </Button>
                         </InlineStack>,
                         <InlineStack key="h-score" gap="100" blockAlign="center">
                           <Button variant="plain" onClick={() => handleSort('score')}>
-                            {`Score ${sortColumn === 'score' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
+                            {`${t.products.score} ${sortColumn === 'score' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
                           </Button>
                         </InlineStack>,
                         <InlineStack key="h-status" gap="100" blockAlign="center">
                           <Button variant="plain" onClick={() => handleSort('status')}>
-                            {`Statut ${sortColumn === 'status' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
+                            {`${t.products.status} ${sortColumn === 'status' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}`}
                           </Button>
                         </InlineStack>,
-                        'Problèmes',
-                        'Action',
+                        t.products.issues,
+                        locale === 'fr' ? 'Action' : 'Action',
                       ]}
                       rows={tableRows}
                     />
@@ -945,35 +967,38 @@ export default function ProductsPage() {
           <Layout.Section>
             <Card>
               <BlockStack gap="400">
-                <Text as="h3" variant="headingMd">Conseils pour améliorer vos produits</Text>
+                <Text as="h3" variant="headingMd">{locale === 'fr' ? 'Conseils pour ameliorer vos produits' : 'Tips to improve your products'}</Text>
                 <Divider />
                 <BlockStack gap="200">
                   {criticalCount > 0 && (
                     <Box padding="300" background="bg-surface-critical" borderRadius="200">
                       <BlockStack gap="100">
-                        <Text as="p" fontWeight="semibold">Ajoutez des images et descriptions</Text>
+                        <Text as="p" fontWeight="semibold">{locale === 'fr' ? 'Ajoutez des images et descriptions' : 'Add images and descriptions'}</Text>
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Les produits sans images ou descriptions ne sont presque jamais recommandés par les IA.
-                          C&apos;est la base pour être visible.
+                          {locale === 'fr'
+                            ? 'Les produits sans images ou descriptions ne sont presque jamais recommandes par les IA. C\'est la base pour etre visible.'
+                            : 'Products without images or descriptions are almost never recommended by AI. This is the foundation for being visible.'}
                         </Text>
                       </BlockStack>
                     </Box>
                   )}
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Utilisez le bouton &quot;Optimiser&quot;</Text>
+                      <Text as="p" fontWeight="semibold">{locale === 'fr' ? 'Utilisez le bouton "Optimiser"' : 'Use the "Optimize" button'}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Notre IA analyse votre produit et génère des suggestions personnalisées.
-                        Appliquez-les en 1 clic directement sur Shopify.
+                        {locale === 'fr'
+                          ? 'Notre IA analyse votre produit et genere des suggestions personnalisees. Appliquez-les en 1 clic directement sur Shopify.'
+                          : 'Our AI analyzes your product and generates personalized suggestions. Apply them in 1 click directly to Shopify.'}
                       </Text>
                     </BlockStack>
                   </Box>
                   <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                     <BlockStack gap="100">
-                      <Text as="p" fontWeight="semibold">Visez un score de 70+</Text>
+                      <Text as="p" fontWeight="semibold">{locale === 'fr' ? 'Visez un score de 70+' : 'Aim for a score of 70+'}</Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        Les produits avec un score de 70 ou plus ont une bien meilleure chance
-                        d&apos;être recommandés par ChatGPT, Perplexity et autres assistants IA.
+                        {locale === 'fr'
+                          ? 'Les produits avec un score de 70 ou plus ont une bien meilleure chance d\'etre recommandes par ChatGPT, Perplexity et autres assistants IA.'
+                          : 'Products with a score of 70 or higher have a much better chance of being recommended by ChatGPT, Perplexity and other AI assistants.'}
                       </Text>
                     </BlockStack>
                   </Box>
@@ -988,11 +1013,11 @@ export default function ProductsPage() {
       <Modal
         open={showModal}
         onClose={() => setShowModal(false)}
-        title={selectedProduct ? `Optimiser : ${selectedProduct.title}` : 'Optimiser le produit'}
+        title={selectedProduct ? `${t.products.optimize}: ${selectedProduct.title}` : t.products.optimize}
         primaryAction={
           optimization && optimization.suggestions.length > 0
             ? {
-                content: `Appliquer ${selectedSuggestions.size} sur Shopify`,
+                content: locale === 'fr' ? `Appliquer ${selectedSuggestions.size} sur Shopify` : `Apply ${selectedSuggestions.size} to Shopify`,
                 icon: CheckIcon,
                 onAction: handleApplySelected,
                 disabled: selectedSuggestions.size === 0 || applying,
@@ -1002,7 +1027,7 @@ export default function ProductsPage() {
         }
         secondaryActions={[
           {
-            content: 'Fermer',
+            content: t.common.close,
             onAction: () => setShowModal(false),
           },
         ]}
@@ -1013,9 +1038,9 @@ export default function ProductsPage() {
             <Box padding="800">
               <BlockStack gap="400" inlineAlign="center">
                 <Spinner size="large" />
-                <Text as="p">Génération des suggestions IA...</Text>
+                <Text as="p">{locale === 'fr' ? 'Generation des suggestions IA...' : 'Generating AI suggestions...'}</Text>
                 <Text as="p" variant="bodySm" tone="subdued">
-                  Cela prend quelques secondes
+                  {locale === 'fr' ? 'Cela prend quelques secondes' : 'This takes a few seconds'}
                 </Text>
               </BlockStack>
             </Box>
@@ -1024,7 +1049,7 @@ export default function ProductsPage() {
               {/* Score improvement */}
               <Box padding="400" background="bg-surface-success" borderRadius="200">
                 <InlineStack align="space-between" blockAlign="center">
-                  <Text as="p" fontWeight="semibold">Amélioration prévue</Text>
+                  <Text as="p" fontWeight="semibold">{locale === 'fr' ? 'Amelioration prevue' : 'Expected improvement'}</Text>
                   <InlineStack gap="200">
                     <Badge tone="critical">{String(optimization.currentScore)}</Badge>
                     <Text as="p">→</Text>
@@ -1038,14 +1063,16 @@ export default function ProductsPage() {
               {optimization.suggestions.length === 0 ? (
                 <Banner tone="info">
                   <Text as="p">
-                    Ce produit est déjà bien optimisé, ou il nécessite du contenu de base (comme une description) avant que l&apos;IA puisse vous aider.
+                    {locale === 'fr'
+                      ? 'Ce produit est deja bien optimise, ou il necessite du contenu de base (comme une description) avant que l\'IA puisse vous aider.'
+                      : 'This product is already well optimized, or it needs basic content (like a description) before AI can help you.'}
                   </Text>
                 </Banner>
               ) : (
                 <BlockStack gap="400">
                   <InlineStack align="space-between" blockAlign="center" wrap>
                     <Text as="p" fontWeight="semibold">
-                      {selectedSuggestions.size} sur {optimization.suggestions.length} sélectionnées
+                      {locale === 'fr' ? `${selectedSuggestions.size} sur ${optimization.suggestions.length} selectionnees` : `${selectedSuggestions.size} of ${optimization.suggestions.length} selected`}
                     </Text>
                     <InlineStack gap="200">
                       <Button
@@ -1060,7 +1087,7 @@ export default function ProductsPage() {
                           }
                         }}
                       >
-                        {selectedSuggestions.size === optimization.suggestions.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+                        {selectedSuggestions.size === optimization.suggestions.length ? (locale === 'fr' ? 'Tout deselectionner' : 'Deselect all') : (locale === 'fr' ? 'Tout selectionner' : 'Select all')}
                       </Button>
                     </InlineStack>
                   </InlineStack>
@@ -1085,7 +1112,7 @@ export default function ProductsPage() {
                               size="slim"
                               onClick={() => handleCopy(suggestion.suggested, suggestion.field)}
                             >
-                              {copied === suggestion.field ? 'Copié !' : 'Copier'}
+                              {copied === suggestion.field ? (locale === 'fr' ? 'Copie !' : 'Copied!') : (locale === 'fr' ? 'Copier' : 'Copy')}
                             </Button>
                             <Button
                               icon={CheckIcon}
@@ -1094,7 +1121,7 @@ export default function ProductsPage() {
                               onClick={() => handleApplySingle(suggestion)}
                               loading={applying}
                             >
-                              Appliquer
+                              {locale === 'fr' ? 'Appliquer' : 'Apply'}
                             </Button>
                           </InlineStack>
                         </InlineStack>
@@ -1110,7 +1137,7 @@ export default function ProductsPage() {
                           <Box minWidth="45%">
                             <BlockStack gap="100">
                               <Text as="p" variant="bodySm" fontWeight="semibold">
-                                Avant :
+                                {locale === 'fr' ? 'Avant :' : 'Before:'}
                               </Text>
                               <Box padding="200" background="bg-surface-secondary" borderRadius="100">
                                 <Text as="p" variant="bodySm">
@@ -1118,7 +1145,7 @@ export default function ProductsPage() {
                                     ? suggestion.original.length > 150
                                       ? `${suggestion.original.substring(0, 150)}...`
                                       : suggestion.original
-                                    : '(vide)'}
+                                    : (locale === 'fr' ? '(vide)' : '(empty)')}
                                 </Text>
                               </Box>
                             </BlockStack>
@@ -1128,7 +1155,7 @@ export default function ProductsPage() {
                           <Box minWidth="45%">
                             <BlockStack gap="100">
                               <Text as="p" variant="bodySm" fontWeight="semibold">
-                                Après :
+                                {locale === 'fr' ? 'Apres :' : 'After:'}
                               </Text>
                               <Box padding="200" background="bg-surface-success" borderRadius="100">
                                 <Text as="p" variant="bodySm">
@@ -1148,8 +1175,9 @@ export default function ProductsPage() {
 
               <Banner tone="info">
                 <Text as="p">
-                  Cliquez sur &quot;Appliquer&quot; pour mettre à jour votre produit directement sur Shopify,
-                  ou &quot;Copier&quot; pour coller manuellement. Vous pouvez annuler toute modification depuis l&apos;onglet Historique.
+                  {locale === 'fr'
+                    ? 'Cliquez sur "Appliquer" pour mettre a jour votre produit directement sur Shopify, ou "Copier" pour coller manuellement. Vous pouvez annuler toute modification depuis l\'onglet Historique.'
+                    : 'Click "Apply" to update your product directly on Shopify, or "Copy" to paste manually. You can undo any change from the History tab.'}
                 </Text>
               </Banner>
             </BlockStack>
@@ -1161,16 +1189,16 @@ export default function ProductsPage() {
       <Modal
         open={showApplyConfirm}
         onClose={() => setShowApplyConfirm(false)}
-        title="Appliquer les modifications sur Shopify"
+        title={locale === 'fr' ? 'Appliquer les modifications sur Shopify' : 'Apply changes to Shopify'}
         primaryAction={{
-          content: 'Confirmer et appliquer',
+          content: locale === 'fr' ? 'Confirmer et appliquer' : 'Confirm and apply',
           icon: CheckIcon,
           onAction: confirmApply,
           loading: applying,
         }}
         secondaryActions={[
           {
-            content: 'Annuler',
+            content: t.common.cancel,
             onAction: () => setShowApplyConfirm(false),
           },
         ]}
@@ -1178,8 +1206,9 @@ export default function ProductsPage() {
         <Modal.Section>
           <BlockStack gap="400">
             <Text as="p">
-              Vous allez appliquer {suggestionsToApply.length} modification{suggestionsToApply.length !== 1 ? 's' : ''} à
-              votre produit sur Shopify :
+              {locale === 'fr'
+                ? `Vous allez appliquer ${suggestionsToApply.length} modification${suggestionsToApply.length !== 1 ? 's' : ''} a votre produit sur Shopify :`
+                : `You are about to apply ${suggestionsToApply.length} change${suggestionsToApply.length !== 1 ? 's' : ''} to your product on Shopify:`}
             </Text>
 
             <BlockStack gap="200">
@@ -1197,7 +1226,9 @@ export default function ProductsPage() {
 
             <Banner tone="info">
               <Text as="p">
-                Vous pourrez annuler ces modifications à tout moment depuis l&apos;onglet Historique.
+                {locale === 'fr'
+                  ? 'Vous pourrez annuler ces modifications a tout moment depuis l\'onglet Historique.'
+                  : 'You can undo these changes at any time from the History tab.'}
               </Text>
             </Banner>
           </BlockStack>
