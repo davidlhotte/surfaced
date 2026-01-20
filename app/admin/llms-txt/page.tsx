@@ -28,15 +28,14 @@ import {
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 
-// Available AI bots
+// Available AI bots - only those we can verify visibility for
 const AI_BOTS = [
   { id: 'ChatGPT-User', name: 'ChatGPT', description: 'OpenAI ChatGPT users' },
-  { id: 'GPTBot', name: 'GPTBot', description: 'OpenAI web crawler' },
-  { id: 'ClaudeBot', name: 'ClaudeBot', description: 'Anthropic Claude crawler' },
-  { id: 'PerplexityBot', name: 'PerplexityBot', description: 'Perplexity AI crawler' },
-  { id: 'Google-Extended', name: 'Google AI', description: 'Google Gemini/Bard crawler' },
-  { id: 'Amazonbot', name: 'Amazonbot', description: 'Amazon Alexa/Rufus crawler' },
-  { id: 'Meta-ExternalAgent', name: 'Meta AI', description: 'Meta AI crawler' },
+  { id: 'GPTBot', name: 'GPT Crawler', description: 'OpenAI web crawler' },
+  { id: 'ClaudeBot', name: 'Claude', description: 'Anthropic Claude crawler' },
+  { id: 'PerplexityBot', name: 'Perplexity', description: 'Perplexity AI crawler' },
+  { id: 'Google-Extended', name: 'Gemini', description: 'Google Gemini crawler' },
+  { id: 'cohere-ai', name: 'Cohere', description: 'Cohere AI crawler' },
 ];
 
 interface LlmsTxtConfig {

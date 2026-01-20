@@ -28,15 +28,15 @@ import {
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
-// AI services that can access your store
+// AI crawlers that can access your store via llms.txt
+// These are the bots we can actually verify visibility for via API
 const AI_SERVICES = [
   { id: 'ChatGPT-User', name: 'ChatGPT', icon: '🤖' },
-  { id: 'GPTBot', name: 'OpenAI', icon: '🧠' },
+  { id: 'GPTBot', name: 'GPT Crawler', icon: '🧠' },
   { id: 'ClaudeBot', name: 'Claude', icon: '🎭' },
   { id: 'PerplexityBot', name: 'Perplexity', icon: '🔍' },
   { id: 'Google-Extended', name: 'Google Gemini', icon: '✨' },
-  { id: 'Amazonbot', name: 'Alexa', icon: '🔊' },
-  { id: 'Meta-ExternalAgent', name: 'Meta AI', icon: '📘' },
+  { id: 'cohere-ai', name: 'Cohere', icon: '🔮' },
 ];
 
 interface AiGuideConfig {
