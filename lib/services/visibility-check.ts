@@ -18,11 +18,20 @@ const openrouter = process.env.OPENROUTER_API_KEY
   : null;
 
 // OpenRouter model mapping for each platform
-const OPENROUTER_MODELS: Record<Platform, string> = {
-  chatgpt: 'openai/gpt-4o-mini',
-  perplexity: 'perplexity/sonar', // Has web search built-in
-  gemini: 'google/gemini-2.0-flash-001', // Google Gemini Flash
-  copilot: 'nvidia/nemotron-nano-12b-v2-vl:free', // Free alternative for Copilot-like responses
+// Paid models provide premium quality, free models offer cost-effective alternatives
+const OPENROUTER_MODELS: Record<Platform, { model: string; free: boolean; displayName: string }> = {
+  // Major AI Assistants (Paid)
+  chatgpt: { model: 'openai/gpt-4o-mini', free: false, displayName: 'ChatGPT' },
+  perplexity: { model: 'perplexity/sonar', free: false, displayName: 'Perplexity' }, // Has web search
+  gemini: { model: 'google/gemini-2.0-flash-001', free: false, displayName: 'Gemini' },
+  copilot: { model: 'google/gemma-3-27b-it:free', free: true, displayName: 'Copilot' }, // Free alternative
+  claude: { model: 'anthropic/claude-3.5-haiku', free: false, displayName: 'Claude' },
+
+  // Free Models (via OpenRouter)
+  llama: { model: 'meta-llama/llama-3.3-70b-instruct:free', free: true, displayName: 'Llama 3.3' },
+  deepseek: { model: 'tngtech/deepseek-r1t2-chimera:free', free: true, displayName: 'DeepSeek' },
+  mistral: { model: 'mistralai/devstral-2512:free', free: true, displayName: 'Mistral' },
+  qwen: { model: 'google/gemma-3-12b-it:free', free: true, displayName: 'Gemma 12B' },
 };
 
 // Fallback: Direct API clients (used if OpenRouter not configured)
@@ -41,14 +50,14 @@ const gemini = process.env.GOOGLE_AI_API_KEY
   ? new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY })
   : null;
 
-// Platform availability checks
+// Get all available platforms
 export function getAvailablePlatforms(): Platform[] {
   // If OpenRouter is configured, all platforms are available
   if (process.env.OPENROUTER_API_KEY) {
-    return ['chatgpt', 'perplexity', 'gemini', 'copilot'];
+    return Object.keys(OPENROUTER_MODELS) as Platform[];
   }
 
-  // Fallback to direct API keys
+  // Fallback to direct API keys (limited platforms)
   const platforms: Platform[] = [];
 
   if (process.env.OPENAI_API_KEY) {
@@ -62,6 +71,29 @@ export function getAvailablePlatforms(): Platform[] {
   }
 
   return platforms;
+}
+
+// Get only free platforms
+export function getFreePlatforms(): Platform[] {
+  return (Object.entries(OPENROUTER_MODELS) as [Platform, { free: boolean }][])
+    .filter(([, config]) => config.free)
+    .map(([platform]) => platform);
+}
+
+// Get platform display info
+export function getPlatformInfo(platform: Platform): { displayName: string; free: boolean } {
+  const config = OPENROUTER_MODELS[platform];
+  return { displayName: config.displayName, free: config.free };
+}
+
+// Get all platform infos
+export function getAllPlatformInfos(): Record<Platform, { displayName: string; free: boolean }> {
+  return Object.fromEntries(
+    Object.entries(OPENROUTER_MODELS).map(([key, val]) => [
+      key,
+      { displayName: val.displayName, free: val.free },
+    ])
+  ) as Record<Platform, { displayName: string; free: boolean }>;
 }
 
 // Check if using OpenRouter
@@ -225,7 +257,8 @@ async function checkViaOpenRouter(
     throw new Error('OpenRouter API key not configured');
   }
 
-  const model = OPENROUTER_MODELS[platform];
+  const modelConfig = OPENROUTER_MODELS[platform];
+  const model = modelConfig.model;
 
   try {
     logger.info({ platform, model, query }, 'Checking visibility via OpenRouter');
@@ -430,6 +463,12 @@ async function checkPlatform(
   brandName: string,
   shopDomain: string
 ): Promise<VisibilityResult> {
+  // All platforms can use OpenRouter if configured
+  if (openrouter) {
+    return checkViaOpenRouter(platform, query, brandName, shopDomain);
+  }
+
+  // Fallback to direct API for specific platforms
   switch (platform) {
     case 'chatgpt':
       return checkChatGPT(query, brandName, shopDomain);
@@ -438,7 +477,12 @@ async function checkPlatform(
     case 'gemini':
       return checkGemini(query, brandName, shopDomain);
     case 'copilot':
-      return checkCopilot(query, brandName, shopDomain);
+    case 'claude':
+    case 'llama':
+    case 'deepseek':
+    case 'mistral':
+    case 'qwen':
+      throw new Error(`Platform ${platform} requires OpenRouter API key`);
     default:
       throw new Error(`Unknown platform: ${platform}`);
   }

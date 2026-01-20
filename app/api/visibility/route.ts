@@ -8,7 +8,12 @@ import {
 } from '@/lib/services/visibility-check';
 import type { Platform } from '@prisma/client';
 
-const VALID_PLATFORMS: Platform[] = ['chatgpt', 'perplexity', 'gemini', 'copilot'];
+const VALID_PLATFORMS: Platform[] = [
+  // Paid platforms
+  'chatgpt', 'perplexity', 'gemini', 'copilot', 'claude',
+  // Free platforms
+  'llama', 'deepseek', 'mistral', 'qwen',
+];
 
 export async function POST(request: NextRequest) {
   try {

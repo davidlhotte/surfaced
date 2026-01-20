@@ -120,18 +120,36 @@ export default function VisibilityPage() {
 
   const getPlatformBadge = (platform: string) => {
     const colors: Record<string, 'info' | 'success' | 'warning' | 'attention'> = {
+      // Paid platforms
       chatgpt: 'success',
       perplexity: 'info',
       gemini: 'warning',
       copilot: 'attention',
+      claude: 'success',
+      // Free platforms
+      llama: 'info',
+      deepseek: 'warning',
+      mistral: 'attention',
+      qwen: 'info',
     };
     const names: Record<string, string> = {
       chatgpt: 'ChatGPT',
       perplexity: 'Perplexity',
       gemini: 'Gemini',
       copilot: 'Copilot',
+      claude: 'Claude',
+      llama: 'Llama 3.3',
+      deepseek: 'DeepSeek',
+      mistral: 'Mistral',
+      qwen: 'Gemma 12B',
     };
-    return <Badge tone={colors[platform] || 'info'}>{names[platform] || platform}</Badge>;
+    const isFree = ['copilot', 'llama', 'deepseek', 'mistral', 'qwen'].includes(platform);
+    return (
+      <InlineStack gap="100">
+        <Badge tone={colors[platform] || 'info'}>{names[platform] || platform}</Badge>
+        {isFree && <Badge tone="success">Free</Badge>}
+      </InlineStack>
+    );
   };
 
   const getQualityBadge = (quality: string | null, isMentioned: boolean) => {
@@ -163,8 +181,28 @@ export default function VisibilityPage() {
       perplexity: '🔍',
       gemini: '✨',
       copilot: '💻',
+      claude: '🧠',
+      llama: '🦙',
+      deepseek: '🔮',
+      mistral: '🌪️',
+      qwen: '🐼',
     };
     return icons[platform] || '🤖';
+  };
+
+  const getPlatformDisplayName = (platform: string) => {
+    const names: Record<string, string> = {
+      chatgpt: 'ChatGPT',
+      perplexity: 'Perplexity',
+      gemini: 'Gemini',
+      copilot: 'Copilot',
+      claude: 'Claude',
+      llama: 'Llama 3.3',
+      deepseek: 'DeepSeek',
+      mistral: 'Mistral',
+      qwen: 'Gemma 12B',
+    };
+    return names[platform] || platform;
   };
 
   // Calculate summary stats
@@ -184,13 +222,24 @@ export default function VisibilityPage() {
     const entries = Object.entries(platformMentions);
     if (entries.length === 0) return null;
     const best = entries.reduce((a, b) => (a[1] > b[1] ? a : b));
-    const names: Record<string, string> = {
-      chatgpt: 'ChatGPT',
-      perplexity: 'Perplexity',
-      gemini: 'Gemini',
-      copilot: 'Copilot',
-    };
-    return names[best[0]] || best[0];
+    return getPlatformDisplayName(best[0]);
+  }, [history]);
+
+  // Group results by platform for display
+  const resultsByPlatform = useMemo(() => {
+    const grouped: Record<string, VisibilityCheck[]> = {};
+    history.forEach((check) => {
+      if (!grouped[check.platform]) {
+        grouped[check.platform] = [];
+      }
+      grouped[check.platform].push(check);
+    });
+    return grouped;
+  }, [history]);
+
+  // Get unique platforms from history
+  const platformsInHistory = useMemo(() => {
+    return [...new Set(history.map(h => h.platform))];
   }, [history]);
 
   // Show authentication error if shop detection failed
@@ -463,6 +512,121 @@ export default function VisibilityPage() {
             </BlockStack>
           </Card>
         </Layout.Section>
+
+        {/* Results by Platform - Raw Responses */}
+        {history.length > 0 && platformsInHistory.length > 0 && (
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400">
+                <BlockStack gap="200">
+                  <Text as="h3" variant="headingMd">
+                    {locale === 'fr' ? 'Réponses par Plateforme AI' : 'AI Platform Responses'}
+                  </Text>
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    {locale === 'fr'
+                      ? 'Comparez les réponses brutes de chaque AI pour voir comment votre marque est perçue.'
+                      : 'Compare raw responses from each AI to see how your brand is perceived.'}
+                  </Text>
+                </BlockStack>
+                <Divider />
+
+                {/* Platform tabs/cards with raw responses */}
+                <BlockStack gap="400">
+                  {platformsInHistory.map((platform) => {
+                    const platformChecks = resultsByPlatform[platform] || [];
+                    const latestCheck = platformChecks[0]; // Most recent check for this platform
+                    const mentionCount = platformChecks.filter(c => c.isMentioned).length;
+                    const platformMentionRate = platformChecks.length > 0
+                      ? Math.round((mentionCount / platformChecks.length) * 100)
+                      : 0;
+                    const isFree = ['copilot', 'llama', 'deepseek', 'mistral', 'qwen'].includes(platform);
+
+                    return (
+                      <Box
+                        key={platform}
+                        padding="400"
+                        background="bg-surface-secondary"
+                        borderRadius="300"
+                        borderWidth="025"
+                        borderColor="border"
+                      >
+                        <BlockStack gap="300">
+                          {/* Platform Header */}
+                          <InlineStack align="space-between" blockAlign="center" wrap>
+                            <InlineStack gap="200" blockAlign="center">
+                              <Text as="span" variant="headingLg">
+                                {getPlatformIcon(platform)}
+                              </Text>
+                              <BlockStack gap="050">
+                                <InlineStack gap="100">
+                                  <Text as="h4" variant="headingMd">
+                                    {getPlatformDisplayName(platform)}
+                                  </Text>
+                                  {isFree && <Badge tone="success">Free</Badge>}
+                                </InlineStack>
+                                <Text as="p" variant="bodySm" tone="subdued">
+                                  {platformChecks.length} {locale === 'fr' ? 'vérifications' : 'checks'} • {platformMentionRate}% {locale === 'fr' ? 'mentions' : 'mention rate'}
+                                </Text>
+                              </BlockStack>
+                            </InlineStack>
+                            <Badge tone={platformMentionRate > 50 ? 'success' : platformMentionRate > 0 ? 'warning' : 'critical'}>
+                              {`${platformMentionRate}%`}
+                            </Badge>
+                          </InlineStack>
+
+                          {/* Latest Response */}
+                          {latestCheck && (
+                            <BlockStack gap="200">
+                              <Box padding="200" background="bg-surface" borderRadius="200">
+                                <BlockStack gap="100">
+                                  <Text as="p" variant="bodySm" tone="subdued">
+                                    {locale === 'fr' ? 'Question:' : 'Query:'} &quot;{latestCheck.query}&quot;
+                                  </Text>
+                                  {getQualityBadge(latestCheck.responseQuality, latestCheck.isMentioned)}
+                                </BlockStack>
+                              </Box>
+
+                              {/* Raw Response Preview */}
+                              {latestCheck.rawResponse && (
+                                <Box
+                                  padding="300"
+                                  background="bg-surface"
+                                  borderRadius="200"
+                                  maxWidth="100%"
+                                >
+                                  <BlockStack gap="200">
+                                    <Text as="h5" variant="headingSm">
+                                      {locale === 'fr' ? 'Réponse brute:' : 'Raw Response:'}
+                                    </Text>
+                                    <Scrollable style={{ maxHeight: '200px' }}>
+                                      <Text as="p" variant="bodySm">
+                                        {latestCheck.rawResponse.length > 500
+                                          ? latestCheck.rawResponse.substring(0, 500) + '...'
+                                          : latestCheck.rawResponse}
+                                      </Text>
+                                    </Scrollable>
+                                    {latestCheck.rawResponse.length > 500 && (
+                                      <Button
+                                        size="slim"
+                                        onClick={() => openResponseModal(latestCheck)}
+                                      >
+                                        {locale === 'fr' ? 'Voir la réponse complète' : 'View full response'}
+                                      </Button>
+                                    )}
+                                  </BlockStack>
+                                </Box>
+                              )}
+                            </BlockStack>
+                          )}
+                        </BlockStack>
+                      </Box>
+                    );
+                  })}
+                </BlockStack>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+        )}
 
         {/* History Table */}
         {history.length > 0 && (

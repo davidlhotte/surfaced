@@ -5,7 +5,7 @@
 
 import OpenAI from 'openai';
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
 
 const openrouter = new OpenAI({
   apiKey: OPENROUTER_API_KEY,
@@ -21,7 +21,7 @@ const PLATFORM_MODELS = {
   chatgpt: 'openai/gpt-4o-mini',
   perplexity: 'perplexity/sonar',
   gemini: 'google/gemini-2.0-flash-001',
-  copilot: 'nvidia/nemotron-nano-12b-v2-vl:free',
+  copilot: 'google/gemma-3-27b-it:free', // Free Google Gemma 3 27B
 };
 
 type Platform = keyof typeof PLATFORM_MODELS;

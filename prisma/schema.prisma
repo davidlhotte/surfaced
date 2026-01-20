@@ -404,10 +404,18 @@ enum Plan {
 }
 
 enum Platform {
-  chatgpt
-  perplexity
-  gemini
-  copilot
+  // Major AI Assistants (Paid via OpenRouter)
+  chatgpt       // OpenAI GPT-4o-mini
+  perplexity    // Perplexity Sonar (with web search)
+  gemini        // Google Gemini 2.0 Flash
+  copilot       // Microsoft Copilot alternative
+  claude        // Anthropic Claude
+
+  // Free Models (via OpenRouter)
+  llama         // Meta Llama 3.3 70B
+  deepseek      // DeepSeek R1
+  mistral       // Mistral AI
+  qwen          // Alibaba Qwen
 }
 
 enum ResponseQuality {
