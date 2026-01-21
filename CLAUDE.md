@@ -109,12 +109,12 @@ npx prisma studio           # View data
 ## Plans
 
 The app includes 4 subscription tiers:
-- FREE: Basic features
-- BASIC ($4.99/mo): More features
-- PLUS ($9.99/mo): Advanced features
-- PREMIUM ($24.99/mo): Everything + priority support
+- FREE: Basic features (10 products, 3 visibility checks/month)
+- BASIC ($49/mo): Starter plan (100 products, 10 checks/month, 1 competitor)
+- PLUS ($99/mo): Growth plan (500 products, 50 checks/month, 3 competitors, CSV export)
+- PREMIUM ($199/mo): Scale plan (unlimited products, 200 checks/month, 10 competitors, API access)
 
-Edit `app/admin/settings/page.tsx` to customize plan features.
+See `lib/constants/plans.ts` for detailed feature limits.
 
 ## Extending the Template
 
