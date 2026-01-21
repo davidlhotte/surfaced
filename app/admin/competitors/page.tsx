@@ -26,6 +26,7 @@ import {
 import { PlusCircleIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type Competitor = {
@@ -83,7 +84,7 @@ type CompetitorAnalysis = {
 export default function CompetitorsPage() {
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
-  const { t } = useAdminLanguage();
+  const { t, locale } = useAdminLanguage();
   const [data, setData] = useState<CompetitorsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -224,7 +225,7 @@ export default function CompetitorsPage() {
 
   if (loading || shopLoading) {
     return (
-      <Page title={t.competitors.title} backAction={{ content: t.dashboard.title, url: '/admin' }}>
+      <Page title={t.competitors.title}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -245,7 +246,6 @@ export default function CompetitorsPage() {
     <Page
       title={t.competitors.title}
       subtitle={t.competitors.subtitle}
-      backAction={{ content: t.dashboard.title, url: '/admin' }}
       primaryAction={{
         content: analyzing ? t.competitors.analyzing : t.competitors.runAnalysis,
         onAction: runAnalysis,
@@ -261,6 +261,7 @@ export default function CompetitorsPage() {
         },
       ]}
     >
+      <AdminNav locale={locale} />
       <Layout>
         {error && (
           <Layout.Section>
