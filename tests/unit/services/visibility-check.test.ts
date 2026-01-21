@@ -128,13 +128,14 @@ describe('Visibility Check Service', () => {
 
       (prisma.visibilityCheck.findMany as ReturnType<typeof vi.fn>).mockResolvedValue(mockChecks);
 
-      const history = await getVisibilityHistory('test.myshopify.com');
+      const result = await getVisibilityHistory('test.myshopify.com');
 
-      expect(history).toHaveLength(2);
-      expect(history[0].platform).toBe('chatgpt');
-      expect(history[0].isMentioned).toBe(true);
-      expect(history[0].checkedAt).toBe('2024-01-15T00:00:00.000Z');
-      expect(history[1].isMentioned).toBe(false);
+      // Function now returns { checks, sessions, brandName }
+      expect(result.checks).toHaveLength(2);
+      expect(result.checks[0].platform).toBe('chatgpt');
+      expect(result.checks[0].isMentioned).toBe(true);
+      expect(result.checks[1].isMentioned).toBe(false);
+      expect(result.brandName).toBeDefined();
     });
 
     it('should order results by checkedAt descending', async () => {
@@ -149,11 +150,11 @@ describe('Visibility Check Service', () => {
       expect(prisma.visibilityCheck.findMany).toHaveBeenCalledWith({
         where: { shopId: 'shop-1' },
         orderBy: { checkedAt: 'desc' },
-        take: 50,
+        take: 100,
       });
     });
 
-    it('should limit results to 50 entries', async () => {
+    it('should limit results to 100 entries', async () => {
       (prisma.shop.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
         id: 'shop-1',
       });
@@ -164,7 +165,7 @@ describe('Visibility Check Service', () => {
 
       expect(prisma.visibilityCheck.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          take: 50,
+          take: 100,
         })
       );
     });

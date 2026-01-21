@@ -236,16 +236,22 @@ describe('Shopify Auth Module', () => {
     });
 
     it('should return shop info for valid token', () => {
-      // Create a valid JWT-like token
-      const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64');
+      // Create a valid JWT with proper HMAC-SHA256 signature
+      const { createHmac } = require('crypto');
+      const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
       const payload = Buffer.from(JSON.stringify({
         iss: 'https://test-store.myshopify.com/admin',
         dest: 'https://test-store.myshopify.com',
         aud: 'test-api-key',
         sub: '1',
         exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-      })).toString('base64');
-      const signature = 'fake-signature';
+      })).toString('base64url');
+
+      // Create valid HMAC-SHA256 signature using the test API secret
+      const signatureInput = `${header}.${payload}`;
+      const signature = createHmac('sha256', 'test-api-secret')
+        .update(signatureInput)
+        .digest('base64url');
 
       const token = `${header}.${payload}.${signature}`;
       const result = verifySessionToken(token);

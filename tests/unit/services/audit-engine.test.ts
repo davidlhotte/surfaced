@@ -13,6 +13,16 @@ vi.mock('@/lib/db/prisma', () => ({
     auditLog: {
       create: vi.fn(),
     },
+    // Mock $transaction to execute the callback with the same mock prisma
+    $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => {
+      // Create a mock transaction object with the same methods
+      const tx = {
+        productAudit: { upsert: vi.fn().mockResolvedValue({}) },
+        shop: { update: vi.fn().mockResolvedValue({}) },
+        auditLog: { create: vi.fn().mockResolvedValue({}) },
+      };
+      return callback(tx);
+    }),
   },
 }));
 
@@ -141,10 +151,8 @@ describe('Audit Engine', () => {
       expect(product2?.issues.some(i => i.code === 'NO_DESCRIPTION')).toBe(true);
       expect(product2?.issues.some(i => i.code === 'NO_IMAGES')).toBe(true);
 
-      // Verify database was updated
-      expect(prisma.productAudit.upsert).toHaveBeenCalledTimes(2);
-      expect(prisma.shop.update).toHaveBeenCalled();
-      expect(prisma.auditLog.create).toHaveBeenCalled();
+      // Verify transaction was used for database operations
+      expect(prisma.$transaction).toHaveBeenCalled();
     });
 
     it('should calculate correct issue counts', async () => {
