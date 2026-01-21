@@ -384,7 +384,7 @@ export default function SettingsPage() {
 
   if (loading || shopLoading) {
     return (
-      <Page title={t.settings.title} backAction={{ content: t.settings.dashboard, url: '/admin' }}>
+      <Page title={t.settings.title}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -418,7 +418,6 @@ export default function SettingsPage() {
     <Page
       title={t.settings.title}
       subtitle={t.settings.subtitle}
-      backAction={{ content: t.settings.dashboard, url: '/admin' }}
     >
       <AdminNav locale={locale} />
       <Layout>

@@ -530,7 +530,7 @@ export default function ProductsPage() {
   // Loading state
   if (loading || shopLoading) {
     return (
-      <Page title={t.products.title} backAction={{ content: t.dashboard.title, url: '/admin' }}>
+      <Page title={t.products.title}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -555,7 +555,6 @@ export default function ProductsPage() {
     <Page
       title={t.products.title}
       subtitle={t.products.subtitle}
-      backAction={{ content: t.dashboard.title, url: '/admin' }}
       primaryAction={{
         content: auditing ? t.products.analyzing : t.products.runAnalysis,
         onAction: runAudit,

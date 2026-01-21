@@ -296,7 +296,7 @@ export default function VisibilityPage() {
   // Loading state
   if (loading || shopLoading) {
     return (
-      <Page title={t.title} backAction={{ content: 'Dashboard', url: '/admin' }}>
+      <Page title={t.title}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -317,7 +317,6 @@ export default function VisibilityPage() {
     <Page
       title={t.title}
       subtitle={t.subtitle}
-      backAction={{ content: 'Dashboard', url: '/admin' }}
     >
       <AdminNav locale={locale} />
       <Layout>
