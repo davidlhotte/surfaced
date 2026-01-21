@@ -213,6 +213,7 @@ model ProductAudit {
   @@unique([shopId, shopifyProductId])
   @@index([shopId])
   @@index([aiScore])
+  @@index([shopId, aiScore])  // Composite for filtered score queries
 }
 
 // ============================================
@@ -245,6 +246,7 @@ model VisibilityCheck {
   @@index([platform])
   @@index([checkedAt(sort: Desc)])
   @@index([sessionId])
+  @@index([shopId, isMentioned, checkedAt(sort: Desc)])  // Composite for visibility analysis
 }
 
 model Competitor {

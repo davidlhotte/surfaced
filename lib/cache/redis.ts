@@ -53,4 +53,15 @@ export const cacheKeys = {
   stores: (shopDomain: string) => `stores:${shopDomain}`,
   settings: (shopDomain: string) => `settings:${shopDomain}`,
   shop: (shopDomain: string) => `shop:${shopDomain}`,
+  audit: (shopDomain: string) => `audit:${shopDomain}`,
+  recommendations: (shopDomain: string) => `recommendations:${shopDomain}`,
+  visibilityHistory: (shopDomain: string) => `visibility:history:${shopDomain}`,
+  dashboard: (shopDomain: string) => `dashboard:${shopDomain}`,
+};
+
+// TTL constants (in seconds)
+export const cacheTTL = {
+  short: 30,        // 30 seconds for frequently changing data
+  medium: 300,      // 5 minutes for audit/recommendations
+  long: 3600,       // 1 hour for historical data
 };
