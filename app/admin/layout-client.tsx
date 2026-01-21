@@ -18,6 +18,7 @@ import frTranslations from '@shopify/polaris/locales/fr.json';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { ShopProvider } from '@/components/providers/ShopProvider';
 import { AdminLanguageProvider } from '@/lib/i18n/AdminLanguageContext';
+import { AppBridgeNav } from '@/components/admin/AppBridgeNav';
 
 /**
  * Simple loading fallback that doesn't require Polaris context
@@ -96,6 +97,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <AppProvider i18n={polarisI18n}>
+      <AppBridgeNav />
       <Frame>
         <ShopProvider>
           <AdminLanguageProvider>
