@@ -20,9 +20,10 @@ import {
   Modal,
   Scrollable,
   ProgressBar,
-  SkeletonBodyText,
+  Collapsible,
+  Icon,
 } from '@shopify/polaris';
-import { SearchIcon, RefreshIcon } from '@shopify/polaris-icons';
+import { SearchIcon, ChevronDownIcon, ChevronUpIcon, ClockIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
@@ -105,6 +106,7 @@ export default function VisibilityPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [brandName, setBrandName] = useState<string>('');
   const [selectedSession, setSelectedSession] = useState<HistorySession | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(true); // Collapsible history
 
   // Translations
   const t = {
@@ -329,10 +331,23 @@ export default function VisibilityPage() {
         {/* Query Input Section */}
         <Layout.Section>
           <Card>
-            <BlockStack gap="400">
+            <BlockStack gap="500">
               {/* Search term - what are we looking for? */}
-              <BlockStack gap="200">
-                <Text as="h2" variant="headingMd">{t.searchTermLabel}</Text>
+              <BlockStack gap="300">
+                <InlineStack gap="200" blockAlign="center">
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Text as="span" variant="headingSm">🎯</Text>
+                  </div>
+                  <Text as="h2" variant="headingMd">{t.searchTermLabel}</Text>
+                </InlineStack>
                 <Text as="p" variant="bodySm" tone="subdued">{t.searchTermHelp}</Text>
                 <Box maxWidth="400px">
                   <TextField
@@ -342,6 +357,18 @@ export default function VisibilityPage() {
                     value={searchTerm || brandName}
                     onChange={setSearchTerm}
                     autoComplete="off"
+                    connectedLeft={
+                      <div style={{
+                        padding: '8px 12px',
+                        background: '#F0F9FF',
+                        borderRadius: '8px 0 0 8px',
+                        color: '#0EA5E9',
+                        fontWeight: '600',
+                        fontSize: '14px'
+                      }}>
+                        {t.lookingFor}
+                      </div>
+                    }
                   />
                 </Box>
               </BlockStack>
@@ -350,8 +377,21 @@ export default function VisibilityPage() {
 
               {/* Query input */}
               <BlockStack gap="300">
-                <Text as="h2" variant="headingMd">{t.query}</Text>
-                <Box maxWidth="600px">
+                <InlineStack gap="200" blockAlign="center">
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Text as="span" variant="headingSm">💬</Text>
+                  </div>
+                  <Text as="h2" variant="headingMd">{t.query}</Text>
+                </InlineStack>
+                <Box maxWidth="700px">
                   <TextField
                     label=""
                     labelHidden
@@ -364,34 +404,72 @@ export default function VisibilityPage() {
                     multiline={2}
                   />
                 </Box>
-                <Button
-                  variant="primary"
-                  icon={SearchIcon}
-                  onClick={() => runCheck(customQuery)}
-                  disabled={!customQuery.trim() || !searchTerm.trim() || checking}
-                  loading={checking}
-                  size="large"
-                >
-                  {checking ? t.testing : t.test}
-                </Button>
+                <div style={{ display: 'inline-block' }}>
+                  <button
+                    onClick={() => runCheck(customQuery)}
+                    disabled={!customQuery.trim() || !searchTerm.trim() || checking}
+                    style={{
+                      background: (!customQuery.trim() || !searchTerm.trim() || checking)
+                        ? '#E0F2FE'
+                        : 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
+                      color: (!customQuery.trim() || !searchTerm.trim() || checking)
+                        ? '#64748B'
+                        : 'white',
+                      border: 'none',
+                      padding: '14px 28px',
+                      borderRadius: '10px',
+                      fontWeight: '600',
+                      fontSize: '16px',
+                      cursor: (!customQuery.trim() || !searchTerm.trim() || checking) ? 'not-allowed' : 'pointer',
+                      boxShadow: (!customQuery.trim() || !searchTerm.trim() || checking)
+                        ? 'none'
+                        : '0 4px 14px rgba(14, 165, 233, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {checking ? (
+                      <>
+                        <Spinner size="small" />
+                        {t.testing}
+                      </>
+                    ) : (
+                      <>
+                        <Icon source={SearchIcon} />
+                        {t.test}
+                      </>
+                    )}
+                  </button>
+                </div>
               </BlockStack>
 
               <Divider />
 
               {/* Query suggestions - click to fill, not to run */}
               <BlockStack gap="200">
-                <Text as="span" variant="bodySm" tone="subdued">{t.suggestions}:</Text>
+                <Text as="span" variant="bodySm" tone="subdued">💡 {t.suggestions}:</Text>
                 <InlineStack gap="200" wrap>
                   {suggestions.map((s, i) => (
-                    <Button
+                    <button
                       key={i}
-                      size="slim"
-                      variant="tertiary"
                       onClick={() => setCustomQuery(s.query)}
                       disabled={checking}
+                      style={{
+                        background: '#F0F9FF',
+                        color: '#0A1628',
+                        border: '1px solid #E0F2FE',
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        fontSize: '13px',
+                        cursor: checking ? 'not-allowed' : 'pointer',
+                        opacity: checking ? 0.5 : 1,
+                        transition: 'all 0.2s ease'
+                      }}
                     >
                       {s.label}
-                    </Button>
+                    </button>
                   ))}
                 </InlineStack>
               </BlockStack>
@@ -403,24 +481,56 @@ export default function VisibilityPage() {
         {currentResults.length > 0 && (
           <Layout.Section>
             <Card>
-              <BlockStack gap="300">
-                <InlineStack align="space-between" blockAlign="center">
-                  <Text as="h2" variant="headingMd">{t.score}</Text>
-                  <InlineStack gap="200" blockAlign="center">
-                    <Text as="span" variant="heading2xl" fontWeight="bold">
-                      {score.mentioned}/{score.total}
-                    </Text>
-                    <Badge tone={score.percentage >= 50 ? 'success' : score.percentage > 0 ? 'warning' : 'critical'}>
-                      {`${score.percentage}%`}
-                    </Badge>
+              <div style={{
+                background: score.percentage >= 50
+                  ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)'
+                  : score.percentage > 0
+                    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)',
+                borderRadius: '8px',
+                padding: '16px'
+              }}>
+                <BlockStack gap="300">
+                  <InlineStack align="space-between" blockAlign="center">
+                    <Text as="h2" variant="headingMd">{t.score}</Text>
+                    <InlineStack gap="300" blockAlign="center">
+                      {/* Large Score Display */}
+                      <div style={{
+                        fontFamily: 'monospace',
+                        fontSize: '48px',
+                        fontWeight: '700',
+                        background: score.percentage >= 50
+                          ? 'linear-gradient(135deg, #10B981 0%, #0EA5E9 100%)'
+                          : score.percentage > 0
+                            ? 'linear-gradient(135deg, #F59E0B 0%, #0EA5E9 100%)'
+                            : 'linear-gradient(135deg, #EF4444 0%, #0EA5E9 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                        lineHeight: '1'
+                      }}>
+                        {score.mentioned}/{score.total}
+                      </div>
+                      <Badge
+                        tone={score.percentage >= 50 ? 'success' : score.percentage > 0 ? 'warning' : 'critical'}
+                        size="large"
+                      >
+                        {`${score.percentage}%`}
+                      </Badge>
+                    </InlineStack>
                   </InlineStack>
-                </InlineStack>
-                <ProgressBar
-                  progress={score.percentage}
-                  tone={score.percentage >= 50 ? 'success' : score.percentage > 0 ? 'highlight' : 'critical'}
-                  size="small"
-                />
-              </BlockStack>
+                  <ProgressBar
+                    progress={score.percentage}
+                    tone={score.percentage >= 50 ? 'success' : score.percentage > 0 ? 'highlight' : 'critical'}
+                    size="medium"
+                  />
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    {locale === 'fr'
+                      ? `Votre marque "${searchTerm || brandName}" a été mentionnée par ${score.mentioned} plateformes IA sur ${score.total} testées.`
+                      : `Your brand "${searchTerm || brandName}" was mentioned by ${score.mentioned} out of ${score.total} AI platforms tested.`}
+                  </Text>
+                </BlockStack>
+              </div>
             </Card>
           </Layout.Section>
         )}
@@ -430,7 +540,21 @@ export default function VisibilityPage() {
           <Card>
             <BlockStack gap="400">
               <BlockStack gap="200">
-                <Text as="h2" variant="headingMd">{t.results}</Text>
+                <InlineStack align="space-between" blockAlign="center">
+                  <Text as="h2" variant="headingMd">{t.results}</Text>
+                  {/* Show date when viewing from history */}
+                  {selectedSession && (
+                    <Badge tone="info">
+                      {new Date(selectedSession.checkedAt).toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </Badge>
+                  )}
+                </InlineStack>
                 {/* Show what we're looking for */}
                 {(searchTerm || brandName) && (
                   <InlineStack gap="200" blockAlign="center">
@@ -447,45 +571,44 @@ export default function VisibilityPage() {
               <Divider />
 
               {/* Table Header */}
-              <Box padding="200" background="bg-surface-secondary" borderRadius="200">
-                <InlineStack align="space-between">
-                  <Box width="30%"><Text as="span" variant="bodySm" fontWeight="bold">{t.platform}</Text></Box>
-                  <Box width="20%"><Text as="span" variant="bodySm" fontWeight="bold">{t.status}</Text></Box>
-                  <Box width="15%"><Text as="span" variant="bodySm" fontWeight="bold">{t.position}</Text></Box>
-                  <Box width="20%"><Text as="span" variant="bodySm" fontWeight="bold">{t.sentiment}</Text></Box>
-                  <Box width="15%"><Text as="span" variant="bodySm" fontWeight="bold">{t.action}</Text></Box>
-                </InlineStack>
+              <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 1fr', gap: '8px', alignItems: 'center' }}>
+                  <Text as="span" variant="bodySm" fontWeight="bold">{t.platform}</Text>
+                  <Text as="span" variant="bodySm" fontWeight="bold">{t.status}</Text>
+                  <Text as="span" variant="bodySm" fontWeight="bold">{t.position}</Text>
+                  <Text as="span" variant="bodySm" fontWeight="bold">{t.sentiment}</Text>
+                  <Text as="span" variant="bodySm" fontWeight="bold">{t.action}</Text>
+                </div>
               </Box>
 
               {/* Platform rows */}
-              <BlockStack gap="200">
+              <BlockStack gap="100">
                 {(Object.entries(PLATFORMS) as [Platform, typeof PLATFORMS[Platform]][]).map(([key, platform]) => {
                   const check = resultsByPlatform[key];
                   const isChecking = checkingPlatforms.has(key);
+                  const isMentioned = check?.isMentioned === true;
 
                   return (
                     <Box
                       key={key}
                       padding="300"
                       borderWidth="025"
-                      borderColor="border"
+                      borderColor={isMentioned ? 'border-success' : check && !isMentioned ? 'border-critical' : 'border'}
                       borderRadius="200"
-                      background={check?.isMentioned ? 'bg-surface-success' : 'bg-surface'}
+                      background={isMentioned ? 'bg-surface-success' : check && !isMentioned ? 'bg-surface-critical' : 'bg-surface'}
                     >
-                      <InlineStack align="space-between" blockAlign="center">
+                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 1fr', gap: '8px', alignItems: 'center' }}>
                         {/* Platform */}
-                        <Box width="30%">
-                          <InlineStack gap="200" blockAlign="center">
-                            <Text as="span" variant="headingMd">{platform.icon}</Text>
-                            <BlockStack gap="050">
-                              <Text as="span" fontWeight="semibold">{platform.displayName}</Text>
-                              {platform.free && <Badge tone="success" size="small">Free</Badge>}
-                            </BlockStack>
-                          </InlineStack>
-                        </Box>
+                        <InlineStack gap="200" blockAlign="center">
+                          <Text as="span" variant="headingMd">{platform.icon}</Text>
+                          <BlockStack gap="0">
+                            <Text as="span" fontWeight="semibold">{platform.displayName}</Text>
+                            {platform.free && <Badge tone="success" size="small">Free</Badge>}
+                          </BlockStack>
+                        </InlineStack>
 
                         {/* Status */}
-                        <Box width="20%">
+                        <div>
                           {isChecking ? (
                             <InlineStack gap="100" blockAlign="center">
                               <Spinner size="small" />
@@ -494,24 +617,24 @@ export default function VisibilityPage() {
                           ) : (
                             getStatusBadge(check)
                           )}
-                        </Box>
+                        </div>
 
                         {/* Position */}
-                        <Box width="15%">
+                        <div>
                           {check?.position ? (
                             <Badge tone="info">{`#${check.position}`}</Badge>
                           ) : (
                             <Text as="span" tone="subdued">-</Text>
                           )}
-                        </Box>
+                        </div>
 
                         {/* Sentiment */}
-                        <Box width="20%">
+                        <div>
                           {getSentimentBadge(check)}
-                        </Box>
+                        </div>
 
                         {/* Action */}
-                        <Box width="15%">
+                        <div>
                           <Button
                             size="slim"
                             onClick={() => {
@@ -524,8 +647,8 @@ export default function VisibilityPage() {
                           >
                             {t.details}
                           </Button>
-                        </Box>
-                      </InlineStack>
+                        </div>
+                      </div>
                     </Box>
                   );
                 })}
@@ -567,57 +690,107 @@ export default function VisibilityPage() {
           </Layout.Section>
         )}
 
-        {/* History Section */}
+        {/* History Section with Collapsible */}
         <Layout.Section>
           <Card>
             <BlockStack gap="300">
-              <Text as="h2" variant="headingMd">{t.history}</Text>
-              <Divider />
+              {/* Collapsible Header */}
+              <InlineStack align="space-between" blockAlign="center">
+                <InlineStack gap="200" blockAlign="center">
+                  <Icon source={ClockIcon} tone="subdued" />
+                  <Text as="h2" variant="headingMd">{t.history}</Text>
+                  {sessions.length > 0 && (
+                    <Badge tone="info" size="small">{`${sessions.length}`}</Badge>
+                  )}
+                </InlineStack>
+                <Button
+                  variant="plain"
+                  onClick={() => setHistoryOpen(!historyOpen)}
+                  icon={historyOpen ? ChevronUpIcon : ChevronDownIcon}
+                  accessibilityLabel={historyOpen ? 'Collapse' : 'Expand'}
+                />
+              </InlineStack>
 
-              {sessions.length === 0 ? (
-                <Box padding="400">
-                  <Text as="p" tone="subdued" alignment="center">{t.noHistory}</Text>
-                </Box>
-              ) : (
-                <BlockStack gap="200">
-                  {sessions.map((session) => (
-                    <Box
-                      key={session.sessionId}
-                      padding="300"
-                      background={selectedSession?.sessionId === session.sessionId ? 'bg-surface-selected' : 'bg-surface-secondary'}
-                      borderRadius="200"
-                      borderWidth={selectedSession?.sessionId === session.sessionId ? '025' : undefined}
-                      borderColor={selectedSession?.sessionId === session.sessionId ? 'border-success' : undefined}
-                    >
-                      <InlineStack align="space-between" blockAlign="center">
-                        <BlockStack gap="100">
-                          <Text as="span" variant="bodyMd" fontWeight="semibold">
-                            &quot;{session.query.length > 50 ? session.query.substring(0, 50) + '...' : session.query}&quot;
-                          </Text>
-                          <InlineStack gap="200">
-                            <Text as="span" variant="bodySm" tone="subdued">
-                              {new Date(session.checkedAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')}
-                            </Text>
-                            <Badge
-                              tone={session.summary.percentage >= 50 ? 'success' : session.summary.percentage > 0 ? 'warning' : 'critical'}
-                              size="small"
-                            >
-                              {`${session.summary.mentioned}/${session.summary.total} (${session.summary.percentage}%)`}
-                            </Badge>
-                          </InlineStack>
-                        </BlockStack>
-                        <Button
-                          size="slim"
-                          onClick={() => viewSession(session)}
-                          variant={selectedSession?.sessionId === session.sessionId ? 'primary' : undefined}
-                        >
-                          {locale === 'fr' ? 'Voir' : 'View'}
-                        </Button>
-                      </InlineStack>
+              <Collapsible
+                open={historyOpen}
+                id="history-collapsible"
+                transition={{ duration: '200ms', timingFunction: 'ease-in-out' }}
+              >
+                <BlockStack gap="300">
+                  <Divider />
+                  {sessions.length === 0 ? (
+                    <Box padding="400">
+                      <Text as="p" tone="subdued" alignment="center">{t.noHistory}</Text>
                     </Box>
-                  ))}
+                  ) : (
+                    <BlockStack gap="200">
+                      {sessions.map((session, index) => {
+                        const isSelected = selectedSession?.sessionId === session.sessionId;
+                        const isLatest = index === 0 && !selectedSession;
+                        const date = new Date(session.checkedAt);
+                        const formattedDate = date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                          day: 'numeric',
+                          month: 'short',
+                        });
+                        const formattedTime = date.toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        });
+
+                        return (
+                          <Box
+                            key={session.sessionId}
+                            padding="300"
+                            background={isSelected ? 'bg-surface-selected' : isLatest ? 'bg-surface-info' : 'bg-surface-secondary'}
+                            borderRadius="200"
+                            borderWidth="025"
+                            borderColor={isSelected ? 'border-success' : isLatest ? 'border-info' : 'border'}
+                          >
+                            <InlineStack align="space-between" blockAlign="center">
+                              <BlockStack gap="100">
+                                {/* Session ID badge for reference */}
+                                <InlineStack gap="200" blockAlign="center">
+                                  <Badge tone={isLatest ? 'info' : undefined} size="small">
+                                    {`#${sessions.length - index}`}
+                                  </Badge>
+                                  {isLatest && (
+                                    <Badge tone="success" size="small">
+                                      {locale === 'fr' ? 'Dernier' : 'Latest'}
+                                    </Badge>
+                                  )}
+                                </InlineStack>
+                                <Text as="span" variant="bodyMd" fontWeight="semibold">
+                                  &quot;{session.query.length > 50 ? session.query.substring(0, 50) + '...' : session.query}&quot;
+                                </Text>
+                                <InlineStack gap="200" blockAlign="center">
+                                  <Text as="span" variant="bodySm" tone="subdued">
+                                    {formattedDate} • {formattedTime}
+                                  </Text>
+                                  <Badge
+                                    tone={session.summary.percentage >= 50 ? 'success' : session.summary.percentage > 0 ? 'warning' : 'critical'}
+                                    size="small"
+                                  >
+                                    {`${session.summary.mentioned}/${session.summary.total} (${session.summary.percentage}%)`}
+                                  </Badge>
+                                </InlineStack>
+                              </BlockStack>
+                              <Button
+                                size="slim"
+                                onClick={() => viewSession(session)}
+                                variant={isSelected ? 'primary' : undefined}
+                              >
+                                {isSelected
+                                  ? (locale === 'fr' ? 'Sélectionné' : 'Selected')
+                                  : (locale === 'fr' ? 'Voir' : 'View')}
+                              </Button>
+                            </InlineStack>
+                          </Box>
+                        );
+                      })}
+                    </BlockStack>
+                  )}
                 </BlockStack>
-              )}
+              </Collapsible>
             </BlockStack>
           </Card>
         </Layout.Section>

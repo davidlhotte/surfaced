@@ -158,44 +158,93 @@ function analyzeResponse(
   const lowerBrand = brandName.toLowerCase();
   const domainBase = shopDomain.replace('.myshopify.com', '').toLowerCase();
 
-  // Check for brand mentions
-  const isMentioned =
-    lowerResponse.includes(lowerBrand) ||
-    lowerResponse.includes(domainBase) ||
-    lowerResponse.includes(shopDomain.toLowerCase());
+  // Check for brand mentions (also check without spaces for compound names)
+  const brandVariants = [
+    lowerBrand,
+    domainBase,
+    shopDomain.toLowerCase(),
+    lowerBrand.replace(/\s+/g, ''), // "Eco Soap" -> "ecosoap"
+    lowerBrand.replace(/\s+/g, '-'), // "Eco Soap" -> "eco-soap"
+  ];
+
+  const isMentioned = brandVariants.some(variant =>
+    variant.length > 2 && lowerResponse.includes(variant)
+  );
 
   let mentionContext: string | null = null;
   let position: number | null = null;
   let responseQuality: ResponseQuality = 'none';
 
   if (isMentioned) {
-    // Extract context around the mention
-    const mentionIndex = Math.max(
-      lowerResponse.indexOf(lowerBrand),
-      lowerResponse.indexOf(domainBase),
-      lowerResponse.indexOf(shopDomain.toLowerCase())
-    );
+    // Find where the brand is mentioned
+    let mentionIndex = -1;
+    for (const variant of brandVariants) {
+      const idx = lowerResponse.indexOf(variant);
+      if (idx !== -1 && (mentionIndex === -1 || idx < mentionIndex)) {
+        mentionIndex = idx;
+      }
+    }
 
     if (mentionIndex !== -1) {
+      // Extract context around the mention
       const start = Math.max(0, mentionIndex - 100);
       const end = Math.min(response.length, mentionIndex + 200);
       mentionContext = response.substring(start, end).trim();
 
-      // Try to determine position if in a list
-      const beforeMention = response.substring(0, mentionIndex);
-      const listMatches = beforeMention.match(/\d+\./g);
-      if (listMatches) {
-        position = listMatches.length;
+      // Detect position in a list - improved algorithm
+      // Split response into lines and find which "list item" contains the brand
+      const lines = response.split('\n');
+      let currentListPosition = 0;
+      let foundPosition = false;
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+
+        // Check if this line is a list item (numbered or bulleted)
+        const isNumberedItem = /^\d+[\.\)]\s/.test(trimmedLine); // "1. " or "1) "
+        const isBulletItem = /^[-*•]\s/.test(trimmedLine); // "- " or "* " or "• "
+        const isStarItem = /^\*\*\d+[\.\)]/.test(trimmedLine); // "**1." markdown bold number
+
+        if (isNumberedItem || isBulletItem || isStarItem) {
+          currentListPosition++;
+
+          // Check if this list item contains the brand
+          const lowerLine = trimmedLine.toLowerCase();
+          if (brandVariants.some(v => v.length > 2 && lowerLine.includes(v))) {
+            position = currentListPosition;
+            foundPosition = true;
+            break;
+          }
+        }
+      }
+
+      // If not found in line-by-line, try regex for inline numbered lists
+      if (!foundPosition) {
+        // Match patterns like "1) Brand" or "1. Brand" even inline
+        const numberedPattern = /(\d+)[\.\)]\s*[^,\n]*?/gi;
+        let match;
+        let itemNum = 0;
+
+        while ((match = numberedPattern.exec(response)) !== null) {
+          itemNum++;
+          const itemText = match[0].toLowerCase();
+          if (brandVariants.some(v => v.length > 2 && itemText.includes(v))) {
+            position = parseInt(match[1], 10);
+            break;
+          }
+        }
       }
     }
 
-    // Determine quality of mention
-    if (
-      lowerResponse.includes('recommend') ||
-      lowerResponse.includes('great option') ||
-      lowerResponse.includes('excellent') ||
-      lowerResponse.includes('top choice')
-    ) {
+    // Determine quality of mention - expanded keywords
+    const positiveKeywords = [
+      'recommend', 'recommande', 'great option', 'excellent', 'top choice',
+      'highly rated', 'popular', 'best', 'meilleur', 'quality', 'qualité',
+      'trusted', 'reliable', 'leading', 'favorite', 'préféré', 'top pick',
+      'outstanding', 'exceptional', 'premium', 'renowned', 'well-known'
+    ];
+
+    if (positiveKeywords.some(kw => lowerResponse.includes(kw))) {
       responseQuality = 'good';
     } else {
       responseQuality = 'partial';
