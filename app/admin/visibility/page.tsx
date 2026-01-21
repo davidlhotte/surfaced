@@ -541,7 +541,15 @@ export default function VisibilityPage() {
             <BlockStack gap="400">
               <BlockStack gap="200">
                 <InlineStack align="space-between" blockAlign="center">
-                  <Text as="h2" variant="headingMd">{t.results}</Text>
+                  <InlineStack gap="200" blockAlign="center">
+                    <Text as="h2" variant="headingMd">{t.results}</Text>
+                    {/* Show session ID when viewing from history */}
+                    {selectedSession && sessions.length > 0 && (
+                      <Badge tone="success">
+                        {`#${sessions.length - sessions.findIndex(s => s.sessionId === selectedSession.sessionId)}`}
+                      </Badge>
+                    )}
+                  </InlineStack>
                   {/* Show date when viewing from history */}
                   {selectedSession && (
                     <Badge tone="info">

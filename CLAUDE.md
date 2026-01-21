@@ -1,5 +1,27 @@
 # Surfaced - Development Guide
 
+## ⚠️ CRITICAL: DEPLOYMENT CHECKLIST ⚠️
+
+**EVERY time you modify code, you MUST complete ALL these steps:**
+
+```bash
+# 1. Check for errors
+npx tsc --noEmit --skipLibCheck
+
+# 2. Commit and push
+git add -A && git commit -m "feat/fix: Description" && git push origin main
+
+# 3. Deploy to Shopify
+npx shopify app deploy --force
+
+# 4. Verify Vercel (wait ~30s for build)
+curl -s -o /dev/null -w "%{http_code}" https://surfaced.vercel.app/admin
+```
+
+**DO NOT consider your work complete until ALL 4 steps are done!**
+
+---
+
 This is a Shopify app template built with Next.js, Prisma, and Polaris.
 
 ## Quick Start
