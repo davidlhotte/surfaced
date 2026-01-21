@@ -543,9 +543,26 @@ For quick resolution, include:
   },
 ];
 
-// Simple markdown to HTML parser
+/**
+ * Sanitize HTML entities in user content before markdown parsing
+ * Only allows markdown syntax, escapes any raw HTML
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
+ * Simple markdown to HTML parser with sanitization
+ * Escapes HTML before parsing markdown to prevent XSS
+ */
 function parseMarkdown(content: string): string {
-  let html = content;
+  // First, escape any HTML in the content to prevent XSS
+  let html = escapeHtml(content);
 
   // Code blocks first (before other replacements)
   html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto my-4 text-sm font-mono"><code>$2</code></pre>');

@@ -1,5 +1,6 @@
 import { shopifyApi, ApiVersion, Session } from '@shopify/shopify-api';
 import '@shopify/shopify-api/adapters/node';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { prisma } from '@/lib/db/prisma';
 import { encryptToken, decryptToken } from '@/lib/security/encryption';
 import { logger } from '@/lib/monitoring/logger';
@@ -239,6 +240,7 @@ export async function exchangeSessionTokenForAccessToken(
 
 /**
  * Verify and decode a session token (JWT)
+ * Performs full HMAC-SHA256 signature verification
  * @see https://shopify.dev/docs/apps/build/authentication-authorization/session-tokens
  */
 export function verifySessionToken(sessionToken: string): {
@@ -251,20 +253,43 @@ export function verifySessionToken(sessionToken: string): {
   try {
     logger.info({ tokenLength: sessionToken.length }, 'Verifying session token');
 
-    // Session tokens are JWTs - decode without verification first to get claims
+    // Session tokens are JWTs - verify structure
     const parts = sessionToken.split('.');
     if (parts.length !== 3) {
       logger.error({ partsCount: parts.length }, 'Invalid session token format - expected 3 parts');
       return null;
     }
 
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+    const [headerB64, payloadB64, signatureB64] = parts;
+
+    // Get API secret for signature verification
+    const config = getConfig();
+    const secret = config.apiSecret;
+
+    // Verify HMAC-SHA256 signature
+    const signatureInput = `${headerB64}.${payloadB64}`;
+    const expectedSignature = createHmac('sha256', secret)
+      .update(signatureInput)
+      .digest('base64url');
+
+    // Use timing-safe comparison to prevent timing attacks
+    const actualSignature = Buffer.from(signatureB64, 'base64url');
+    const computedSignature = Buffer.from(expectedSignature, 'base64url');
+
+    if (actualSignature.length !== computedSignature.length ||
+        !timingSafeEqual(actualSignature, computedSignature)) {
+      logger.error({}, 'Session token signature verification failed');
+      return null;
+    }
+
+    // Decode and verify payload
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8'));
     logger.info({
       iss: payload.iss,
       dest: payload.dest,
       exp: payload.exp,
       sub: payload.sub?.substring(0, 20) + '...',
-    }, 'Session token payload decoded');
+    }, 'Session token payload decoded, signature verified');
 
     // Verify expiration
     const now = Math.floor(Date.now() / 1000);
@@ -273,11 +298,28 @@ export function verifySessionToken(sessionToken: string): {
       return null;
     }
 
-    // Verify issuer matches shop
+    // Verify not-before (nbf) if present
+    if (payload.nbf && payload.nbf > now) {
+      logger.error({ nbf: payload.nbf, now }, 'Session token not yet valid');
+      return null;
+    }
+
+    // Verify issuer matches expected Shopify issuer pattern
     const destUrl = new URL(payload.dest);
     const shop = destUrl.hostname;
+    const expectedIss = `https://${shop}/admin`;
+    if (payload.iss !== expectedIss) {
+      logger.error({ iss: payload.iss, expected: expectedIss }, 'Session token issuer mismatch');
+      return null;
+    }
 
-    // Basic validation
+    // Verify audience (aud) matches our API key
+    if (payload.aud !== config.apiKey) {
+      logger.error({ aud: payload.aud, expected: config.apiKey }, 'Session token audience mismatch');
+      return null;
+    }
+
+    // Basic shop validation
     if (!shop.endsWith('.myshopify.com')) {
       logger.error({ shop }, 'Invalid shop in session token - must end with .myshopify.com');
       return null;

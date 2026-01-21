@@ -19,15 +19,55 @@ const ShopContext = createContext<ShopContextType>({
   shopDetectionFailed: false,
 });
 
-// Global shop storage (survives component re-mounts)
-let globalShop: string | null = null;
-let isTokenExchanged = false;
+/**
+ * Session storage for shop data (survives page refreshes in same tab)
+ * Using sessionStorage instead of module variables for better SSR compatibility
+ */
+const STORAGE_KEY = 'surfaced_shop_domain';
+const TOKEN_EXCHANGED_KEY = 'surfaced_token_exchanged';
+
+function getStoredShop(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return sessionStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setStoredShop(shop: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(STORAGE_KEY, shop);
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function isTokenAlreadyExchanged(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return sessionStorage.getItem(TOKEN_EXCHANGED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function markTokenExchanged(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(TOKEN_EXCHANGED_KEY, 'true');
+  } catch {
+    // Ignore storage errors
+  }
+}
 
 interface ShopProviderProps {
   children: ReactNode;
 }
 
-const DEBUG = true; // Set to true for verbose logging
+// Only enable debug logging in development
+const DEBUG = process.env.NODE_ENV === 'development';
 
 function debugLog(message: string, data?: unknown) {
   if (DEBUG) {
@@ -36,20 +76,24 @@ function debugLog(message: string, data?: unknown) {
 }
 
 export function ShopProvider({ children }: ShopProviderProps) {
-  const [shop, setShop] = useState<string | null>(globalShop);
-  const [isLoading, setIsLoading] = useState(!globalShop);
-  const [isAuthenticated, setIsAuthenticated] = useState(isTokenExchanged);
+  // Initialize from sessionStorage to survive refreshes
+  const [shop, setShop] = useState<string | null>(() => getStoredShop());
+  const [isLoading, setIsLoading] = useState(() => !getStoredShop());
+  const [isAuthenticated, setIsAuthenticated] = useState(() => isTokenAlreadyExchanged());
   const [error, setError] = useState<string | null>(null);
   const [shopDetectionFailed, setShopDetectionFailed] = useState(false);
 
   useEffect(() => {
+    const cachedShop = getStoredShop();
+    const tokenExchanged = isTokenAlreadyExchanged();
+
     debugLog('ShopProvider mounted');
-    debugLog('Initial state:', { globalShop, isTokenExchanged });
+    debugLog('Initial state:', { cachedShop, tokenExchanged });
 
     // If we already have the shop and token, don't search again
-    if (globalShop && isTokenExchanged) {
+    if (cachedShop && tokenExchanged) {
       debugLog('Using cached shop and token');
-      setShop(globalShop);
+      setShop(cachedShop);
       setIsLoading(false);
       setIsAuthenticated(true);
       return;
@@ -92,17 +136,11 @@ export function ShopProvider({ children }: ShopProviderProps) {
         }
       }
 
-      // Try sessionStorage
-      if (typeof window !== 'undefined') {
-        try {
-          const stored = sessionStorage.getItem('surfaced_shop_domain');
-          if (stored) {
-            debugLog('Found shop in sessionStorage:', stored);
-            return stored;
-          }
-        } catch {
-          // Storage access denied
-        }
+      // Try sessionStorage as fallback
+      const stored = getStoredShop();
+      if (stored) {
+        debugLog('Found shop in sessionStorage:', stored);
+        return stored;
       }
 
       debugLog('No shop detected');
@@ -141,7 +179,7 @@ export function ShopProvider({ children }: ShopProviderProps) {
         if (process.env.NODE_ENV === 'development') {
           debugLog('Dev mode - skipping token exchange');
           setIsAuthenticated(true);
-          isTokenExchanged = true;
+          markTokenExchanged();
           return;
         }
         setError('Could not get session token from Shopify');
@@ -164,7 +202,7 @@ export function ShopProvider({ children }: ShopProviderProps) {
         if (response.ok) {
           debugLog('Token exchange successful!');
           setIsAuthenticated(true);
-          isTokenExchanged = true;
+          markTokenExchanged();
           setError(null);
         } else {
           const errorMsg = `Token exchange failed: ${responseText}`;
@@ -181,16 +219,10 @@ export function ShopProvider({ children }: ShopProviderProps) {
     // Try to detect immediately
     let detected = detectShop();
     if (detected) {
-      globalShop = detected;
+      setStoredShop(detected);
       setShop(detected);
-      // Store in sessionStorage
-      try {
-        sessionStorage.setItem('surfaced_shop_domain', detected);
-      } catch {
-        // Ignore storage errors
-      }
       // Perform token exchange if needed
-      if (!isTokenExchanged) {
+      if (!isTokenAlreadyExchanged()) {
         performTokenExchange(detected).finally(() => setIsLoading(false));
       } else {
         setIsLoading(false);
@@ -206,14 +238,9 @@ export function ShopProvider({ children }: ShopProviderProps) {
       debugLog(`Retry attempt ${attemptIndex + 1}/${attempts.length}`);
       detected = detectShop();
       if (detected) {
-        globalShop = detected;
+        setStoredShop(detected);
         setShop(detected);
-        try {
-          sessionStorage.setItem('surfaced_shop_domain', detected);
-        } catch {
-          // Ignore
-        }
-        if (!isTokenExchanged) {
+        if (!isTokenAlreadyExchanged()) {
           performTokenExchange(detected).finally(() => setIsLoading(false));
         } else {
           setIsLoading(false);
@@ -264,15 +291,15 @@ export function useAuthenticatedFetch() {
       // Get shop from multiple sources
       let shopDomain = shop;
 
-      // Fallback to global
-      if (!shopDomain && globalShop) {
-        shopDomain = globalShop;
+      // Fallback to sessionStorage
+      if (!shopDomain) {
+        shopDomain = getStoredShop();
       }
 
       // Try App Bridge directly
       if (!shopDomain && typeof window !== 'undefined' && window.shopify?.config?.shop) {
         shopDomain = window.shopify.config.shop;
-        globalShop = shopDomain;
+        setStoredShop(shopDomain);
       }
 
       // Try URL params
@@ -281,7 +308,7 @@ export function useAuthenticatedFetch() {
         const urlShop = urlParams.get('shop');
         if (urlShop) {
           shopDomain = urlShop;
-          globalShop = urlShop;
+          setStoredShop(urlShop);
         }
       }
 

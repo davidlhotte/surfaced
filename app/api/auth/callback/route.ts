@@ -1,8 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { exchangeCodeForToken, validateShop } from '@/lib/shopify/auth';
 import { prisma } from '@/lib/db/prisma';
 import { encryptToken } from '@/lib/security/encryption';
 import { logger, auditLog } from '@/lib/monitoring/logger';
+
+/**
+ * Verify HMAC signature from Shopify OAuth callback
+ * @see https://shopify.dev/docs/apps/build/authentication-authorization/access-token-types/online-access-tokens#verify-a-request
+ */
+function verifyHmac(searchParams: URLSearchParams): boolean {
+  const hmac = searchParams.get('hmac');
+  if (!hmac) return false;
+
+  const apiSecret = process.env.SHOPIFY_API_SECRET;
+  if (!apiSecret) {
+    logger.error({}, 'SHOPIFY_API_SECRET not configured');
+    return false;
+  }
+
+  // Create a copy of params without the hmac
+  const params = new URLSearchParams(searchParams);
+  params.delete('hmac');
+
+  // Sort parameters alphabetically and create query string
+  const sortedParams = Array.from(params.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('&');
+
+  // Calculate expected HMAC
+  const calculatedHmac = createHmac('sha256', apiSecret)
+    .update(sortedParams)
+    .digest('hex');
+
+  // Use timing-safe comparison
+  const providedHmac = Buffer.from(hmac, 'hex');
+  const computedHmac = Buffer.from(calculatedHmac, 'hex');
+
+  if (providedHmac.length !== computedHmac.length) {
+    return false;
+  }
+
+  return timingSafeEqual(providedHmac, computedHmac);
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -17,6 +58,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // CRITICAL: Verify HMAC signature to ensure request is from Shopify
+  if (!verifyHmac(searchParams)) {
+    logger.error({ shop }, 'OAuth callback HMAC verification failed');
+    return NextResponse.json(
+      { error: 'Invalid HMAC signature' },
+      { status: 401 }
+    );
+  }
+
   const isValid = await validateShop(shop);
   if (!isValid) {
     return NextResponse.json(
@@ -26,7 +76,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    logger.info({ shop, code: code?.substring(0, 10) }, 'OAuth callback received');
+    logger.info({ shop, code: code?.substring(0, 10) }, 'OAuth callback received, HMAC verified');
 
     // Exchange code for access token (manual implementation)
     const { accessToken, scope } = await exchangeCodeForToken(shop, code);
