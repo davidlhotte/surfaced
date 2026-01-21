@@ -34,6 +34,7 @@ import {
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type ProductIssue = {
@@ -568,6 +569,7 @@ export default function ProductsPage() {
         },
       ]}
     >
+      <AdminNav locale={locale} />
       <Layout>
         {error && (
           <Layout.Section>
@@ -630,7 +632,7 @@ export default function ProductsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#5c6ac4',
+                            background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
@@ -649,7 +651,7 @@ export default function ProductsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#5c6ac4',
+                            background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',
@@ -668,7 +670,7 @@ export default function ProductsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: '#5c6ac4',
+                            background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
                             color: 'white',
                             display: 'flex',
                             alignItems: 'center',

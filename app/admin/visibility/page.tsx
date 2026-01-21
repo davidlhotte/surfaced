@@ -26,6 +26,7 @@ import {
 import { SearchIcon, ChevronDownIcon, ChevronUpIcon, ClockIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 // Types
@@ -318,6 +319,7 @@ export default function VisibilityPage() {
       subtitle={t.subtitle}
       backAction={{ content: 'Dashboard', url: '/admin' }}
     >
+      <AdminNav locale={locale} />
       <Layout>
         {/* Error Banner */}
         {error && (

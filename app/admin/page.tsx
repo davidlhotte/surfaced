@@ -34,6 +34,7 @@ import {
 import Link from 'next/link';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type DashboardData = {
@@ -269,6 +270,7 @@ export default function Dashboard() {
         },
       ]}
     >
+      <AdminNav locale={locale} />
       <BlockStack gap="600">
         {/* Welcome Banner - Only for new users */}
         {!hasAnalyzed && (

@@ -23,6 +23,7 @@ import { TechnicalSeoCard } from '@/components/admin/TechnicalSeoCard';
 import { LlmsTxtConfigModal } from '@/components/admin/LlmsTxtConfigModal';
 import { JsonLdConfigModal } from '@/components/admin/JsonLdConfigModal';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 import type { AdminLocale } from '@/lib/i18n/translations';
 
@@ -419,6 +420,7 @@ export default function SettingsPage() {
       subtitle={t.settings.subtitle}
       backAction={{ content: t.settings.dashboard, url: '/admin' }}
     >
+      <AdminNav locale={locale} />
       <Layout>
         {error && (
           <Layout.Section>
