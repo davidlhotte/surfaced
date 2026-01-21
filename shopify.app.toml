@@ -26,3 +26,24 @@ redirect_urls = ["https://surfaced.vercel.app/api/auth/callback"]
 
 [pos]
 embedded = false
+
+# App Bridge Navigation Menu
+[[nav]]
+label = "Dashboard"
+destination = "/admin"
+
+[[nav]]
+label = "Products"
+destination = "/admin/products"
+
+[[nav]]
+label = "Visibility"
+destination = "/admin/visibility"
+
+[[nav]]
+label = "Competitors"
+destination = "/admin/competitors"
+
+[[nav]]
+label = "Settings"
+destination = "/admin/settings"
