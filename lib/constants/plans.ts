@@ -27,6 +27,13 @@ export const PLAN_LIMITS = {
     exportCsv: false,
     apiAccess: false,
     prioritySupport: false,
+    // SEO Tools
+    sitemapGenerator: true,
+    robotsTxtManager: true,
+    duplicateContent: false,
+    aiTrafficTracking: false,
+    bulkEditor: false,
+    seoReports: false,
     // Legacy features (from template)
     customMarkerColor: false,
     customMarkerIcon: false,
@@ -43,6 +50,13 @@ export const PLAN_LIMITS = {
     exportCsv: false,
     apiAccess: false,
     prioritySupport: false,
+    // SEO Tools
+    sitemapGenerator: true,
+    robotsTxtManager: true,
+    duplicateContent: true,
+    aiTrafficTracking: false,
+    bulkEditor: true,
+    seoReports: false,
     // Legacy features
     customMarkerColor: true,
     customMarkerIcon: false,
@@ -59,6 +73,13 @@ export const PLAN_LIMITS = {
     exportCsv: true,
     apiAccess: false,
     prioritySupport: false,
+    // SEO Tools
+    sitemapGenerator: true,
+    robotsTxtManager: true,
+    duplicateContent: true,
+    aiTrafficTracking: true,
+    bulkEditor: true,
+    seoReports: true,
     // Legacy features
     customMarkerColor: true,
     customMarkerIcon: true,
@@ -75,6 +96,13 @@ export const PLAN_LIMITS = {
     exportCsv: true,
     apiAccess: true,
     prioritySupport: true,
+    // SEO Tools
+    sitemapGenerator: true,
+    robotsTxtManager: true,
+    duplicateContent: true,
+    aiTrafficTracking: true,
+    bulkEditor: true,
+    seoReports: true,
     // Legacy features
     customMarkerColor: true,
     customMarkerIcon: true,

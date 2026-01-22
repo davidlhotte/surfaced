@@ -261,6 +261,78 @@ Surfaced actually queries AI assistants to see if your brand is mentioned.
 - **Monthly minimum**: Have trend data`,
         },
       },
+      {
+        id: 'seo-tools',
+        title: { fr: 'Outils SEO Avancés', en: 'Advanced SEO Tools' },
+        content: {
+          fr: `### Vue d'ensemble
+
+Surfaced inclut une suite d'outils SEO avancés pour optimiser votre boutique.
+
+### Outils disponibles
+
+#### 🗺️ Générateur de Sitemap
+Créez des sitemaps XML optimisés avec support d'images pour un meilleur indexage par Google.
+
+#### 🤖 Gestionnaire Robots.txt
+Contrôlez quels bots IA peuvent explorer votre boutique (GPTBot, ClaudeBot, etc.).
+
+#### 🔍 Détection de Contenu Dupliqué
+Identifiez les descriptions similaires qui nuisent à votre SEO.
+
+#### 📊 Suivi du Trafic IA
+Suivez les visiteurs venant de ChatGPT, Perplexity et autres plateformes IA.
+
+#### ✏️ Éditeur en Masse
+Modifiez les alt texts, meta tags et descriptions pour plusieurs produits à la fois.
+
+#### 📈 Rapports SEO
+Exportez des rapports détaillés d'audit et de visibilité en CSV.
+
+### Accès par plan
+| Outil | Free | Starter | Growth | Scale |
+|-------|------|---------|--------|-------|
+| Sitemap | ✅ | ✅ | ✅ | ✅ |
+| Robots.txt | ✅ | ✅ | ✅ | ✅ |
+| Doublons | ❌ | ✅ | ✅ | ✅ |
+| Trafic IA | ❌ | ❌ | ✅ | ✅ |
+| Bulk Edit | ❌ | ✅ | ✅ | ✅ |
+| Rapports | ❌ | ❌ | ✅ | ✅ |`,
+          en: `### Overview
+
+Surfaced includes a suite of advanced SEO tools to optimize your store.
+
+### Available Tools
+
+#### 🗺️ Sitemap Generator
+Create optimized XML sitemaps with image support for better Google indexing.
+
+#### 🤖 Robots.txt Manager
+Control which AI bots can crawl your store (GPTBot, ClaudeBot, etc.).
+
+#### 🔍 Duplicate Content Detection
+Identify similar descriptions that hurt your SEO.
+
+#### 📊 AI Traffic Tracking
+Track visitors coming from ChatGPT, Perplexity and other AI platforms.
+
+#### ✏️ Bulk Editor
+Edit alt texts, meta tags and descriptions for multiple products at once.
+
+#### 📈 SEO Reports
+Export detailed audit and visibility reports in CSV.
+
+### Access by plan
+| Tool | Free | Starter | Growth | Scale |
+|------|------|---------|--------|-------|
+| Sitemap | ✅ | ✅ | ✅ | ✅ |
+| Robots.txt | ✅ | ✅ | ✅ | ✅ |
+| Duplicates | ❌ | ✅ | ✅ | ✅ |
+| AI Traffic | ❌ | ❌ | ✅ | ✅ |
+| Bulk Edit | ❌ | ✅ | ✅ | ✅ |
+| Reports | ❌ | ❌ | ✅ | ✅ |`,
+        },
+      },
     ],
   },
   {
@@ -360,6 +432,17 @@ Perfect for: commuting, sports, office, travel."
 | Tests A/B | ❌ | ❌ | ✅ | ✅ |
 | API | ❌ | ❌ | ❌ | ✅ |
 
+### Outils SEO inclus
+
+| Outil | Free | Starter | Growth | Scale |
+|-------|------|---------|--------|-------|
+| Sitemap Generator | ✅ | ✅ | ✅ | ✅ |
+| Robots.txt Manager | ✅ | ✅ | ✅ | ✅ |
+| Détection Doublons | ❌ | ✅ | ✅ | ✅ |
+| Suivi Trafic IA | ❌ | ❌ | ✅ | ✅ |
+| Éditeur en Masse | ❌ | ✅ | ✅ | ✅ |
+| Rapports SEO | ❌ | ❌ | ✅ | ✅ |
+
 ### Quel plan choisir ?
 
 **Free** : Découvrir Surfaced et comprendre votre score IA.
@@ -381,6 +464,17 @@ Perfect for: commuting, sports, office, travel."
 | JSON-LD | ❌ | ✅ | ✅ | ✅ |
 | A/B Tests | ❌ | ❌ | ✅ | ✅ |
 | API | ❌ | ❌ | ❌ | ✅ |
+
+### SEO Tools Included
+
+| Tool | Free | Starter | Growth | Scale |
+|------|------|---------|--------|-------|
+| Sitemap Generator | ✅ | ✅ | ✅ | ✅ |
+| Robots.txt Manager | ✅ | ✅ | ✅ | ✅ |
+| Duplicate Detection | ❌ | ✅ | ✅ | ✅ |
+| AI Traffic Tracking | ❌ | ❌ | ✅ | ✅ |
+| Bulk Editor | ❌ | ✅ | ✅ | ✅ |
+| SEO Reports | ❌ | ❌ | ✅ | ✅ |
 
 ### Which plan to choose?
 
