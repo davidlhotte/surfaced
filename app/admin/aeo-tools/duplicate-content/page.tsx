@@ -55,7 +55,7 @@ export default function DuplicateContentPage() {
     en: {
       title: 'Duplicate Content Analysis',
       subtitle: 'Detect duplicate titles and descriptions that hurt your SEO',
-      back: 'SEO Tools',
+      back: 'AEO Tools',
       analyze: 'Analyze Content',
       analyzing: 'Analyzing...',
       refresh: 'Refresh',
@@ -89,7 +89,7 @@ export default function DuplicateContentPage() {
     fr: {
       title: 'Analyse du Contenu Duplique',
       subtitle: 'Detectez les titres et descriptions dupliques qui nuisent a votre SEO',
-      back: 'Outils SEO',
+      back: 'Outils AEO',
       analyze: 'Analyser le Contenu',
       analyzing: 'Analyse...',
       refresh: 'Actualiser',
@@ -165,7 +165,7 @@ export default function DuplicateContentPage() {
   return (
     <Page
       title={t.title}
-      backAction={{ content: t.back, url: '/admin/seo-tools' }}
+      backAction={{ content: t.back, url: '/admin/aeo-tools' }}
       secondaryActions={
         report
           ? [

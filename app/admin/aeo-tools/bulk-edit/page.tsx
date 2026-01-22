@@ -63,7 +63,7 @@ export default function BulkEditPage() {
     en: {
       title: 'Bulk Editor',
       subtitle: 'Edit multiple products at once with AI assistance',
-      back: 'SEO Tools',
+      back: 'AEO Tools',
       refresh: 'Refresh',
       selectProducts: 'Select Products',
       selectAll: 'Select All',
@@ -95,7 +95,7 @@ export default function BulkEditPage() {
     fr: {
       title: 'Editeur en Masse',
       subtitle: 'Modifiez plusieurs produits a la fois avec l\'assistance IA',
-      back: 'Outils SEO',
+      back: 'Outils AEO',
       refresh: 'Actualiser',
       selectProducts: 'Selectionner les Produits',
       selectAll: 'Tout Selectionner',
@@ -231,7 +231,7 @@ export default function BulkEditPage() {
 
   if (loading) {
     return (
-      <Page title={t.title} backAction={{ content: t.back, url: '/admin/seo-tools' }}>
+      <Page title={t.title} backAction={{ content: t.back, url: '/admin/aeo-tools' }}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -250,7 +250,7 @@ export default function BulkEditPage() {
   return (
     <Page
       title={t.title}
-      backAction={{ content: t.back, url: '/admin/seo-tools' }}
+      backAction={{ content: t.back, url: '/admin/aeo-tools' }}
       secondaryActions={[
         {
           content: t.refresh,

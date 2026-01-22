@@ -38,7 +38,7 @@ export default function ReportsPage() {
     en: {
       title: 'SEO Reports',
       subtitle: 'Generate comprehensive reports for your store\'s SEO performance',
-      back: 'SEO Tools',
+      back: 'AEO Tools',
       reportType: 'Report Type',
       auditReport: 'Product Audit Report',
       auditDesc: 'Complete analysis of all products with AI scores and issues',
@@ -85,7 +85,7 @@ export default function ReportsPage() {
     fr: {
       title: 'Rapports SEO',
       subtitle: 'Generez des rapports complets sur les performances SEO de votre boutique',
-      back: 'Outils SEO',
+      back: 'Outils AEO',
       reportType: 'Type de Rapport',
       auditReport: 'Rapport d\'Audit Produits',
       auditDesc: 'Analyse complete de tous les produits avec scores IA et problemes',
@@ -202,7 +202,7 @@ export default function ReportsPage() {
   return (
     <Page
       title={t.title}
-      backAction={{ content: t.back, url: '/admin/seo-tools' }}
+      backAction={{ content: t.back, url: '/admin/aeo-tools' }}
     >
       <Layout>
         {error && (

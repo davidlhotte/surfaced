@@ -16,84 +16,66 @@ import {
   SkeletonBodyText,
   Box,
   Divider,
-  Icon,
-  ProgressBar,
 } from '@shopify/polaris';
 import {
   RefreshIcon,
   FileIcon,
-  CodeIcon,
-  SearchIcon,
-  ChartVerticalFilledIcon,
-  EditIcon,
-  ImageIcon,
-  AlertCircleIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
-interface ToolStats {
-  sitemap?: { lastGenerated: string | null; urlCount: number };
-  robotsTxt?: { isConfigured: boolean; aiBotsBlocked: number };
-  duplicateContent?: { score: number; issuesCount: number };
-  aiTraffic?: { totalVisits: number; conversions: number };
-  bulkEdit?: { lastJob: string | null; productsEdited: number };
-  reports?: { lastReport: string | null };
-}
-
-const SEO_TOOLS = [
-  {
-    id: 'sitemap',
-    icon: '🗺️',
-    color: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
-    href: '/admin/seo-tools/sitemap',
-    plans: ['FREE', 'BASIC', 'PLUS', 'PREMIUM'],
-  },
+const AEO_TOOLS = [
   {
     id: 'robots',
     icon: '🤖',
     color: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-    href: '/admin/seo-tools/robots-txt',
+    href: '/admin/aeo-tools/robots-txt',
+    plans: ['FREE', 'BASIC', 'PLUS', 'PREMIUM'],
+  },
+  {
+    id: 'aiTraffic',
+    icon: '📊',
+    color: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+    href: '/admin/aeo-tools/ai-traffic',
+    plans: ['PLUS', 'PREMIUM'],
+  },
+  {
+    id: 'sitemap',
+    icon: '🗺️',
+    color: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
+    href: '/admin/aeo-tools/sitemap',
     plans: ['FREE', 'BASIC', 'PLUS', 'PREMIUM'],
   },
   {
     id: 'duplicate',
     icon: '🔍',
     color: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)',
-    href: '/admin/seo-tools/duplicate-content',
+    href: '/admin/aeo-tools/duplicate-content',
     plans: ['BASIC', 'PLUS', 'PREMIUM'],
-  },
-  {
-    id: 'aiTraffic',
-    icon: '📊',
-    color: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-    href: '/admin/seo-tools/ai-traffic',
-    plans: ['PLUS', 'PREMIUM'],
   },
   {
     id: 'bulkEdit',
     icon: '✏️',
     color: 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)',
-    href: '/admin/seo-tools/bulk-edit',
+    href: '/admin/aeo-tools/bulk-edit',
     plans: ['BASIC', 'PLUS', 'PREMIUM'],
   },
   {
     id: 'reports',
     icon: '📈',
     color: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
-    href: '/admin/seo-tools/reports',
+    href: '/admin/aeo-tools/reports',
     plans: ['PLUS', 'PREMIUM'],
   },
 ];
 
-export default function SeoToolsPage() {
+export default function AeoToolsPage() {
   const { fetch } = useAuthenticatedFetch();
-  const { t, locale } = useAdminLanguage();
+  const { locale } = useAdminLanguage();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<ToolStats>({});
   const [shopPlan, setShopPlan] = useState<string>('FREE');
 
   const loadData = useCallback(async () => {
@@ -120,83 +102,83 @@ export default function SeoToolsPage() {
 
   const translations = {
     en: {
-      title: 'SEO Tools',
-      subtitle: 'Advanced tools to optimize your store for AI and search engines',
+      title: 'AEO Tools',
+      subtitle: 'AI Engine Optimization tools to maximize your visibility on ChatGPT, Claude, Perplexity and other AI assistants',
       home: 'Home',
       refresh: 'Refresh',
       upgradePlan: 'Upgrade Plan',
       available: 'Available',
       requiresUpgrade: 'Requires upgrade',
       tools: {
-        sitemap: {
-          title: 'Sitemap Generator',
-          description: 'Generate optimized XML sitemaps with image support for better indexing',
-          stat: 'URLs indexed',
-        },
         robots: {
-          title: 'Robots.txt Manager',
-          description: 'Control which bots can crawl your store and manage AI bot access',
+          title: 'AI Bot Manager',
+          description: 'Control which AI bots (GPTBot, ClaudeBot, PerplexityBot) can crawl and learn from your store',
           stat: 'AI bots managed',
-        },
-        duplicate: {
-          title: 'Duplicate Content',
-          description: 'Detect and fix duplicate content issues hurting your SEO',
-          stat: 'Content score',
         },
         aiTraffic: {
           title: 'AI Traffic Tracking',
-          description: 'Track visitors coming from ChatGPT, Perplexity, and other AI platforms',
+          description: 'Track visitors coming from ChatGPT, Perplexity, Claude and other AI platforms',
           stat: 'AI visits tracked',
         },
+        sitemap: {
+          title: 'Sitemap Generator',
+          description: 'Generate optimized XML sitemaps to help AI crawlers index your products',
+          stat: 'URLs indexed',
+        },
+        duplicate: {
+          title: 'Content Quality',
+          description: 'Detect duplicate content that confuses AI and hurts recommendations',
+          stat: 'Content score',
+        },
         bulkEdit: {
-          title: 'Bulk Editor',
-          description: 'Edit alt texts, meta tags, and descriptions for multiple products at once',
-          stat: 'Products edited',
+          title: 'Bulk Optimizer',
+          description: 'Optimize alt texts, meta tags, and descriptions for multiple products at once',
+          stat: 'Products optimized',
         },
         reports: {
-          title: 'SEO Reports',
-          description: 'Generate comprehensive audit and visibility reports for your store',
+          title: 'AEO Reports',
+          description: 'Generate comprehensive AI visibility and audit reports for your store',
           stat: 'Reports available',
         },
       },
     },
     fr: {
-      title: 'Outils SEO',
-      subtitle: 'Outils avances pour optimiser votre boutique pour l\'IA et les moteurs de recherche',
+      title: 'Outils AEO',
+      subtitle: 'Outils d\'optimisation pour moteurs IA pour maximiser votre visibilite sur ChatGPT, Claude, Perplexity et autres assistants IA',
       home: 'Accueil',
       refresh: 'Actualiser',
       upgradePlan: 'Mettre a niveau',
       available: 'Disponible',
       requiresUpgrade: 'Mise a niveau requise',
       tools: {
-        sitemap: {
-          title: 'Generateur de Sitemap',
-          description: 'Generez des sitemaps XML optimises avec support d\'images pour un meilleur indexage',
-          stat: 'URLs indexees',
-        },
         robots: {
-          title: 'Gestionnaire Robots.txt',
-          description: 'Controlez quels bots peuvent explorer votre boutique et gerez l\'acces des bots IA',
+          title: 'Gestionnaire Bots IA',
+          description: 'Controlez quels bots IA (GPTBot, ClaudeBot, PerplexityBot) peuvent explorer votre boutique',
           stat: 'Bots IA geres',
-        },
-        duplicate: {
-          title: 'Contenu Duplique',
-          description: 'Detectez et corrigez les problemes de contenu duplique nuisant a votre SEO',
-          stat: 'Score de contenu',
         },
         aiTraffic: {
           title: 'Suivi Trafic IA',
-          description: 'Suivez les visiteurs venant de ChatGPT, Perplexity et autres plateformes IA',
+          description: 'Suivez les visiteurs venant de ChatGPT, Perplexity, Claude et autres plateformes IA',
           stat: 'Visites IA suivies',
         },
+        sitemap: {
+          title: 'Generateur Sitemap',
+          description: 'Generez des sitemaps XML optimises pour aider les crawlers IA a indexer vos produits',
+          stat: 'URLs indexees',
+        },
+        duplicate: {
+          title: 'Qualite du Contenu',
+          description: 'Detectez le contenu duplique qui confond les IA et nuit aux recommandations',
+          stat: 'Score de contenu',
+        },
         bulkEdit: {
-          title: 'Editeur en Masse',
-          description: 'Modifiez les alt texts, meta tags et descriptions pour plusieurs produits a la fois',
-          stat: 'Produits edites',
+          title: 'Optimiseur en Masse',
+          description: 'Optimisez alt texts, meta tags et descriptions pour plusieurs produits a la fois',
+          stat: 'Produits optimises',
         },
         reports: {
-          title: 'Rapports SEO',
-          description: 'Generez des rapports d\'audit et de visibilite complets pour votre boutique',
+          title: 'Rapports AEO',
+          description: 'Generez des rapports complets de visibilite IA et d\'audit pour votre boutique',
           stat: 'Rapports disponibles',
         },
       },
@@ -259,7 +241,7 @@ export default function SeoToolsPage() {
               gap: '16px',
             }}
           >
-            {SEO_TOOLS.map((tool) => {
+            {AEO_TOOLS.map((tool) => {
               const toolTr = tr.tools[tool.id as keyof typeof tr.tools];
               const hasAccess = canAccessTool(tool.plans);
 
@@ -319,7 +301,7 @@ export default function SeoToolsPage() {
           </div>
         </Layout.Section>
 
-        {/* Quick Links to Original Tools */}
+        {/* Quick Links to AI Guide Tools */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">

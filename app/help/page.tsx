@@ -262,74 +262,74 @@ Surfaced actually queries AI assistants to see if your brand is mentioned.
         },
       },
       {
-        id: 'seo-tools',
-        title: { fr: 'Outils SEO Avancés', en: 'Advanced SEO Tools' },
+        id: 'aeo-tools',
+        title: { fr: 'Outils AEO Avancés', en: 'Advanced AEO Tools' },
         content: {
           fr: `### Vue d'ensemble
 
-Surfaced inclut une suite d'outils SEO avancés pour optimiser votre boutique.
+Surfaced inclut une suite d'outils AEO (AI Engine Optimization) avancés pour maximiser votre visibilité sur ChatGPT, Claude, Perplexity et autres assistants IA.
 
 ### Outils disponibles
 
 #### 🗺️ Générateur de Sitemap
-Créez des sitemaps XML optimisés avec support d'images pour un meilleur indexage par Google.
+Créez des sitemaps XML optimisés pour aider les crawlers IA à indexer vos produits.
 
-#### 🤖 Gestionnaire Robots.txt
-Contrôlez quels bots IA peuvent explorer votre boutique (GPTBot, ClaudeBot, etc.).
+#### 🤖 Gestionnaire Bots IA
+Contrôlez quels bots IA peuvent explorer votre boutique (GPTBot, ClaudeBot, PerplexityBot, etc.).
 
-#### 🔍 Détection de Contenu Dupliqué
-Identifiez les descriptions similaires qui nuisent à votre SEO.
+#### 🔍 Qualité du Contenu
+Détectez le contenu dupliqué qui confond les IA et nuit aux recommandations.
 
 #### 📊 Suivi du Trafic IA
-Suivez les visiteurs venant de ChatGPT, Perplexity et autres plateformes IA.
+Suivez les visiteurs venant de ChatGPT, Perplexity, Claude et autres plateformes IA.
 
-#### ✏️ Éditeur en Masse
-Modifiez les alt texts, meta tags et descriptions pour plusieurs produits à la fois.
+#### ✏️ Optimiseur en Masse
+Optimisez les alt texts, meta tags et descriptions pour plusieurs produits à la fois.
 
-#### 📈 Rapports SEO
-Exportez des rapports détaillés d'audit et de visibilité en CSV.
+#### 📈 Rapports AEO
+Exportez des rapports détaillés de visibilité IA et d'audit en CSV.
 
 ### Accès par plan
 | Outil | Free | Starter | Growth | Scale |
 |-------|------|---------|--------|-------|
 | Sitemap | ✅ | ✅ | ✅ | ✅ |
-| Robots.txt | ✅ | ✅ | ✅ | ✅ |
-| Doublons | ❌ | ✅ | ✅ | ✅ |
+| Bots IA | ✅ | ✅ | ✅ | ✅ |
+| Qualité | ❌ | ✅ | ✅ | ✅ |
 | Trafic IA | ❌ | ❌ | ✅ | ✅ |
-| Bulk Edit | ❌ | ✅ | ✅ | ✅ |
+| Optimiseur | ❌ | ✅ | ✅ | ✅ |
 | Rapports | ❌ | ❌ | ✅ | ✅ |`,
           en: `### Overview
 
-Surfaced includes a suite of advanced SEO tools to optimize your store.
+Surfaced includes a suite of advanced AEO (AI Engine Optimization) tools to maximize your visibility on ChatGPT, Claude, Perplexity and other AI assistants.
 
 ### Available Tools
 
 #### 🗺️ Sitemap Generator
-Create optimized XML sitemaps with image support for better Google indexing.
+Create optimized XML sitemaps to help AI crawlers index your products.
 
-#### 🤖 Robots.txt Manager
-Control which AI bots can crawl your store (GPTBot, ClaudeBot, etc.).
+#### 🤖 AI Bot Manager
+Control which AI bots can crawl your store (GPTBot, ClaudeBot, PerplexityBot, etc.).
 
-#### 🔍 Duplicate Content Detection
-Identify similar descriptions that hurt your SEO.
+#### 🔍 Content Quality
+Detect duplicate content that confuses AIs and hurts recommendations.
 
 #### 📊 AI Traffic Tracking
-Track visitors coming from ChatGPT, Perplexity and other AI platforms.
+Track visitors coming from ChatGPT, Perplexity, Claude and other AI platforms.
 
-#### ✏️ Bulk Editor
-Edit alt texts, meta tags and descriptions for multiple products at once.
+#### ✏️ Bulk Optimizer
+Optimize alt texts, meta tags and descriptions for multiple products at once.
 
-#### 📈 SEO Reports
-Export detailed audit and visibility reports in CSV.
+#### 📈 AEO Reports
+Export detailed AI visibility and audit reports in CSV.
 
 ### Access by plan
 | Tool | Free | Starter | Growth | Scale |
 |------|------|---------|--------|-------|
 | Sitemap | ✅ | ✅ | ✅ | ✅ |
-| Robots.txt | ✅ | ✅ | ✅ | ✅ |
-| Duplicates | ❌ | ✅ | ✅ | ✅ |
+| AI Bots | ✅ | ✅ | ✅ | ✅ |
+| Quality | ❌ | ✅ | ✅ | ✅ |
 | AI Traffic | ❌ | ❌ | ✅ | ✅ |
-| Bulk Edit | ❌ | ✅ | ✅ | ✅ |
+| Optimizer | ❌ | ✅ | ✅ | ✅ |
 | Reports | ❌ | ❌ | ✅ | ✅ |`,
         },
       },
@@ -432,16 +432,16 @@ Perfect for: commuting, sports, office, travel."
 | Tests A/B | ❌ | ❌ | ✅ | ✅ |
 | API | ❌ | ❌ | ❌ | ✅ |
 
-### Outils SEO inclus
+### Outils AEO inclus
 
 | Outil | Free | Starter | Growth | Scale |
 |-------|------|---------|--------|-------|
 | Sitemap Generator | ✅ | ✅ | ✅ | ✅ |
-| Robots.txt Manager | ✅ | ✅ | ✅ | ✅ |
-| Détection Doublons | ❌ | ✅ | ✅ | ✅ |
+| Gestionnaire Bots IA | ✅ | ✅ | ✅ | ✅ |
+| Qualité du Contenu | ❌ | ✅ | ✅ | ✅ |
 | Suivi Trafic IA | ❌ | ❌ | ✅ | ✅ |
-| Éditeur en Masse | ❌ | ✅ | ✅ | ✅ |
-| Rapports SEO | ❌ | ❌ | ✅ | ✅ |
+| Optimiseur en Masse | ❌ | ✅ | ✅ | ✅ |
+| Rapports AEO | ❌ | ❌ | ✅ | ✅ |
 
 ### Quel plan choisir ?
 
@@ -465,16 +465,16 @@ Perfect for: commuting, sports, office, travel."
 | A/B Tests | ❌ | ❌ | ✅ | ✅ |
 | API | ❌ | ❌ | ❌ | ✅ |
 
-### SEO Tools Included
+### AEO Tools Included
 
 | Tool | Free | Starter | Growth | Scale |
 |------|------|---------|--------|-------|
 | Sitemap Generator | ✅ | ✅ | ✅ | ✅ |
-| Robots.txt Manager | ✅ | ✅ | ✅ | ✅ |
-| Duplicate Detection | ❌ | ✅ | ✅ | ✅ |
+| AI Bot Manager | ✅ | ✅ | ✅ | ✅ |
+| Content Quality | ❌ | ✅ | ✅ | ✅ |
 | AI Traffic Tracking | ❌ | ❌ | ✅ | ✅ |
-| Bulk Editor | ❌ | ✅ | ✅ | ✅ |
-| SEO Reports | ❌ | ❌ | ✅ | ✅ |
+| Bulk Optimizer | ❌ | ✅ | ✅ | ✅ |
+| AEO Reports | ❌ | ❌ | ✅ | ✅ |
 
 ### Which plan to choose?
 

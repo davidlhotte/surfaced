@@ -59,7 +59,7 @@ export default function RobotsTxtPage() {
     en: {
       title: 'Robots.txt Manager',
       subtitle: 'Control how search engines and AI bots crawl your store',
-      back: 'SEO Tools',
+      back: 'AEO Tools',
       save: 'Save Configuration',
       saving: 'Saving...',
       preview: 'Preview',
@@ -94,7 +94,7 @@ export default function RobotsTxtPage() {
     fr: {
       title: 'Gestionnaire Robots.txt',
       subtitle: 'Controlez comment les moteurs de recherche et bots IA explorent votre boutique',
-      back: 'Outils SEO',
+      back: 'Outils AEO',
       save: 'Sauvegarder',
       saving: 'Sauvegarde...',
       preview: 'Apercu',
@@ -238,7 +238,7 @@ export default function RobotsTxtPage() {
   return (
     <Page
       title={t.title}
-      backAction={{ content: t.back, url: '/admin/seo-tools' }}
+      backAction={{ content: t.back, url: '/admin/aeo-tools' }}
     >
       <Layout>
         {error && (

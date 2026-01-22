@@ -49,7 +49,7 @@ export default function AITrafficPage() {
     en: {
       title: 'AI Traffic Tracking',
       subtitle: 'Track visitors coming from AI platforms like ChatGPT and Perplexity',
-      back: 'SEO Tools',
+      back: 'AEO Tools',
       refresh: 'Refresh',
       totalVisits: 'Total AI Visits',
       conversions: 'Conversions',
@@ -79,7 +79,7 @@ export default function AITrafficPage() {
     fr: {
       title: 'Suivi du Trafic IA',
       subtitle: 'Suivez les visiteurs venant des plateformes IA comme ChatGPT et Perplexity',
-      back: 'Outils SEO',
+      back: 'Outils AEO',
       refresh: 'Actualiser',
       totalVisits: 'Visites IA Totales',
       conversions: 'Conversions',
@@ -195,7 +195,7 @@ export default function AITrafficPage() {
 
   if (loading) {
     return (
-      <Page title={t.title} backAction={{ content: t.back, url: '/admin/seo-tools' }}>
+      <Page title={t.title} backAction={{ content: t.back, url: '/admin/aeo-tools' }}>
         <Layout>
           <Layout.Section>
             <Card>
@@ -214,7 +214,7 @@ export default function AITrafficPage() {
   return (
     <Page
       title={t.title}
-      backAction={{ content: t.back, url: '/admin/seo-tools' }}
+      backAction={{ content: t.back, url: '/admin/aeo-tools' }}
       secondaryActions={[
         {
           content: t.refresh,

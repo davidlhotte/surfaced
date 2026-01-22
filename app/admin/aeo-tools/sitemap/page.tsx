@@ -45,7 +45,7 @@ export default function SitemapPage() {
     en: {
       title: 'Sitemap Generator',
       subtitle: 'Generate optimized XML sitemaps for better search engine indexing',
-      back: 'SEO Tools',
+      back: 'AEO Tools',
       refresh: 'Refresh',
       generate: 'Generate Sitemap',
       generating: 'Generating...',
@@ -76,7 +76,7 @@ export default function SitemapPage() {
     fr: {
       title: 'Generateur de Sitemap',
       subtitle: 'Generez des sitemaps XML optimises pour un meilleur indexage',
-      back: 'Outils SEO',
+      back: 'Outils AEO',
       refresh: 'Actualiser',
       generate: 'Generer le Sitemap',
       generating: 'Generation...',
@@ -166,7 +166,7 @@ export default function SitemapPage() {
   return (
     <Page
       title={t.title}
-      backAction={{ content: t.back, url: '/admin/seo-tools' }}
+      backAction={{ content: t.back, url: '/admin/aeo-tools' }}
     >
       <Layout>
         {error && (

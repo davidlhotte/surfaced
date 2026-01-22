@@ -13,6 +13,10 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Products', destination: '/admin/products' },
   { label: 'Visibility', destination: '/admin/visibility' },
   { label: 'Competitors', destination: '/admin/competitors' },
+  { label: 'Statistics', destination: '/admin/insights' },
+  { label: 'AI Guide', destination: '/admin/tools' },
+  { label: 'AEO Tools', destination: '/admin/aeo-tools' },
+  { label: 'A/B Tests', destination: '/admin/ab-tests' },
   { label: 'Settings', destination: '/admin/settings' },
 ];
 

@@ -109,12 +109,12 @@ export const translations = {
       additional: [
         { icon: '📄', title: 'llms.txt Generator', desc: 'Fichier guide pour les IA crawlers' },
         { icon: '🏷️', title: 'JSON-LD Schemas', desc: 'Données structurées automatiques' },
-        { icon: '🗺️', title: 'Sitemap Generator', desc: 'Sitemaps XML optimisés avec images' },
-        { icon: '🤖', title: 'Robots.txt Manager', desc: 'Contrôlez l\'accès des bots IA' },
-        { icon: '🔍', title: 'Détection Doublons', desc: 'Trouvez le contenu dupliqué' },
+        { icon: '🤖', title: 'Gestionnaire Bots IA', desc: 'Contrôlez GPTBot, ClaudeBot, etc.' },
         { icon: '📊', title: 'Suivi Trafic IA', desc: 'Trackez les visites depuis ChatGPT' },
-        { icon: '✏️', title: 'Édition en Masse', desc: 'Modifiez plusieurs produits à la fois' },
-        { icon: '📈', title: 'Rapports SEO', desc: 'Exportez vos audits en CSV' },
+        { icon: '🗺️', title: 'Sitemap Generator', desc: 'Aidez les crawlers IA à indexer' },
+        { icon: '🔍', title: 'Qualité du Contenu', desc: 'Détectez le contenu qui confond les IA' },
+        { icon: '✏️', title: 'Optimiseur en Masse', desc: 'Optimisez plusieurs produits à la fois' },
+        { icon: '📈', title: 'Rapports AEO', desc: 'Exportez vos audits de visibilité IA' },
       ],
     },
     testimonials: {
@@ -435,7 +435,7 @@ export const translations = {
         { icon: '🔍', title: 'Duplicate Detection', desc: 'Find duplicate content' },
         { icon: '📊', title: 'AI Traffic Tracking', desc: 'Track visits from ChatGPT' },
         { icon: '✏️', title: 'Bulk Editor', desc: 'Edit multiple products at once' },
-        { icon: '📈', title: 'SEO Reports', desc: 'Export your audits to CSV' },
+        { icon: '📈', title: 'AEO Reports', desc: 'Export AI visibility audits to CSV' },
       ],
     },
     testimonials: {
