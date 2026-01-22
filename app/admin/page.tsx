@@ -252,6 +252,18 @@ export default function Dashboard() {
       stat: t.common.configure,
       statTone: 'subdued',
     },
+    {
+      title: locale === 'fr' ? 'Outils SEO' : 'SEO Tools',
+      subtitle: locale === 'fr' ? 'Sitemap, Robots.txt & plus' : 'Sitemap, Robots.txt & more',
+      description: locale === 'fr'
+        ? 'Outils avances pour sitemap, robots.txt, contenu duplique et trafic IA'
+        : 'Advanced tools for sitemap, robots.txt, duplicate content and AI traffic',
+      icon: CodeIcon,
+      href: '/admin/seo-tools',
+      gradient: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
+      stat: locale === 'fr' ? '6 outils' : '6 tools',
+      statTone: 'subdued',
+    },
   ];
 
   return (
