@@ -62,6 +62,69 @@ export interface JsonLdBreadcrumb {
   }[];
 }
 
+// Rich Snippets Types
+export interface JsonLdFAQ {
+  '@context': string;
+  '@type': string;
+  mainEntity: {
+    '@type': string;
+    name: string;
+    acceptedAnswer: {
+      '@type': string;
+      text: string;
+    };
+  }[];
+}
+
+export interface JsonLdHowTo {
+  '@context': string;
+  '@type': string;
+  name: string;
+  description?: string;
+  image?: string;
+  totalTime?: string;
+  step: {
+    '@type': string;
+    position: number;
+    name: string;
+    text: string;
+    image?: string;
+  }[];
+}
+
+export interface JsonLdReview {
+  '@context': string;
+  '@type': string;
+  itemReviewed: {
+    '@type': string;
+    name: string;
+  };
+  reviewRating: {
+    '@type': string;
+    ratingValue: string;
+    bestRating: string;
+  };
+  author: {
+    '@type': string;
+    name: string;
+  };
+  reviewBody?: string;
+  datePublished?: string;
+}
+
+export interface JsonLdAggregateRating {
+  '@context': string;
+  '@type': string;
+  itemReviewed: {
+    '@type': string;
+    name: string;
+  };
+  ratingValue: string;
+  bestRating: string;
+  ratingCount: string;
+  reviewCount?: string;
+}
+
 export interface GenerateJsonLdOptions {
   shopDomain: string;
   shopName: string;
@@ -225,6 +288,161 @@ export function generateBreadcrumbJsonLd(
       ...(item.url ? { item: item.url } : {}),
     })),
   };
+}
+
+/**
+ * Generate FAQ JSON-LD schema (Rich Snippet)
+ */
+export function generateFAQJsonLd(
+  questions: { question: string; answer: string }[]
+): JsonLdFAQ {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: questions.map((q) => ({
+      '@type': 'Question',
+      name: q.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: q.answer,
+      },
+    })),
+  };
+}
+
+/**
+ * Generate HowTo JSON-LD schema (Rich Snippet)
+ */
+export function generateHowToJsonLd(
+  name: string,
+  steps: { name: string; text: string; image?: string }[],
+  options?: {
+    description?: string;
+    image?: string;
+    totalTimeMinutes?: number;
+  }
+): JsonLdHowTo {
+  const howTo: JsonLdHowTo = {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name,
+    step: steps.map((step, index) => ({
+      '@type': 'HowToStep',
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+      ...(step.image ? { image: step.image } : {}),
+    })),
+  };
+
+  if (options?.description) {
+    howTo.description = options.description;
+  }
+
+  if (options?.image) {
+    howTo.image = options.image;
+  }
+
+  if (options?.totalTimeMinutes) {
+    howTo.totalTime = `PT${options.totalTimeMinutes}M`;
+  }
+
+  return howTo;
+}
+
+/**
+ * Generate Review JSON-LD schema (Rich Snippet)
+ */
+export function generateReviewJsonLd(
+  productName: string,
+  review: {
+    rating: number;
+    maxRating?: number;
+    authorName: string;
+    reviewBody?: string;
+    datePublished?: string;
+  }
+): JsonLdReview {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    itemReviewed: {
+      '@type': 'Product',
+      name: productName,
+    },
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: review.rating.toString(),
+      bestRating: (review.maxRating || 5).toString(),
+    },
+    author: {
+      '@type': 'Person',
+      name: review.authorName,
+    },
+    ...(review.reviewBody ? { reviewBody: review.reviewBody } : {}),
+    ...(review.datePublished ? { datePublished: review.datePublished } : {}),
+  };
+}
+
+/**
+ * Generate Aggregate Rating JSON-LD schema (Rich Snippet)
+ */
+export function generateAggregateRatingJsonLd(
+  productName: string,
+  rating: {
+    value: number;
+    maxRating?: number;
+    ratingCount: number;
+    reviewCount?: number;
+  }
+): JsonLdAggregateRating {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AggregateRating',
+    itemReviewed: {
+      '@type': 'Product',
+      name: productName,
+    },
+    ratingValue: rating.value.toFixed(1),
+    bestRating: (rating.maxRating || 5).toString(),
+    ratingCount: rating.ratingCount.toString(),
+    ...(rating.reviewCount ? { reviewCount: rating.reviewCount.toString() } : {}),
+  };
+}
+
+/**
+ * Generate Product FAQ from common questions
+ */
+export function generateProductFAQ(
+  productTitle: string,
+  productType: string | null,
+  vendor: string | null
+): { question: string; answer: string }[] {
+  const faqs: { question: string; answer: string }[] = [];
+
+  faqs.push({
+    question: `What is ${productTitle}?`,
+    answer: `${productTitle} is a ${productType || 'product'}${vendor ? ` from ${vendor}` : ''}. It's designed to meet your needs with quality and reliability.`,
+  });
+
+  faqs.push({
+    question: `Is ${productTitle} available for shipping?`,
+    answer: `Yes, ${productTitle} is available for shipping. Check our shipping policy for delivery times and costs to your location.`,
+  });
+
+  if (vendor) {
+    faqs.push({
+      question: `Who makes ${productTitle}?`,
+      answer: `${productTitle} is made by ${vendor}, a trusted brand known for quality products.`,
+    });
+  }
+
+  faqs.push({
+    question: `What is your return policy for ${productTitle}?`,
+    answer: `We offer a satisfaction guarantee on ${productTitle}. Please check our return policy for specific terms and conditions.`,
+  });
+
+  return faqs;
 }
 
 /**

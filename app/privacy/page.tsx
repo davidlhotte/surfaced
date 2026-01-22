@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - LocateUs',
-  description: 'Privacy Policy for LocateUs Store Locator App',
+  title: 'Privacy Policy - Surfaced',
+  description: 'Privacy Policy for Surfaced AI Visibility Optimization App',
   robots: 'index, follow',
 };
 
@@ -16,22 +16,22 @@ export default function PrivacyPolicy() {
       lineHeight: '1.6',
       color: '#333'
     }}>
-      <h1 style={{ borderBottom: '2px solid #007bff', paddingBottom: '10px' }}>
+      <h1 style={{ borderBottom: '2px solid #0EA5E9', paddingBottom: '10px' }}>
         Privacy Policy
       </h1>
       <p style={{ color: '#666', marginBottom: '30px' }}>
-        Last updated: January 12, 2025
+        Last updated: January 21, 2025
       </p>
 
       <section style={{ marginBottom: '30px' }}>
         <h2>1. Introduction</h2>
         <p>
-          LocateUs (&quot;we&quot;, &quot;our&quot;, or &quot;the App&quot;) is a Shopify application that helps
-          merchants display their store locations on an interactive map. This Privacy Policy explains
-          how we collect, use, store, and protect information when you use our application.
+          Surfaced (&quot;we&quot;, &quot;our&quot;, or &quot;the App&quot;) is a Shopify application that helps
+          merchants optimize their product catalog for AI visibility (AEO - AI Engine Optimization).
+          This Privacy Policy explains how we collect, use, store, and protect information when you use our application.
         </p>
         <p>
-          By installing and using LocateUs, you agree to the terms of this Privacy Policy.
+          By installing and using Surfaced, you agree to the terms of this Privacy Policy.
         </p>
       </section>
 
@@ -39,30 +39,39 @@ export default function PrivacyPolicy() {
         <h2>2. Information We Collect</h2>
 
         <h3>2.1 Merchant Information</h3>
-        <p>When you install LocateUs, we collect:</p>
+        <p>When you install Surfaced, we collect:</p>
         <ul>
           <li><strong>Shop domain</strong> (e.g., your-store.myshopify.com)</li>
-          <li><strong>Access tokens</strong> (encrypted, for API authentication)</li>
+          <li><strong>Shop name and email</strong> for account identification</li>
+          <li><strong>Access tokens</strong> (encrypted with AES-256-GCM, for API authentication)</li>
           <li><strong>Billing plan</strong> selected</li>
         </ul>
 
-        <h3>2.2 Store Location Data</h3>
-        <p>You provide us with store location information including:</p>
+        <h3>2.2 Product Data</h3>
+        <p>To provide AI visibility analysis, we access and store:</p>
         <ul>
-          <li>Store name</li>
-          <li>Address, city, state/province, country, postal code</li>
-          <li>Geographic coordinates (latitude/longitude)</li>
-          <li>Contact information (phone, email, website)</li>
-          <li>Business hours</li>
+          <li>Product titles, descriptions, and handles</li>
+          <li>Product images and ALT texts</li>
+          <li>Product metafields and tags</li>
+          <li>AI readiness scores and audit results</li>
         </ul>
 
-        <h3>2.3 What We Do NOT Collect</h3>
+        <h3>2.3 Visibility Check Data</h3>
+        <p>When you run visibility checks, we store:</p>
+        <ul>
+          <li>Search queries tested</li>
+          <li>AI platform responses (summarized)</li>
+          <li>Mention status and position data</li>
+          <li>Competitor mentions detected</li>
+        </ul>
+
+        <h3>2.4 What We Do NOT Collect</h3>
         <p>We do not collect or store:</p>
         <ul>
           <li>Customer personal information</li>
           <li>Payment or financial data</li>
           <li>Order information</li>
-          <li>Product data</li>
+          <li>Inventory levels</li>
         </ul>
       </section>
 
@@ -70,8 +79,10 @@ export default function PrivacyPolicy() {
         <h2>3. How We Use Your Information</h2>
         <p>We use collected information solely to:</p>
         <ul>
-          <li>Display your store locations on the interactive map widget</li>
-          <li>Provide geocoding services (converting addresses to coordinates)</li>
+          <li>Analyze your product catalog for AI readiness</li>
+          <li>Generate AI visibility scores and recommendations</li>
+          <li>Check your brand visibility on AI platforms (ChatGPT, Claude, Perplexity, etc.)</li>
+          <li>Generate llms.txt and JSON-LD structured data</li>
           <li>Process billing through Shopify&apos;s billing system</li>
           <li>Provide customer support</li>
           <li>Improve the application</li>
@@ -107,17 +118,18 @@ export default function PrivacyPolicy() {
             as required by the Shopify platform
           </li>
           <li>
-            <strong>Map providers:</strong> OpenStreetMap (open source) or Google Maps
-            (if enabled) receive geographic coordinates to display maps
+            <strong>AI Platforms (for visibility checks):</strong> When you run visibility checks,
+            we send search queries to AI platforms (OpenAI, Anthropic, Google, Perplexity) to test
+            if your brand is mentioned. We do not share your product data with these platforms.
           </li>
           <li>
-            <strong>Geocoding services:</strong> Address data is sent to geocoding APIs
-            to convert addresses to coordinates
+            <strong>OpenRouter:</strong> We use OpenRouter as an API gateway for some AI model requests.
+            Only search queries are sent, not your product catalog.
           </li>
         </ul>
         <p>
-          Your store location data is publicly displayed on your storefront&apos;s map widget
-          as intended by the application&apos;s functionality.
+          Your product data stays within our secure infrastructure and is never shared
+          with third-party AI training or marketing services.
         </p>
       </section>
 
@@ -125,11 +137,12 @@ export default function PrivacyPolicy() {
         <h2>6. Data Retention</h2>
         <p>
           We retain your data only as long as you have the app installed. When you
-          uninstall LocateUs:
+          uninstall Surfaced:
         </p>
         <ul>
-          <li>All store locations are permanently deleted</li>
-          <li>All settings are permanently deleted</li>
+          <li>All product audit data is permanently deleted</li>
+          <li>All visibility check history is permanently deleted</li>
+          <li>All settings and configurations are permanently deleted</li>
           <li>All access tokens are permanently deleted</li>
           <li>All cached data is cleared</li>
         </ul>
@@ -150,7 +163,7 @@ export default function PrivacyPolicy() {
         </ul>
         <p>
           To exercise these rights, contact us at{' '}
-          <a href="mailto:david.lhotte@gmail.com">david.lhotte@gmail.com</a>.
+          <a href="mailto:support@surfaced.app">support@surfaced.app</a>.
         </p>
       </section>
 
@@ -170,16 +183,16 @@ export default function PrivacyPolicy() {
       <section style={{ marginBottom: '30px' }}>
         <h2>9. Cookies and Tracking</h2>
         <p>
-          The LocateUs admin interface uses sessionStorage (not cookies) to maintain
+          The Surfaced admin interface uses sessionStorage (not cookies) to maintain
           your session within the Shopify admin. We do not use tracking cookies or
-          third-party analytics on the storefront widget.
+          third-party analytics within the app.
         </p>
       </section>
 
       <section style={{ marginBottom: '30px' }}>
         <h2>10. Children&apos;s Privacy</h2>
         <p>
-          LocateUs is a B2B application designed for Shopify merchants. We do not
+          Surfaced is a B2B application designed for Shopify merchants. We do not
           knowingly collect information from children under 16 years of age.
         </p>
       </section>
@@ -200,7 +213,7 @@ export default function PrivacyPolicy() {
           please contact us:
         </p>
         <ul>
-          <li><strong>Email:</strong> <a href="mailto:david.lhotte@gmail.com">david.lhotte@gmail.com</a></li>
+          <li><strong>Email:</strong> <a href="mailto:support@surfaced.app">support@surfaced.app</a></li>
         </ul>
       </section>
 

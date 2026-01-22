@@ -9,7 +9,10 @@ export type FlowTriggerType =
   | 'alert_created'
   | 'visibility_check_completed'
   | 'optimization_applied'
-  | 'ab_test_completed';
+  | 'ab_test_completed'
+  | 'bulk_optimization_completed'
+  | 'duplicate_content_found'
+  | 'ai_traffic_spike';
 
 type FlowTriggerPayload = {
   product_score_changed: {
@@ -44,6 +47,24 @@ type FlowTriggerPayload = {
     winner: string;
     variant_a_mentions: number;
     variant_b_mentions: number;
+  };
+  bulk_optimization_completed: {
+    job_id: string;
+    operation_type: string;
+    total_products: number;
+    succeeded: number;
+    failed: number;
+  };
+  duplicate_content_found: {
+    duplicate_groups: number;
+    affected_products: number;
+    score: number;
+  };
+  ai_traffic_spike: {
+    platform: string;
+    visits_count: number;
+    period_hours: number;
+    threshold: number;
   };
 };
 
@@ -82,6 +103,9 @@ export async function sendFlowTrigger<T extends FlowTriggerType>(
       visibility_check_completed: 'surfaced-flow-triggers/visibility-check-completed',
       optimization_applied: 'surfaced-flow-triggers/product-optimization-applied',
       ab_test_completed: 'surfaced-flow-triggers/ab-test-completed',
+      bulk_optimization_completed: 'surfaced-flow-triggers/bulk-optimization-completed',
+      duplicate_content_found: 'surfaced-flow-triggers/duplicate-content-found',
+      ai_traffic_spike: 'surfaced-flow-triggers/ai-traffic-spike',
     };
 
     const triggerHandle = triggerHandles[triggerType];
@@ -238,5 +262,69 @@ export async function triggerABTestCompleted(
     winner,
     variant_a_mentions: variantAMentions,
     variant_b_mentions: variantBMentions,
+  });
+}
+
+/**
+ * Trigger: Bulk Optimization Completed
+ */
+export async function triggerBulkOptimizationCompleted(
+  shopDomain: string,
+  jobId: string,
+  operationType: string,
+  totalProducts: number,
+  succeeded: number,
+  failed: number
+): Promise<void> {
+  await sendFlowTrigger(shopDomain, 'bulk_optimization_completed', {
+    job_id: jobId,
+    operation_type: operationType,
+    total_products: totalProducts,
+    succeeded,
+    failed,
+  });
+}
+
+/**
+ * Trigger: Duplicate Content Found
+ */
+export async function triggerDuplicateContentFound(
+  shopDomain: string,
+  duplicateGroups: number,
+  affectedProducts: number,
+  score: number
+): Promise<void> {
+  // Only trigger if there are significant duplicates
+  if (duplicateGroups === 0) {
+    return;
+  }
+
+  await sendFlowTrigger(shopDomain, 'duplicate_content_found', {
+    duplicate_groups: duplicateGroups,
+    affected_products: affectedProducts,
+    score,
+  });
+}
+
+/**
+ * Trigger: AI Traffic Spike
+ */
+export async function triggerAITrafficSpike(
+  shopDomain: string,
+  platform: string,
+  visitsCount: number,
+  periodHours: number,
+  threshold: number
+): Promise<void> {
+  // Only trigger if visits exceed threshold
+  if (visitsCount < threshold) {
+    return;
+  }
+
+  await sendFlowTrigger(shopDomain, 'ai_traffic_spike', {
+    platform,
+    visits_count: visitsCount,
+    period_hours: periodHours,
+    threshold,
   });
 }

@@ -505,6 +505,263 @@ function calculateEstimatedScore(
 }
 
 /**
+ * Generate ALT text suggestions for product images
+ */
+export async function generateAltTextSuggestions(
+  shopDomain: string,
+  productId: string,
+  productData: {
+    title: string;
+    description: string;
+    productType?: string;
+    vendor?: string;
+    images: Array<{
+      url: string;
+      altText: string | null;
+    }>;
+  }
+): Promise<{
+  productId: string;
+  title: string;
+  suggestions: Array<{
+    imageUrl: string;
+    originalAlt: string | null;
+    suggestedAlt: string;
+    reasoning: string;
+  }>;
+}> {
+  logger.info({ shopDomain, productId, imageCount: productData.images.length }, 'Generating ALT text suggestions');
+
+  // Check quota
+  const quota = await checkOptimizationQuota(shopDomain);
+  if (!quota.available) {
+    throw new Error(`AI optimization limit reached (${quota.limit}/month). Upgrade your plan for more.`);
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  // Filter images that need ALT text
+  const imagesNeedingAlt = productData.images.filter(img => !img.altText || img.altText.length < 10);
+
+  if (imagesNeedingAlt.length === 0) {
+    return {
+      productId,
+      title: productData.title,
+      suggestions: [],
+    };
+  }
+
+  // Generate ALT text for each image in parallel
+  const suggestions = await Promise.all(
+    imagesNeedingAlt.slice(0, 5).map(async (image, index) => {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert at writing accessible, SEO-friendly image alt text for e-commerce products. Create descriptive alt text that helps visually impaired users and AI systems understand the image.',
+            },
+            {
+              role: 'user',
+              content: `Write an alt text for product image ${index + 1} of "${productData.title}".
+
+Product Details:
+- Title: ${productData.title}
+- Type: ${productData.productType || 'Not specified'}
+- Brand: ${productData.vendor || 'Not specified'}
+- Description: ${productData.description?.substring(0, 200) || 'Not available'}
+- Image URL: ${image.url}
+
+Requirements:
+- 50-125 characters
+- Describe what the image shows (product angle, context, usage)
+- Include product name naturally
+- Be specific and descriptive
+- Don't start with "Image of" or "Picture of"
+
+Return ONLY the alt text, no quotes.`,
+            },
+          ],
+          max_tokens: 100,
+          temperature: 0.6,
+        });
+
+        const suggestedAlt = completion.choices[0]?.message?.content?.trim() || '';
+
+        return {
+          imageUrl: image.url,
+          originalAlt: image.altText,
+          suggestedAlt,
+          reasoning: 'Descriptive alt text helps AI assistants and visually impaired users understand your product images, improving accessibility and AI visibility.',
+        };
+      } catch (error) {
+        logger.error({ error, imageUrl: image.url }, 'Failed to generate ALT text');
+        return null;
+      }
+    })
+  );
+
+  // Log the optimization
+  const shop = await prisma.shop.findUnique({
+    where: { shopDomain },
+    select: { id: true },
+  });
+
+  if (shop) {
+    await prisma.auditLog.create({
+      data: {
+        shopId: shop.id,
+        action: 'ai_optimization',
+        details: {
+          type: 'alt_text',
+          productId,
+          suggestionsCount: suggestions.filter(Boolean).length,
+        },
+      },
+    });
+  }
+
+  return {
+    productId,
+    title: productData.title,
+    suggestions: suggestions.filter((s): s is NonNullable<typeof s> => s !== null && s.suggestedAlt.length > 0),
+  };
+}
+
+/**
+ * Generate meta tags optimization suggestions
+ */
+export async function generateMetaTagsSuggestions(
+  shopDomain: string,
+  productId: string,
+  productData: {
+    title: string;
+    description: string;
+    productType?: string;
+    vendor?: string;
+    seoTitle?: string;
+    seoDescription?: string;
+  }
+): Promise<{
+  productId: string;
+  title: string;
+  suggestions: {
+    seoTitle: { original: string; suggested: string; reasoning: string } | null;
+    seoDescription: { original: string; suggested: string; reasoning: string } | null;
+    ogTitle: { suggested: string; reasoning: string } | null;
+    ogDescription: { suggested: string; reasoning: string } | null;
+  };
+}> {
+  logger.info({ shopDomain, productId }, 'Generating meta tags suggestions');
+
+  // Check quota
+  const quota = await checkOptimizationQuota(shopDomain);
+  if (!quota.available) {
+    throw new Error(`AI optimization limit reached (${quota.limit}/month). Upgrade your plan for more.`);
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  // Generate all meta tags in one API call for efficiency
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are an SEO and social media expert. Generate optimized meta tags for e-commerce products.',
+      },
+      {
+        role: 'user',
+        content: `Generate meta tags for this product:
+
+Product: ${productData.title}
+Type: ${productData.productType || 'Not specified'}
+Brand: ${productData.vendor || 'Not specified'}
+Description: ${productData.description?.substring(0, 300) || 'Not available'}
+Current SEO Title: ${productData.seoTitle || 'None'}
+Current SEO Description: ${productData.seoDescription || 'None'}
+
+Generate JSON with:
+{
+  "seoTitle": "50-60 char SEO title with primary keyword",
+  "seoDescription": "150-160 char meta description with CTA",
+  "ogTitle": "60-90 char engaging title for social sharing",
+  "ogDescription": "200 char description optimized for social media"
+}
+
+Return ONLY valid JSON, no markdown.`,
+      },
+    ],
+    max_tokens: 400,
+    temperature: 0.6,
+  });
+
+  let metaTags: {
+    seoTitle?: string;
+    seoDescription?: string;
+    ogTitle?: string;
+    ogDescription?: string;
+  } = {};
+
+  try {
+    const content = completion.choices[0]?.message?.content?.trim() || '{}';
+    metaTags = JSON.parse(content);
+  } catch {
+    logger.error('Failed to parse meta tags JSON');
+    throw new Error('Failed to generate meta tags');
+  }
+
+  // Log the optimization
+  const shop = await prisma.shop.findUnique({
+    where: { shopDomain },
+    select: { id: true },
+  });
+
+  if (shop) {
+    await prisma.auditLog.create({
+      data: {
+        shopId: shop.id,
+        action: 'ai_optimization',
+        details: {
+          type: 'meta_tags',
+          productId,
+        },
+      },
+    });
+  }
+
+  return {
+    productId,
+    title: productData.title,
+    suggestions: {
+      seoTitle: metaTags.seoTitle ? {
+        original: productData.seoTitle || '',
+        suggested: metaTags.seoTitle,
+        reasoning: 'SEO titles should be 50-60 characters with your primary keyword at the start.',
+      } : null,
+      seoDescription: metaTags.seoDescription ? {
+        original: productData.seoDescription || '',
+        suggested: metaTags.seoDescription,
+        reasoning: 'Meta descriptions should be 150-160 characters with a clear call-to-action.',
+      } : null,
+      ogTitle: metaTags.ogTitle ? {
+        suggested: metaTags.ogTitle,
+        reasoning: 'Open Graph titles appear when your product is shared on social media.',
+      } : null,
+      ogDescription: metaTags.ogDescription ? {
+        suggested: metaTags.ogDescription,
+        reasoning: 'Open Graph descriptions provide context for social media shares.',
+      } : null,
+    },
+  };
+}
+
+/**
  * Get products that need optimization
  */
 export async function getProductsForOptimization(
