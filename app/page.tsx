@@ -160,7 +160,7 @@ function HomeContent() {
     },
     {
       name: 'Starter',
-      price: '49',
+      price: '29',
       period: t.pricing.starter.period,
       description: t.pricing.starter.description,
       features: t.pricing.starter.features,
@@ -169,7 +169,7 @@ function HomeContent() {
     },
     {
       name: 'Growth',
-      price: '99',
+      price: '79',
       period: t.pricing.growth.period,
       description: t.pricing.growth.description,
       features: t.pricing.growth.features,
@@ -178,7 +178,7 @@ function HomeContent() {
     },
     {
       name: 'Scale',
-      price: '199',
+      price: '149',
       period: t.pricing.scale.period,
       description: t.pricing.scale.description,
       features: t.pricing.scale.features,

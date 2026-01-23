@@ -2,15 +2,15 @@ import { Plan } from '@prisma/client';
 
 /**
  * Plan prices in USD per month
- * Matches the PRODUCT_SPEC.md pricing:
- * - BASIC (Starter): $49/month
- * - PLUS (Growth): $99/month
- * - PREMIUM (Scale): $199/month
+ * Competitive pricing based on market analysis:
+ * - BASIC (Starter): $29/month - Entry point for small stores
+ * - PLUS (Growth): $79/month - Best value for growing stores
+ * - PREMIUM (Scale): $149/month - Enterprise features
  */
 export const PLAN_PRICES: Record<Exclude<Plan, 'FREE'>, number> = {
-  [Plan.BASIC]: 49,
-  [Plan.PLUS]: 99,
-  [Plan.PREMIUM]: 199,
+  [Plan.BASIC]: 29,
+  [Plan.PLUS]: 79,
+  [Plan.PREMIUM]: 149,
 };
 
 /**

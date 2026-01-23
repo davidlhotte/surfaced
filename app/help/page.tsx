@@ -509,7 +509,7 @@ Perfect for: commuting, sports, office, travel."
 
 | Fonctionnalité | Free | Starter | Growth | Scale |
 |----------------|------|---------|--------|-------|
-| Prix | $0 | $49/mois | $99/mois | $199/mois |
+| Prix | $0 | $29/mois | $79/mois | $149/mois |
 | Produits analysés | 10 | 100 | 500 | Illimité |
 | Vérifications | 3/mois | 10/mois | 50/mois | 200/mois |
 | Suggestions IA | 3/mois | 20/mois | 100/mois | 500/mois |
@@ -542,7 +542,7 @@ Perfect for: commuting, sports, office, travel."
 
 | Feature | Free | Starter | Growth | Scale |
 |---------|------|---------|--------|-------|
-| Price | $0 | $49/mo | $99/mo | $199/mo |
+| Price | $0 | $29/mo | $79/mo | $149/mo |
 | Products analyzed | 10 | 100 | 500 | Unlimited |
 | Visibility checks | 3/mo | 10/mo | 50/mo | 200/mo |
 | AI suggestions | 3/mo | 20/mo | 100/mo | 500/mo |
