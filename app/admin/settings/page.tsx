@@ -614,7 +614,7 @@ export default function SettingsPage() {
           </Card>
         </Layout.Section>
 
-        {/* Compare All Plans - Full Comparison Table */}
+        {/* Compare All Plans - Card Grid */}
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
@@ -624,132 +624,202 @@ export default function SettingsPage() {
               </Text>
               <Divider />
 
-              {/* Comparison Table */}
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid var(--p-color-border)' }}>
-                      <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600 }}>{t.settings.feature}</th>
-                      {(['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const).map((planKey) => {
-                        const plan = PLAN_FEATURES[planKey];
-                        const isCurrent = planKey === currentPlan;
-                        const isPopular = 'popular' in plan && plan.popular;
-                        return (
-                          <th
-                            key={planKey}
+              {/* Plan Cards Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '16px',
+                padding: '8px 0'
+              }}>
+                {(['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const).map((planKey) => {
+                  const plan = PLAN_FEATURES[planKey];
+                  const isCurrent = planKey === currentPlan;
+                  const isPopular = 'popular' in plan && plan.popular;
+                  const isUpgrade = getPlanIndex(planKey) > getPlanIndex(currentPlan);
+                  const isDowngrade = getPlanIndex(planKey) < getPlanIndex(currentPlan);
+                  const limits = PLAN_LIMITS[planKey];
+
+                  return (
+                    <div
+                      key={planKey}
+                      style={{
+                        borderRadius: '16px',
+                        padding: '24px 20px',
+                        position: 'relative',
+                        background: isPopular
+                          ? 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)'
+                          : isCurrent
+                            ? '#f0fdf4'
+                            : '#ffffff',
+                        border: isPopular
+                          ? 'none'
+                          : isCurrent
+                            ? '2px solid #22c55e'
+                            : '1px solid #e2e8f0',
+                        boxShadow: isPopular
+                          ? '0 10px 40px rgba(14, 165, 233, 0.3)'
+                          : '0 2px 8px rgba(0,0,0,0.04)',
+                        transform: isPopular ? 'scale(1.02)' : 'none',
+                        color: isPopular ? 'white' : 'inherit',
+                      }}
+                    >
+                      {/* Popular Badge */}
+                      {isPopular && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '-10px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          background: '#fbbf24',
+                          color: '#78350f',
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}>
+                          {t.settings.popular}
+                        </div>
+                      )}
+
+                      {/* Current Badge */}
+                      {isCurrent && !isPopular && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '-10px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          background: '#22c55e',
+                          color: 'white',
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}>
+                          {t.settings.current}
+                        </div>
+                      )}
+
+                      {/* Plan Name */}
+                      <div style={{
+                        fontSize: '18px',
+                        fontWeight: 700,
+                        marginBottom: '8px',
+                        marginTop: (isPopular || isCurrent) ? '8px' : '0',
+                      }}>
+                        {plan.name}
+                      </div>
+
+                      {/* Price */}
+                      <div style={{ marginBottom: '16px' }}>
+                        <span style={{ fontSize: '32px', fontWeight: 800 }}>
+                          {plan.price === 0 ? t.settings.free : `$${plan.price}`}
+                        </span>
+                        {plan.price > 0 && (
+                          <span style={{
+                            fontSize: '14px',
+                            opacity: isPopular ? 0.9 : 0.6,
+                            marginLeft: '4px'
+                          }}>
+                            /{locale === 'fr' ? 'mois' : 'mo'}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Features List */}
+                      <div style={{
+                        fontSize: '13px',
+                        lineHeight: '2',
+                        opacity: isPopular ? 0.95 : 1,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ color: isPopular ? '#bae6fd' : '#22c55e' }}>✓</span>
+                          <span>{limits.productsAudited === Infinity ? t.settings.unlimited : limits.productsAudited} {t.settings.productsAuditedLabel.toLowerCase()}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ color: isPopular ? '#bae6fd' : '#22c55e' }}>✓</span>
+                          <span>{limits.visibilityChecksPerMonth} {t.settings.visibilityChecksLabel.toLowerCase()}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ color: isPopular ? '#bae6fd' : '#22c55e' }}>✓</span>
+                          <span>{limits.aiOptimizationsPerMonth} {t.settings.aiSuggestionsLabel.toLowerCase()}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ color: isPopular ? '#bae6fd' : limits.competitorsTracked > 0 ? '#22c55e' : '#94a3b8' }}>
+                            {limits.competitorsTracked > 0 ? '✓' : '−'}
+                          </span>
+                          <span style={{ opacity: limits.competitorsTracked > 0 ? 1 : 0.5 }}>
+                            {limits.competitorsTracked > 0 ? `${limits.competitorsTracked} ${t.settings.competitorsTracked.toLowerCase()}` : t.settings.competitorsTracked}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ color: isPopular ? '#bae6fd' : limits.exportCsv ? '#22c55e' : '#94a3b8' }}>
+                            {limits.exportCsv ? '✓' : '−'}
+                          </span>
+                          <span style={{ opacity: limits.exportCsv ? 1 : 0.5 }}>{t.settings.csvExport}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ color: isPopular ? '#bae6fd' : limits.apiAccess ? '#22c55e' : '#94a3b8' }}>
+                            {limits.apiAccess ? '✓' : '−'}
+                          </span>
+                          <span style={{ opacity: limits.apiAccess ? 1 : 0.5 }}>{t.settings.apiAccess}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ color: isPopular ? '#bae6fd' : limits.prioritySupport ? '#22c55e' : '#94a3b8' }}>
+                            {limits.prioritySupport ? '✓' : '−'}
+                          </span>
+                          <span style={{ opacity: limits.prioritySupport ? 1 : 0.5 }}>{t.settings.prioritySupport}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <div style={{ marginTop: '20px' }}>
+                        {isCurrent ? (
+                          <div style={{
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            background: isPopular ? 'rgba(255,255,255,0.2)' : '#dcfce7',
+                            color: isPopular ? 'white' : '#16a34a',
+                          }}>
+                            {t.settings.currentPlan}
+                          </div>
+                        ) : planKey === 'FREE' ? null : (
+                          <button
+                            onClick={() => isDevMode ? handleDevPlanChange(planKey) : handleUpgrade(planKey)}
                             style={{
-                              padding: '12px 8px',
-                              textAlign: 'center',
+                              width: '100%',
+                              padding: '10px 16px',
+                              borderRadius: '8px',
+                              border: 'none',
                               fontWeight: 600,
-                              backgroundColor: isCurrent ? 'var(--p-color-bg-fill-success)' : isPopular ? 'var(--p-color-bg-fill-warning)' : undefined,
-                              borderRadius: '8px 8px 0 0',
+                              fontSize: '14px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              background: isPopular
+                                ? 'white'
+                                : isUpgrade
+                                  ? 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)'
+                                  : '#f1f5f9',
+                              color: isPopular
+                                ? '#0EA5E9'
+                                : isUpgrade
+                                  ? 'white'
+                                  : '#64748b',
                             }}
                           >
-                            <BlockStack gap="100" inlineAlign="center">
-                              <Text as="span" variant="headingSm">{plan.name}</Text>
-                              {isCurrent && <Badge tone="success" size="small">{t.settings.current}</Badge>}
-                              {isPopular && !isCurrent && <Badge tone="attention" size="small">{t.settings.popular}</Badge>}
-                              <Text as="span" variant="bodyLg" fontWeight="bold">
-                                {plan.price === 0 ? t.settings.free : `$${plan.price}`}
-                              </Text>
-                              {plan.price > 0 && <Text as="span" variant="bodySm" tone="subdued">/{locale === 'fr' ? 'mois' : 'mo'}</Text>}
-                            </BlockStack>
-                          </th>
-                        );
-                      })}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Products */}
-                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>{t.settings.productsAuditedLabel}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.productsAudited}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.productsAudited}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.productsAudited}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 600 }}>{t.settings.unlimited}</td>
-                    </tr>
-                    {/* Visibility Checks */}
-                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>{t.settings.visibilityChecksLabel}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.visibilityChecksPerMonth}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.visibilityChecksPerMonth}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.visibilityChecksPerMonth}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.visibilityChecksPerMonth}</td>
-                    </tr>
-                    {/* AI Optimizations */}
-                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>{t.settings.aiSuggestionsLabel}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.aiOptimizationsPerMonth}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.aiOptimizationsPerMonth}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.aiOptimizationsPerMonth}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.aiOptimizationsPerMonth}</td>
-                    </tr>
-                    {/* Competitors */}
-                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>{t.settings.competitorsTracked}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.competitorsTracked || '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.competitorsTracked}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.competitorsTracked}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.competitorsTracked}</td>
-                    </tr>
-                    {/* History */}
-                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>{t.settings.historyRetained}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.historyDays} {t.settings.days}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.historyDays} {t.settings.days}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.historyDays} {t.settings.days}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.historyDays} {t.settings.days}</td>
-                    </tr>
-                    {/* Export CSV */}
-                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>{t.settings.csvExport}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.exportCsv ? '✓' : '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.exportCsv ? '✓' : '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.exportCsv ? '✓' : '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.exportCsv ? '✓' : '-'}</td>
-                    </tr>
-                    {/* API Access */}
-                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>{t.settings.apiAccess}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.apiAccess ? '✓' : '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.apiAccess ? '✓' : '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.apiAccess ? '✓' : '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.apiAccess ? '✓' : '-'}</td>
-                    </tr>
-                    {/* Priority Support */}
-                    <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued)' }}>
-                      <td style={{ padding: '10px 8px' }}>{t.settings.prioritySupport}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.FREE.prioritySupport ? '✓' : '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.BASIC.prioritySupport ? '✓' : '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PLUS.prioritySupport ? '✓' : '-'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{PLAN_LIMITS.PREMIUM.prioritySupport ? '✓' : '-'}</td>
-                    </tr>
-                    {/* Action Row */}
-                    <tr>
-                      <td style={{ padding: '16px 8px' }}></td>
-                      {(['FREE', 'BASIC', 'PLUS', 'PREMIUM'] as const).map((planKey) => {
-                        const isCurrent = planKey === currentPlan;
-                        const isUpgrade = getPlanIndex(planKey) > getPlanIndex(currentPlan);
-                        const isDowngrade = getPlanIndex(planKey) < getPlanIndex(currentPlan);
-                        return (
-                          <td key={planKey} style={{ padding: '16px 8px', textAlign: 'center' }}>
-                            {isCurrent ? (
-                              <Badge tone="success">{t.settings.currentPlan}</Badge>
-                            ) : planKey === 'FREE' ? null : (
-                              <Button
-                                size="slim"
-                                variant={isUpgrade ? 'primary' : 'secondary'}
-                                onClick={() => isDevMode ? handleDevPlanChange(planKey) : handleUpgrade(planKey)}
-                              >
-                                {isUpgrade ? t.settings.upgrade : isDowngrade ? t.settings.downgrade : t.settings.select}
-                              </Button>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </tbody>
-                </table>
+                            {isUpgrade ? t.settings.upgrade : isDowngrade ? t.settings.downgrade : t.settings.select}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </BlockStack>
           </Card>
