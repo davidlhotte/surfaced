@@ -119,11 +119,15 @@ export default function CompetitorsPage() {
       const result = await response.json();
       if (result.success) {
         setData(result.data);
-        // Initialize brand name from shop domain if not set
-        if (!brandName && result.data.shopDomain) {
-          const shopName = result.data.shopDomain.replace('.myshopify.com', '').replace(/-/g, ' ');
-          setBrandName(shopName.charAt(0).toUpperCase() + shopName.slice(1));
-        }
+        // Initialize brand name from shop domain only if not already set
+        setBrandName((current) => {
+          if (current) return current; // Don't override if already set
+          if (result.data.shopDomain) {
+            const shopName = result.data.shopDomain.replace('.myshopify.com', '').replace(/-/g, ' ');
+            return shopName.charAt(0).toUpperCase() + shopName.slice(1);
+          }
+          return current;
+        });
       } else {
         setError(result.error || t.common.error);
       }
@@ -132,7 +136,7 @@ export default function CompetitorsPage() {
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch, t.common.error, brandName]);
+  }, [authenticatedFetch, t.common.error]);
 
   useEffect(() => {
     fetchCompetitors();
