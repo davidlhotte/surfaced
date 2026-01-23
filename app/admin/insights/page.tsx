@@ -2,7 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Page,
   Layout,
@@ -20,16 +21,22 @@ import {
   ProgressBar,
   Select,
   Tabs,
+  Collapsible,
+  DataTable,
 } from '@shopify/polaris';
 import {
   RefreshIcon,
   AlertTriangleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { PageBanner } from '@/components/admin/PageBanner';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
+
+type MetricType = 'visibility' | 'score' | 'competitors' | null;
 
 type TimePeriod = '7d' | '30d' | '90d' | '365d';
 
@@ -105,6 +112,12 @@ interface WeeklyReport {
 export default function InsightsPage() {
   const { fetch } = useAuthenticatedFetch();
   const { t, locale } = useAdminLanguage();
+  const searchParams = useSearchParams();
+
+  // Check if coming from Dashboard with specific metric
+  const metricParam = searchParams.get('metric') as MetricType;
+  const [highlightedMetric, setHighlightedMetric] = useState<MetricType>(metricParam);
+  const [expandedMetric, setExpandedMetric] = useState<MetricType>(metricParam);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -322,47 +335,73 @@ export default function InsightsPage() {
                       </Box>
                     </InlineStack>
 
-                    {/* Key Metrics */}
+                    {/* Key Metrics - Clickable for details */}
                     <InlineStack gap="400" align="start" wrap>
-                      {/* Current Score */}
+                      {/* Current Score - Clickable */}
                       <Box minWidth="180px">
-                        <Card>
-                          <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">{t.insights.aiScore}</Text>
-                            <InlineStack gap="200" blockAlign="center">
-                              <Text as="p" variant="heading2xl" fontWeight="bold">
-                                {metrics?.currentScore ?? 0}
-                              </Text>
-                              {metrics && metrics.scoreImprovement !== 0 && (
-                                <Badge tone={metrics.scoreImprovement > 0 ? 'success' : 'critical'}>
-                                  {(metrics.scoreImprovement > 0 ? '+' : '') + metrics.scoreImprovement}
-                                </Badge>
-                              )}
-                            </InlineStack>
-                            <Box width="100%">
-                              <ProgressBar
-                                progress={metrics?.currentScore ?? 0}
-                                tone={getScoreColor(metrics?.currentScore ?? 0)}
-                                size="small"
-                              />
-                            </Box>
-                          </BlockStack>
-                        </Card>
+                        <div
+                          onClick={() => setExpandedMetric(expandedMetric === 'score' ? null : 'score')}
+                          style={{
+                            cursor: 'pointer',
+                            borderRadius: '8px',
+                            border: highlightedMetric === 'score' || expandedMetric === 'score' ? '2px solid #0EA5E9' : 'none',
+                            padding: highlightedMetric === 'score' || expandedMetric === 'score' ? '2px' : '4px',
+                          }}
+                        >
+                          <Card>
+                            <BlockStack gap="200">
+                              <InlineStack align="space-between" blockAlign="center">
+                                <Text as="h3" variant="bodySm" tone="subdued">{t.insights.aiScore}</Text>
+                                <Badge tone="info" size="small">{expandedMetric === 'score' ? '▲' : '▼'}</Badge>
+                              </InlineStack>
+                              <InlineStack gap="200" blockAlign="center">
+                                <Text as="p" variant="heading2xl" fontWeight="bold">
+                                  {metrics?.currentScore ?? 0}
+                                </Text>
+                                {metrics && metrics.scoreImprovement !== 0 && (
+                                  <Badge tone={metrics.scoreImprovement > 0 ? 'success' : 'critical'}>
+                                    {(metrics.scoreImprovement > 0 ? '+' : '') + metrics.scoreImprovement}
+                                  </Badge>
+                                )}
+                              </InlineStack>
+                              <Box width="100%">
+                                <ProgressBar
+                                  progress={metrics?.currentScore ?? 0}
+                                  tone={getScoreColor(metrics?.currentScore ?? 0)}
+                                  size="small"
+                                />
+                              </Box>
+                            </BlockStack>
+                          </Card>
+                        </div>
                       </Box>
 
-                      {/* Visibility Rate */}
+                      {/* Visibility Rate - Clickable */}
                       <Box minWidth="180px">
-                        <Card>
-                          <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">{t.insights.mentionRate}</Text>
-                            <Text as="p" variant="heading2xl" fontWeight="bold">
-                              {metrics?.visibility.mentionRate ?? 0}%
-                            </Text>
-                            <Text as="p" variant="bodySm" tone="subdued">
-                              {metrics?.visibility.mentioned ?? 0} {t.insights.outOf} {metrics?.visibility.totalChecks ?? 0}
-                            </Text>
-                          </BlockStack>
-                        </Card>
+                        <div
+                          onClick={() => setExpandedMetric(expandedMetric === 'visibility' ? null : 'visibility')}
+                          style={{
+                            cursor: 'pointer',
+                            borderRadius: '8px',
+                            border: highlightedMetric === 'visibility' || expandedMetric === 'visibility' ? '2px solid #0EA5E9' : 'none',
+                            padding: highlightedMetric === 'visibility' || expandedMetric === 'visibility' ? '2px' : '4px',
+                          }}
+                        >
+                          <Card>
+                            <BlockStack gap="200">
+                              <InlineStack align="space-between" blockAlign="center">
+                                <Text as="h3" variant="bodySm" tone="subdued">{t.insights.mentionRate}</Text>
+                                <Badge tone="info" size="small">{expandedMetric === 'visibility' ? '▲' : '▼'}</Badge>
+                              </InlineStack>
+                              <Text as="p" variant="heading2xl" fontWeight="bold">
+                                {metrics?.visibility.mentionRate ?? 0}%
+                              </Text>
+                              <Text as="p" variant="bodySm" tone="subdued">
+                                {metrics?.visibility.mentioned ?? 0} {t.insights.outOf} {metrics?.visibility.totalChecks ?? 0}
+                              </Text>
+                            </BlockStack>
+                          </Card>
+                        </div>
                       </Box>
 
                       {/* Products Improved */}
@@ -395,6 +434,163 @@ export default function InsightsPage() {
                         </Card>
                       </Box>
                     </InlineStack>
+
+                    {/* Expanded Score Details */}
+                    <Collapsible
+                      open={expandedMetric === 'score'}
+                      id="score-details"
+                      transition={{ duration: '200ms', timingFunction: 'ease-in-out' }}
+                    >
+                      <Card>
+                        <BlockStack gap="400">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <Text as="h3" variant="headingMd">
+                              {locale === 'fr' ? 'Détails du Score IA' : 'AI Score Details'}
+                            </Text>
+                            <Button variant="plain" onClick={() => setExpandedMetric(null)}>✕</Button>
+                          </InlineStack>
+                          <Divider />
+
+                          {/* Score Distribution */}
+                          <BlockStack gap="300">
+                            <Text as="h4" variant="headingSm">
+                              {locale === 'fr' ? 'Répartition des Scores' : 'Score Distribution'}
+                            </Text>
+                            <InlineStack gap="400" wrap>
+                              <Box minWidth="120px">
+                                <BlockStack gap="100">
+                                  <Badge tone="success">{locale === 'fr' ? 'Excellent (80+)' : 'Excellent (80+)'}</Badge>
+                                  <Text as="p" variant="headingLg">{metrics?.scoreDistribution.excellent ?? 0}</Text>
+                                </BlockStack>
+                              </Box>
+                              <Box minWidth="120px">
+                                <BlockStack gap="100">
+                                  <Badge tone="info">{locale === 'fr' ? 'Bon (60-79)' : 'Good (60-79)'}</Badge>
+                                  <Text as="p" variant="headingLg">{metrics?.scoreDistribution.good ?? 0}</Text>
+                                </BlockStack>
+                              </Box>
+                              <Box minWidth="120px">
+                                <BlockStack gap="100">
+                                  <Badge tone="warning">{locale === 'fr' ? 'À améliorer (40-59)' : 'Needs Work (40-59)'}</Badge>
+                                  <Text as="p" variant="headingLg">{metrics?.scoreDistribution.needsWork ?? 0}</Text>
+                                </BlockStack>
+                              </Box>
+                              <Box minWidth="120px">
+                                <BlockStack gap="100">
+                                  <Badge tone="critical">{locale === 'fr' ? 'Critique (<40)' : 'Critical (<40)'}</Badge>
+                                  <Text as="p" variant="headingLg">{metrics?.scoreDistribution.critical ?? 0}</Text>
+                                </BlockStack>
+                              </Box>
+                            </InlineStack>
+                          </BlockStack>
+
+                          {/* Score Trend Chart */}
+                          <BlockStack gap="300">
+                            <Text as="h4" variant="headingSm">
+                              {locale === 'fr' ? 'Évolution du Score' : 'Score Trend'}
+                            </Text>
+                            <div style={{ display: 'flex', gap: '4px', height: '60px', alignItems: 'flex-end' }}>
+                              {(metrics?.scoreTrend || []).slice(-14).map((point, i) => (
+                                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                  <div style={{
+                                    width: '100%',
+                                    maxWidth: '20px',
+                                    height: `${Math.max(point.value * 0.6, 5)}px`,
+                                    backgroundColor: point.value >= 70 ? '#10B981' : point.value >= 40 ? '#F59E0B' : '#EF4444',
+                                    borderRadius: '4px 4px 0 0',
+                                  }} />
+                                </div>
+                              ))}
+                            </div>
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              {locale === 'fr' ? 'Les 14 derniers jours' : 'Last 14 days'}
+                            </Text>
+                          </BlockStack>
+
+                          <InlineStack gap="200">
+                            <Link href="/admin/products">
+                              <Button variant="primary">
+                                {locale === 'fr' ? 'Voir les produits' : 'View Products'}
+                              </Button>
+                            </Link>
+                          </InlineStack>
+                        </BlockStack>
+                      </Card>
+                    </Collapsible>
+
+                    {/* Expanded Visibility Details */}
+                    <Collapsible
+                      open={expandedMetric === 'visibility'}
+                      id="visibility-details"
+                      transition={{ duration: '200ms', timingFunction: 'ease-in-out' }}
+                    >
+                      <Card>
+                        <BlockStack gap="400">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <Text as="h3" variant="headingMd">
+                              {locale === 'fr' ? 'Détails de Visibilité IA' : 'AI Visibility Details'}
+                            </Text>
+                            <Button variant="plain" onClick={() => setExpandedMetric(null)}>✕</Button>
+                          </InlineStack>
+                          <Divider />
+
+                          {/* Platform Breakdown */}
+                          <BlockStack gap="300">
+                            <Text as="h4" variant="headingSm">
+                              {locale === 'fr' ? 'Par Plateforme' : 'By Platform'}
+                            </Text>
+                            <div style={{ overflowX: 'auto' }}>
+                              <DataTable
+                                columnContentTypes={['text', 'numeric', 'numeric', 'numeric']}
+                                headings={[
+                                  locale === 'fr' ? 'Plateforme' : 'Platform',
+                                  locale === 'fr' ? 'Tests' : 'Checks',
+                                  locale === 'fr' ? 'Mentionné' : 'Mentioned',
+                                  locale === 'fr' ? 'Taux' : 'Rate',
+                                ]}
+                                rows={(metrics?.visibility.byPlatform || []).map(p => [
+                                  getPlatformLabel(p.platform),
+                                  p.checks.toString(),
+                                  p.mentioned.toString(),
+                                  `${p.rate}%`,
+                                ])}
+                              />
+                            </div>
+                          </BlockStack>
+
+                          {/* Visibility Trend Chart */}
+                          <BlockStack gap="300">
+                            <Text as="h4" variant="headingSm">
+                              {locale === 'fr' ? 'Évolution de la Visibilité' : 'Visibility Trend'}
+                            </Text>
+                            <div style={{ display: 'flex', gap: '4px', height: '60px', alignItems: 'flex-end' }}>
+                              {(metrics?.visibilityTrend || []).slice(-14).map((point, i) => (
+                                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                  <div style={{
+                                    width: '100%',
+                                    maxWidth: '20px',
+                                    height: `${Math.max(point.value * 0.6, 5)}px`,
+                                    backgroundColor: point.value >= 50 ? '#0EA5E9' : point.value >= 20 ? '#F59E0B' : '#EF4444',
+                                    borderRadius: '4px 4px 0 0',
+                                  }} />
+                                </div>
+                              ))}
+                            </div>
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              {locale === 'fr' ? 'Les 14 derniers jours' : 'Last 14 days'}
+                            </Text>
+                          </BlockStack>
+
+                          <InlineStack gap="200">
+                            <Link href="/admin/visibility">
+                              <Button variant="primary">
+                                {locale === 'fr' ? 'Lancer un test' : 'Run a Test'}
+                              </Button>
+                            </Link>
+                          </InlineStack>
+                        </BlockStack>
+                      </Card>
+                    </Collapsible>
 
                     <Divider />
 
