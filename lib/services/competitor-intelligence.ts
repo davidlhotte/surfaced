@@ -448,10 +448,22 @@ export async function removeCompetitor(
     throw new Error('Shop not found');
   }
 
-  await prisma.competitor.delete({
+  // First verify the competitor belongs to this shop
+  const competitor = await prisma.competitor.findFirst({
     where: {
       id: competitorId,
       shopId: shop.id,
+    },
+  });
+
+  if (!competitor) {
+    throw new Error('Competitor not found or does not belong to this shop');
+  }
+
+  // Delete the competitor by its unique id
+  await prisma.competitor.delete({
+    where: {
+      id: competitorId,
     },
   });
 

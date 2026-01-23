@@ -1128,7 +1128,17 @@ export default function ProductsPage() {
                           }
                         }}
                       >
-                        {selectedSuggestions.size === optimization.suggestions.length ? (locale === 'fr' ? 'Tout deselectionner' : 'Deselect all') : (locale === 'fr' ? 'Tout selectionner' : 'Select all')}
+                        {selectedSuggestions.size === optimization.suggestions.length ? (locale === 'fr' ? 'Tout désélectionner' : 'Deselect all') : (locale === 'fr' ? 'Tout sélectionner' : 'Select all')}
+                      </Button>
+                      <Button
+                        size="slim"
+                        variant="primary"
+                        icon={CheckIcon}
+                        onClick={handleApplySelected}
+                        loading={applying}
+                        disabled={selectedSuggestions.size === 0}
+                      >
+                        {locale === 'fr' ? 'APPLIQUER TOUT' : 'APPLY ALL'}
                       </Button>
                     </InlineStack>
                   </InlineStack>
@@ -1197,7 +1207,7 @@ export default function ProductsPage() {
                             <BlockStack gap="100">
                               <InlineStack align="space-between" blockAlign="center">
                                 <Text as="p" variant="bodySm" fontWeight="semibold">
-                                  {locale === 'fr' ? 'Apres (editable) :' : 'After (editable):'}
+                                  {locale === 'fr' ? 'Après :' : 'After:'}
                                 </Text>
                                 {editedSuggestions[index] !== undefined && (
                                   <Button

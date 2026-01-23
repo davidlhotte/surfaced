@@ -110,6 +110,10 @@ export default function CompetitorsPage() {
   const [history, setHistory] = useState<CompetitorAnalysis[]>([]);
   const [selectedTab, setSelectedTab] = useState(0);
 
+  // Detail modal state for query responses
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedComparison, setSelectedComparison] = useState<CompetitorAnalysis['comparisons'][0] | null>(null);
+
   const fetchCompetitors = useCallback(async () => {
     try {
       setLoading(true);
@@ -725,33 +729,44 @@ export default function CompetitorsPage() {
                   <Divider />
                   <BlockStack gap="400">
                     {analysis.comparisons.map((comp, index) => (
-                      <Box key={index} padding="300" background="bg-surface-secondary" borderRadius="200">
-                        <BlockStack gap="200">
-                          <InlineStack align="space-between" blockAlign="center" wrap>
-                            <Text as="p" fontWeight="semibold">
-                              &ldquo;{comp.query}&rdquo;
+                      <div
+                        key={index}
+                        onClick={() => { setSelectedComparison(comp); setDetailModalOpen(true); }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                          <BlockStack gap="200">
+                            <InlineStack align="space-between" blockAlign="center" wrap>
+                              <InlineStack gap="200" blockAlign="center">
+                                <Text as="p" fontWeight="semibold">
+                                  &ldquo;{comp.query}&rdquo;
+                                </Text>
+                                <Text as="span" variant="bodySm" tone="subdued">
+                                  {locale === 'fr' ? '(cliquez pour détails)' : '(click for details)'}
+                                </Text>
+                              </InlineStack>
+                              {comp.winner && (
+                                <Badge tone={comp.winner === analysis.brandName ? 'success' : 'critical'}>
+                                  {`${t.competitors.winner}: ${comp.winner}`}
+                                </Badge>
+                              )}
+                            </InlineStack>
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              {comp.gap}
                             </Text>
-                            {comp.winner && (
-                              <Badge tone={comp.winner === analysis.brandName ? 'success' : 'critical'}>
-                                {`${t.competitors.winner}: ${comp.winner}`}
+                            <InlineStack gap="200" wrap>
+                              <Badge tone={comp.yourBrand.isMentioned ? 'success' : 'critical'}>
+                                {`${t.competitors.you}: ${comp.yourBrand.isMentioned ? `#${comp.yourBrand.position || '?'}` : t.visibility.notFound}`}
                               </Badge>
-                            )}
-                          </InlineStack>
-                          <Text as="p" variant="bodySm" tone="subdued">
-                            {comp.gap}
-                          </Text>
-                          <InlineStack gap="200" wrap>
-                            <Badge tone={comp.yourBrand.isMentioned ? 'success' : 'critical'}>
-                              {`${t.competitors.you}: ${comp.yourBrand.isMentioned ? `#${comp.yourBrand.position || '?'}` : t.visibility.notFound}`}
-                            </Badge>
-                            {comp.competitors.slice(0, 3).map((c) => (
-                              <Badge key={c.domain} tone={c.isMentioned ? 'attention' : 'new'}>
-                                {`${c.name || c.domain}: ${c.isMentioned ? `#${c.position || '?'}` : t.visibility.notFound}`}
+                              {comp.competitors.slice(0, 3).map((c) => (
+                                <Badge key={c.domain} tone={c.isMentioned ? 'attention' : 'new'}>
+                                  {`${c.name || c.domain}: ${c.isMentioned ? `#${c.position || '?'}` : t.visibility.notFound}`}
                               </Badge>
                             ))}
                           </InlineStack>
                         </BlockStack>
                       </Box>
+                      </div>
                     ))}
                   </BlockStack>
                 </BlockStack>
@@ -759,6 +774,106 @@ export default function CompetitorsPage() {
             </Layout.Section>
           </>
         )}
+
+        {/* Detail Modal for Query Response */}
+        <Modal
+          open={detailModalOpen}
+          onClose={() => { setDetailModalOpen(false); setSelectedComparison(null); }}
+          title={selectedComparison ? `"${selectedComparison.query}"` : locale === 'fr' ? 'Détails' : 'Details'}
+          size="large"
+        >
+          <Modal.Section>
+            {selectedComparison && analysis && (
+              <BlockStack gap="500">
+                {/* Winner Summary */}
+                <Box padding="300" background={selectedComparison.winner === analysis.brandName ? 'bg-surface-success' : 'bg-surface-warning'} borderRadius="200">
+                  <InlineStack gap="300" blockAlign="center">
+                    <Text as="span" variant="headingMd">
+                      {locale === 'fr' ? 'Gagnant :' : 'Winner:'}
+                    </Text>
+                    <Badge tone={selectedComparison.winner === analysis.brandName ? 'success' : 'warning'} size="large">
+                      {selectedComparison.winner || (locale === 'fr' ? 'Aucun' : 'None')}
+                    </Badge>
+                  </InlineStack>
+                </Box>
+
+                {/* Gap Analysis */}
+                <BlockStack gap="200">
+                  <Text as="h4" variant="headingSm">{locale === 'fr' ? 'Analyse' : 'Analysis'}</Text>
+                  <Text as="p" variant="bodyMd">{selectedComparison.gap}</Text>
+                </BlockStack>
+
+                <Divider />
+
+                {/* Your Brand Section */}
+                <BlockStack gap="300">
+                  <InlineStack gap="200" blockAlign="center">
+                    <Badge tone="success">{t.competitors.you}</Badge>
+                    <Text as="h4" variant="headingSm">{analysis.brandName}</Text>
+                  </InlineStack>
+                  <Box padding="300" background={selectedComparison.yourBrand.isMentioned ? 'bg-surface-success' : 'bg-surface-critical'} borderRadius="200">
+                    <BlockStack gap="200">
+                      <InlineStack gap="400" wrap>
+                        <BlockStack gap="100">
+                          <Text as="span" variant="bodySm" tone="subdued">{locale === 'fr' ? 'Statut' : 'Status'}</Text>
+                          <Badge tone={selectedComparison.yourBrand.isMentioned ? 'success' : 'critical'}>
+                            {selectedComparison.yourBrand.isMentioned ? (locale === 'fr' ? 'Mentionné' : 'Mentioned') : (locale === 'fr' ? 'Non mentionné' : 'Not mentioned')}
+                          </Badge>
+                        </BlockStack>
+                        {selectedComparison.yourBrand.position && (
+                          <BlockStack gap="100">
+                            <Text as="span" variant="bodySm" tone="subdued">{locale === 'fr' ? 'Position' : 'Position'}</Text>
+                            <Badge tone="info">{`#${selectedComparison.yourBrand.position}`}</Badge>
+                          </BlockStack>
+                        )}
+                      </InlineStack>
+                      {selectedComparison.yourBrand.context && (
+                        <BlockStack gap="100">
+                          <Text as="span" variant="bodySm" tone="subdued">{locale === 'fr' ? 'Contexte de mention' : 'Mention context'}</Text>
+                          <Text as="p" variant="bodyMd">
+                            &ldquo;...{selectedComparison.yourBrand.context}...&rdquo;
+                          </Text>
+                        </BlockStack>
+                      )}
+                    </BlockStack>
+                  </Box>
+                </BlockStack>
+
+                <Divider />
+
+                {/* Competitors Section */}
+                <BlockStack gap="300">
+                  <Text as="h4" variant="headingSm">{locale === 'fr' ? 'Concurrents' : 'Competitors'}</Text>
+                  {selectedComparison.competitors.map((competitor) => (
+                    <Box key={competitor.domain} padding="300" background={competitor.isMentioned ? 'bg-surface-warning' : 'bg-surface-secondary'} borderRadius="200">
+                      <BlockStack gap="200">
+                        <InlineStack align="space-between" blockAlign="center">
+                          <Text as="p" fontWeight="semibold">{competitor.name || competitor.domain}</Text>
+                          <InlineStack gap="200">
+                            <Badge tone={competitor.isMentioned ? 'attention' : 'new'}>
+                              {competitor.isMentioned ? (locale === 'fr' ? 'Mentionné' : 'Mentioned') : (locale === 'fr' ? 'Non mentionné' : 'Not mentioned')}
+                            </Badge>
+                            {competitor.position && (
+                              <Badge tone="info">{`#${competitor.position}`}</Badge>
+                            )}
+                          </InlineStack>
+                        </InlineStack>
+                        {competitor.mentionContext && (
+                          <BlockStack gap="100">
+                            <Text as="span" variant="bodySm" tone="subdued">{locale === 'fr' ? 'Contexte' : 'Context'}</Text>
+                            <Text as="p" variant="bodySm">
+                              &ldquo;...{competitor.mentionContext}...&rdquo;
+                            </Text>
+                          </BlockStack>
+                        )}
+                      </BlockStack>
+                    </Box>
+                  ))}
+                </BlockStack>
+              </BlockStack>
+            )}
+          </Modal.Section>
+        </Modal>
 
         {/* Competitors List */}
         {data?.competitors && data.competitors.length > 0 && (
