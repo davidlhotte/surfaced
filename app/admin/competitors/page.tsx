@@ -99,12 +99,9 @@ export default function CompetitorsPage() {
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
 
-  // Analysis configuration - editable by user
+  // Analysis configuration - editable by user (inline, no modal needed)
   const [brandName, setBrandName] = useState('');
   const [customQueries, setCustomQueries] = useState<string[]>([]);
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [tempBrandName, setTempBrandName] = useState('');
-  const [tempQueries, setTempQueries] = useState('');
 
   // History state
   const [history, setHistory] = useState<CompetitorAnalysis[]>([]);
@@ -228,19 +225,6 @@ export default function CompetitorsPage() {
     }
   };
 
-  // Open config modal with current values
-  const openConfigModal = () => {
-    setTempBrandName(brandName);
-    setTempQueries(customQueries.join('\n'));
-    setShowConfigModal(true);
-  };
-
-  // Save config from modal
-  const saveConfig = () => {
-    setBrandName(tempBrandName);
-    setCustomQueries(tempQueries.split('\n').map((q) => q.trim()).filter((q) => q.length > 0));
-    setShowConfigModal(false);
-  };
 
   // Default query suggestions based on competitors
   const suggestedQueries = useMemo(() => {
@@ -338,51 +322,63 @@ export default function CompetitorsPage() {
           </Layout.Section>
         )}
 
-        {/* Analysis Configuration Section */}
+        {/* Analysis Configuration Section - Inline editing without modal */}
         {data?.competitors && data.competitors.length > 0 && (
           <Layout.Section>
             <Card>
               <BlockStack gap="400">
-                <InlineStack align="space-between" blockAlign="center">
-                  <BlockStack gap="100">
-                    <Text as="h3" variant="headingMd">
-                      {locale === 'fr' ? 'Configuration de l\'analyse' : 'Analysis Configuration'}
-                    </Text>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      {locale === 'fr'
-                        ? 'Personnalisez les questions posees aux IA pour comparer votre marque avec vos concurrents.'
-                        : 'Customize the questions asked to AI to compare your brand with competitors.'}
-                    </Text>
-                  </BlockStack>
-                  <Button onClick={openConfigModal}>
-                    {locale === 'fr' ? 'Configurer' : 'Configure'}
-                  </Button>
-                </InlineStack>
+                <BlockStack gap="100">
+                  <Text as="h3" variant="headingMd">
+                    {locale === 'fr' ? 'Configuration de l\'analyse' : 'Analysis Configuration'}
+                  </Text>
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    {locale === 'fr'
+                      ? 'Personnalisez les questions posees aux IA pour comparer votre marque avec vos concurrents.'
+                      : 'Customize the questions asked to AI to compare your brand with competitors.'}
+                  </Text>
+                </BlockStack>
                 <Divider />
-                <InlineStack gap="400" wrap>
-                  <Box minWidth="200px">
-                    <BlockStack gap="100">
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        {locale === 'fr' ? 'Nom de votre marque' : 'Your brand name'}
-                      </Text>
-                      <Text as="p" fontWeight="semibold">
-                        {brandName || (locale === 'fr' ? '(non defini)' : '(not set)')}
-                      </Text>
-                    </BlockStack>
-                  </Box>
-                  <Box minWidth="300px">
-                    <BlockStack gap="100">
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        {locale === 'fr' ? 'Questions personnalisees' : 'Custom queries'}
-                      </Text>
-                      <Text as="p" fontWeight="semibold">
-                        {customQueries.length > 0
-                          ? `${customQueries.length} ${locale === 'fr' ? 'questions' : 'queries'}`
-                          : locale === 'fr' ? 'Questions par defaut' : 'Default queries'}
-                      </Text>
-                    </BlockStack>
-                  </Box>
-                </InlineStack>
+
+                {/* Brand Name - Inline editable */}
+                <TextField
+                  label={locale === 'fr' ? 'Nom de votre marque' : 'Your brand name'}
+                  value={brandName}
+                  onChange={setBrandName}
+                  autoComplete="off"
+                  helpText={locale === 'fr'
+                    ? 'Le nom qui sera recherche dans les reponses IA'
+                    : 'The name that will be searched for in AI responses'}
+                />
+
+                {/* Custom Queries - Inline editable */}
+                <BlockStack gap="200">
+                  <Text as="p" fontWeight="semibold">
+                    {locale === 'fr' ? 'Questions a poser aux IA' : 'Questions to ask AI'}
+                  </Text>
+                  <TextField
+                    label=""
+                    labelHidden
+                    value={customQueries.join('\n')}
+                    onChange={(value) => setCustomQueries(value.split('\n').map((q) => q.trim()).filter((q) => q.length > 0))}
+                    multiline={4}
+                    autoComplete="off"
+                    placeholder={suggestedQueries.join('\n')}
+                    helpText={locale === 'fr'
+                      ? 'Une question par ligne. Laissez vide pour utiliser les questions par defaut.'
+                      : 'One question per line. Leave empty to use default questions.'}
+                  />
+                  <InlineStack gap="200" wrap>
+                    {suggestedQueries.slice(0, 3).map((q, i) => (
+                      <Button
+                        key={i}
+                        size="slim"
+                        onClick={() => setCustomQueries((prev) => [...prev, q])}
+                      >
+                        + {q.length > 25 ? `${q.substring(0, 25)}...` : q}
+                      </Button>
+                    ))}
+                  </InlineStack>
+                </BlockStack>
               </BlockStack>
             </Card>
           </Layout.Section>
@@ -1028,82 +1024,6 @@ export default function CompetitorsPage() {
         </Modal.Section>
       </Modal>
 
-      {/* Analysis Configuration Modal */}
-      <Modal
-        open={showConfigModal}
-        onClose={() => setShowConfigModal(false)}
-        title={locale === 'fr' ? 'Configurer l\'analyse' : 'Configure Analysis'}
-        primaryAction={{
-          content: locale === 'fr' ? 'Enregistrer' : 'Save',
-          onAction: saveConfig,
-        }}
-        secondaryActions={[
-          {
-            content: t.common.cancel,
-            onAction: () => setShowConfigModal(false),
-          },
-        ]}
-        size="large"
-      >
-        <Modal.Section>
-          <BlockStack gap="500">
-            <Banner tone="info">
-              <Text as="p">
-                {locale === 'fr'
-                  ? 'Personnalisez les parametres d\'analyse pour obtenir des resultats plus pertinents.'
-                  : 'Customize analysis settings to get more relevant results.'}
-              </Text>
-            </Banner>
-
-            <TextField
-              label={locale === 'fr' ? 'Nom de votre marque' : 'Your brand name'}
-              value={tempBrandName}
-              onChange={setTempBrandName}
-              autoComplete="off"
-              helpText={locale === 'fr'
-                ? 'Le nom qui sera recherche dans les reponses IA'
-                : 'The name that will be searched for in AI responses'}
-            />
-
-            <BlockStack gap="200">
-              <Text as="p" fontWeight="semibold">
-                {locale === 'fr' ? 'Questions a poser aux IA' : 'Questions to ask AI'}
-              </Text>
-              <Text as="p" variant="bodySm" tone="subdued">
-                {locale === 'fr'
-                  ? 'Une question par ligne. Laissez vide pour utiliser les questions par defaut.'
-                  : 'One question per line. Leave empty to use default questions.'}
-              </Text>
-              <TextField
-                label=""
-                labelHidden
-                value={tempQueries}
-                onChange={setTempQueries}
-                multiline={5}
-                autoComplete="off"
-                placeholder={suggestedQueries.join('\n')}
-              />
-            </BlockStack>
-
-            <BlockStack gap="200">
-              <Text as="p" variant="bodySm" fontWeight="semibold">
-                {locale === 'fr' ? 'Questions suggerees :' : 'Suggested questions:'}
-              </Text>
-              <InlineStack gap="200" wrap>
-                {suggestedQueries.map((q, i) => (
-                  <Button
-                    key={i}
-                    size="slim"
-                    onClick={() => setTempQueries((prev) => prev ? `${prev}\n${q}` : q)}
-                  >
-                    + {q.length > 30 ? `${q.substring(0, 30)}...` : q}
-                  </Button>
-                ))}
-              </InlineStack>
-            </BlockStack>
-          </BlockStack>
-        </Modal.Section>
-      </Modal>
     </Page>
   );
 }

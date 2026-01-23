@@ -38,8 +38,8 @@ export default function ReportsPage() {
 
   const tr = {
     en: {
-      title: 'SEO Reports',
-      subtitle: 'Generate comprehensive reports for your store\'s SEO performance',
+      title: 'AEO Reports',
+      subtitle: 'Generate comprehensive reports for your store\'s AI Engine Optimization',
       back: 'AEO Tools',
       reportType: 'Report Type',
       auditReport: 'Product Audit Report',
@@ -85,8 +85,8 @@ export default function ReportsPage() {
       errorMsg: 'Failed to generate report',
     },
     fr: {
-      title: 'Rapports SEO',
-      subtitle: 'Generez des rapports complets sur les performances SEO de votre boutique',
+      title: 'Rapports AEO',
+      subtitle: 'Generez des rapports complets sur l\'optimisation IA de votre boutique',
       back: 'Outils AEO',
       reportType: 'Type de Rapport',
       auditReport: 'Rapport d\'Audit Produits',
@@ -141,34 +141,39 @@ export default function ReportsPage() {
       setError(null);
       setSuccess(null);
 
+      // Use download=true to get the file directly with correct content-type
       const response = await fetch(
-        `/api/reports?type=${reportType}&format=${format}`,
+        `/api/reports?type=${reportType}&format=${format}&download=true`,
         { method: 'GET' }
       );
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || t.errorMsg);
+        // Try to parse error from JSON
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          throw new Error(data.error || t.errorMsg);
+        } catch {
+          throw new Error(t.errorMsg);
+        }
       }
 
-      // Handle different content types
-      const contentType = response.headers.get('content-type') || '';
-      let blob: Blob;
-      let filename: string;
-
-      if (contentType.includes('application/json')) {
-        const data = await response.json();
-        blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        filename = `surfaced-${reportType}-report.json`;
-      } else if (contentType.includes('text/csv')) {
-        const text = await response.text();
-        blob = new Blob([text], { type: 'text/csv' });
-        filename = `surfaced-${reportType}-report.csv`;
+      // Get filename from Content-Disposition header or generate one
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `surfaced-aeo-${reportType}-report`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="([^"]+)"/);
+        if (match) {
+          filename = match[1];
+        }
       } else {
-        const text = await response.text();
-        blob = new Blob([text], { type: 'text/plain' });
-        filename = `surfaced-${reportType}-report.txt`;
+        // Add extension based on format
+        const extensions: Record<string, string> = { csv: '.csv', json: '.json', txt: '.txt' };
+        filename += extensions[format] || '.txt';
       }
+
+      // Get the blob directly from response
+      const blob = await response.blob();
 
       // Download
       const url = URL.createObjectURL(blob);

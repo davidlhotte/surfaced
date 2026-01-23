@@ -404,31 +404,40 @@ export default function InsightsPage() {
                         </div>
                       </Box>
 
-                      {/* Products Improved */}
+                      {/* Critical Issues - Actionable metric */}
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">{t.insights.productsImproved}</Text>
-                            <Text as="p" variant="heading2xl" fontWeight="bold">
-                              {metrics?.productsImproved ?? 0}
+                            <Text as="h3" variant="bodySm" tone="subdued">
+                              {locale === 'fr' ? 'Problemes Critiques' : 'Critical Issues'}
+                            </Text>
+                            <Text
+                              as="p"
+                              variant="heading2xl"
+                              fontWeight="bold"
+                              tone={(metrics?.productsWithCriticalIssues ?? 0) > 0 ? 'critical' : 'success'}
+                            >
+                              {metrics?.productsWithCriticalIssues ?? 0}
                             </Text>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              {t.insights.outOf} {metrics?.totalProducts ?? 0} {t.insights.total}
+                              {locale === 'fr' ? 'produits a corriger' : 'products to fix'}
                             </Text>
                           </BlockStack>
                         </Card>
                       </Box>
 
-                      {/* AI Optimizations */}
+                      {/* Total Products Analyzed */}
                       <Box minWidth="180px">
                         <Card>
                           <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">{t.insights.aiSuggestionsUsed}</Text>
+                            <Text as="h3" variant="bodySm" tone="subdued">
+                              {locale === 'fr' ? 'Produits Analyses' : 'Products Analyzed'}
+                            </Text>
                             <Text as="p" variant="heading2xl" fontWeight="bold">
-                              {metrics?.optimizationsUsed ?? 0}
+                              {metrics?.totalProducts ?? 0}
                             </Text>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              {t.insights.thisPeriod}
+                              {locale === 'fr' ? 'dans votre catalogue' : 'in your catalog'}
                             </Text>
                           </BlockStack>
                         </Card>
