@@ -1266,14 +1266,18 @@ After activation:
         },
       },
       {
-        id: 'robots-sitemap',
-        title: { fr: "Robots.txt & Sitemap", en: "Robots.txt & Sitemap" },
+        id: 'ai-bot-manager',
+        title: { fr: "AI Bot Manager", en: "AI Bot Manager" },
         content: {
-          fr: `### Robots.txt pour les bots IA
+          fr: `### Qu'est-ce que l'AI Bot Manager ?
 
-Le fichier robots.txt contrôle quels bots peuvent explorer votre site. C'est crucial pour les crawlers IA.
+Contrôlez quels bots IA (GPTBot, ClaudeBot, PerplexityBot) peuvent crawler votre boutique.
 
-#### Bots IA à autoriser
+### Pourquoi c'est important
+
+Si vous bloquez les bots IA, ils ne peuvent pas découvrir vos produits ni vous recommander.
+
+### Bots IA à autoriser
 
 | Bot | Propriétaire | Importance |
 |-----|--------------|------------|
@@ -1283,52 +1287,25 @@ Le fichier robots.txt contrôle quels bots peuvent explorer votre site. C'est cr
 | **Google-Extended** | Google (Gemini) | 🟡 Important |
 | **Bingbot** | Microsoft (Copilot) | 🟡 Important |
 
-#### Comment configurer
+### Comment configurer
 
-1. Allez dans **Outils AEO → Robots.txt**
-2. Cochez les bots que vous voulez autoriser
+1. Allez dans **Outils AEO → AI Bot Manager**
+2. Cochez les bots à autoriser
 3. Cliquez sur **"Générer robots.txt"**
 4. Copiez le code dans votre robots.txt Shopify
 
-#### Exemple robots.txt optimisé AEO
+### Disponibilité
 
-\`\`\`
-User-agent: GPTBot
-Allow: /
+Tous les plans (gratuit inclus).`,
+          en: `### What is AI Bot Manager?
 
-User-agent: ClaudeBot
-Allow: /
+Control which AI bots (GPTBot, ClaudeBot, PerplexityBot) can crawl your store.
 
-User-agent: PerplexityBot
-Allow: /
+### Why it matters
 
-User-agent: Google-Extended
-Allow: /
-\`\`\`
+If you block AI bots, they can't discover your products or recommend you.
 
-### Sitemap optimisé AEO
-
-Le sitemap aide les crawlers à découvrir toutes vos pages.
-
-#### Différence avec le sitemap standard
-
-| Sitemap Standard | Sitemap AEO |
-|------------------|-------------|
-| Liste des URLs | URLs + contexte enrichi |
-| Priorités génériques | Priorités basées sur Score IA |
-| Fréquence standard | Fréquence optimisée |
-
-#### Comment générer
-
-1. Allez dans **Outils AEO → Sitemap**
-2. Configurez les options (produits, collections, pages)
-3. Cliquez sur **"Générer"**
-4. Soumettez l'URL du sitemap aux moteurs de recherche`,
-          en: `### Robots.txt for AI bots
-
-The robots.txt file controls which bots can crawl your site. It's crucial for AI crawlers.
-
-#### AI bots to allow
+### AI bots to allow
 
 | Bot | Owner | Importance |
 |-----|-------|------------|
@@ -1338,163 +1315,316 @@ The robots.txt file controls which bots can crawl your site. It's crucial for AI
 | **Google-Extended** | Google (Gemini) | 🟡 Important |
 | **Bingbot** | Microsoft (Copilot) | 🟡 Important |
 
-#### How to configure
+### How to configure
 
-1. Go to **AEO Tools → Robots.txt**
-2. Check bots you want to allow
+1. Go to **AEO Tools → AI Bot Manager**
+2. Check bots to allow
 3. Click **"Generate robots.txt"**
 4. Copy code to your Shopify robots.txt
 
-#### Example AEO-optimized robots.txt
+### Availability
 
-\`\`\`
-User-agent: GPTBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-\`\`\`
-
-### AEO-optimized Sitemap
-
-The sitemap helps crawlers discover all your pages.
-
-#### Difference from standard sitemap
-
-| Standard Sitemap | AEO Sitemap |
-|------------------|-------------|
-| URL list | URLs + enriched context |
-| Generic priorities | Priorities based on AI Score |
-| Standard frequency | Optimized frequency |
-
-#### How to generate
-
-1. Go to **AEO Tools → Sitemap**
-2. Configure options (products, collections, pages)
-3. Click **"Generate"**
-4. Submit sitemap URL to search engines`,
+All plans (free included).`,
         },
       },
       {
-        id: 'bulk-reports',
-        title: { fr: "Optimisation en masse & Rapports", en: "Bulk Optimization & Reports" },
+        id: 'ai-traffic-tracking',
+        title: { fr: "AI Traffic Tracking", en: "AI Traffic Tracking" },
         content: {
-          fr: `### Optimisation en masse
+          fr: `### Qu'est-ce que l'AI Traffic Tracking ?
 
-Optimisez plusieurs produits en une seule opération.
+Suivez les visiteurs venant de ChatGPT, Perplexity, Claude et autres IA.
 
-#### Cas d'usage
+### Ce que vous voyez
 
-- Vous avez 50+ produits avec des alt-texts manquants
-- Tous vos produits manquent de meta descriptions
-- Vous voulez standardiser les tags
+| Métrique | Description |
+|----------|-------------|
+| **Visites totales** | Visiteurs depuis les IA |
+| **Par plateforme** | ChatGPT, Claude, Perplexity... |
+| **Pages d'atterrissage** | Pages qui reçoivent le trafic IA |
+| **Conversions** | Ventes du trafic IA |
 
-#### Comment utiliser
+### Comment activer
 
-1. Allez dans **Outils AEO → Optimiseur en masse**
-2. Sélectionnez le type d'optimisation :
-   - Alt-text des images
-   - Meta tags (title + description)
-   - Tags produits
-3. Filtrez les produits (tous, sans alt-text, score < 50...)
-4. Cliquez sur **"Aperçu"** pour voir les changements proposés
-5. Vérifiez et cliquez sur **"Appliquer à tous"**
+1. Allez dans **Outils AEO → AI Traffic Tracking**
+2. Copiez le script de tracking
+3. Collez-le dans votre thème Shopify (section head)
 
-#### Conseils
+### Disponibilité
 
-- Commencez par un **petit lot** (10 produits) pour vérifier la qualité
-- Utilisez les **filtres** pour cibler les produits problématiques
-- Vérifiez l'aperçu avant d'appliquer
+| Plan | Tracking | Conversions |
+|------|----------|-------------|
+| Free | ✅ | ❌ |
+| Starter+ | ✅ | ✅ |`,
+          en: `### What is AI Traffic Tracking?
 
-### Rapports AEO
+Track visitors from ChatGPT, Perplexity, Claude and other AIs.
 
-Exportez des rapports détaillés pour analyser ou partager.
+### What you see
 
-#### Types de rapports
+| Metric | Description |
+|--------|-------------|
+| **Total visits** | Visitors from AIs |
+| **By platform** | ChatGPT, Claude, Perplexity... |
+| **Landing pages** | Pages receiving AI traffic |
+| **Conversions** | Sales from AI traffic |
 
-| Rapport | Contenu | Format |
-|---------|---------|--------|
-| **Audit complet** | Score IA, problèmes, recommandations | CSV, PDF |
-| **Visibilité** | Historique des vérifications, taux | CSV |
-| **Concurrents** | Comparatif de scores | CSV |
-| **Progrès** | Évolution dans le temps | CSV, PDF |
+### How to enable
 
-#### Comment exporter
+1. Go to **AEO Tools → AI Traffic Tracking**
+2. Copy the tracking script
+3. Paste in your Shopify theme (head section)
 
-1. Allez dans **Outils AEO → Rapports**
-2. Sélectionnez le type de rapport
-3. Choisissez la période
-4. Cliquez sur **"Exporter"**
+### Availability
 
-#### Disponibilité
+| Plan | Tracking | Conversions |
+|------|----------|-------------|
+| Free | ✅ | ❌ |
+| Starter+ | ✅ | ✅ |`,
+        },
+      },
+      {
+        id: 'sitemap-generator',
+        title: { fr: "Sitemap Generator", en: "Sitemap Generator" },
+        content: {
+          fr: `### Qu'est-ce que le Sitemap Generator ?
 
-| Plan | Bulk Edit | Rapports |
+Générez des sitemaps XML optimisés pour les crawlers IA.
+
+### Différence avec le sitemap standard
+
+| Sitemap Standard | Sitemap AEO |
+|------------------|-------------|
+| Liste d'URLs | URLs + contexte |
+| Priorités génériques | Priorités par Score IA |
+| Fréquence uniforme | Fréquence optimisée |
+
+### Comment générer
+
+1. Allez dans **Outils AEO → Sitemap Generator**
+2. Configurez (produits, collections, pages)
+3. Cliquez sur **"Générer"**
+4. Soumettez à Google Search Console
+
+### Disponibilité
+
+Tous les plans (gratuit inclus).`,
+          en: `### What is Sitemap Generator?
+
+Generate optimized XML sitemaps for AI crawlers.
+
+### Difference from standard sitemap
+
+| Standard Sitemap | AEO Sitemap |
+|------------------|-------------|
+| URL list | URLs + context |
+| Generic priorities | Priorities by AI Score |
+| Uniform frequency | Optimized frequency |
+
+### How to generate
+
+1. Go to **AEO Tools → Sitemap Generator**
+2. Configure (products, collections, pages)
+3. Click **"Generate"**
+4. Submit to Google Search Console
+
+### Availability
+
+All plans (free included).`,
+        },
+      },
+      {
+        id: 'content-quality',
+        title: { fr: "Content Quality", en: "Content Quality" },
+        content: {
+          fr: `### Qu'est-ce que Content Quality ?
+
+Détectez le contenu dupliqué qui confond les IA et nuit à vos recommandations.
+
+### Types de doublons détectés
+
+| Type | Impact | Priorité |
+|------|--------|----------|
+| **Descriptions identiques** | Très élevé | 🔴 Urgent |
+| **Descriptions similaires** (>80%) | Élevé | 🟡 Important |
+| **Meta descriptions** | Élevé | 🟡 Important |
+
+### Comment utiliser
+
+1. Allez dans **Outils AEO → Content Quality**
+2. Cliquez sur **"Analyser"**
+3. Consultez les doublons trouvés
+4. Cliquez sur **"Corriger"** pour générer des variantes uniques
+
+### Disponibilité
+
+| Plan | Détection | Correction auto |
+|------|-----------|-----------------|
+| Free | ✅ | ❌ |
+| Starter+ | ✅ | ✅ |`,
+          en: `### What is Content Quality?
+
+Detect duplicate content that confuses AIs and hurts recommendations.
+
+### Duplicate types detected
+
+| Type | Impact | Priority |
+|------|--------|----------|
+| **Identical descriptions** | Very high | 🔴 Urgent |
+| **Similar descriptions** (>80%) | High | 🟡 Important |
+| **Meta descriptions** | High | 🟡 Important |
+
+### How to use
+
+1. Go to **AEO Tools → Content Quality**
+2. Click **"Analyze"**
+3. Review duplicates found
+4. Click **"Fix"** to generate unique variants
+
+### Availability
+
+| Plan | Detection | Auto-fix |
 |------|-----------|----------|
-| Free | ❌ | ❌ |
-| Starter | ✅ | ❌ |
-| Growth | ✅ | ✅ |
-| Scale | ✅ | ✅ |`,
-          en: `### Bulk Optimization
+| Free | ✅ | ❌ |
+| Starter+ | ✅ | ✅ |`,
+        },
+      },
+      {
+        id: 'bulk-optimizer',
+        title: { fr: "Bulk Optimizer", en: "Bulk Optimizer" },
+        content: {
+          fr: `### Qu'est-ce que le Bulk Optimizer ?
 
-Optimize multiple products in a single operation.
+Optimisez alt-texts, meta tags et descriptions pour plusieurs produits en une opération.
 
-#### Use cases
+### Types d'optimisation
 
-- You have 50+ products with missing alt-texts
-- All your products lack meta descriptions
-- You want to standardize tags
+| Type | Description |
+|------|-------------|
+| **Alt-text images** | Descriptions d'images pour l'AEO |
+| **Meta title** | Titres optimisés |
+| **Meta description** | Descriptions pour les résultats |
 
-#### How to use
+### Comment utiliser
+
+1. Allez dans **Outils AEO → Bulk Optimizer**
+2. Sélectionnez le type d'optimisation
+3. Filtrez les produits (sans alt-text, score < 50...)
+4. Cliquez sur **"Aperçu"**
+5. Vérifiez et cliquez sur **"Appliquer"**
+
+### Conseils
+
+- Commencez par un petit lot (10 produits)
+- Vérifiez toujours l'aperçu avant d'appliquer
+
+### Disponibilité
+
+| Plan | Bulk Optimizer |
+|------|----------------|
+| Free | ❌ |
+| Starter+ | ✅ |`,
+          en: `### What is Bulk Optimizer?
+
+Optimize alt-texts, meta tags and descriptions for multiple products at once.
+
+### Optimization types
+
+| Type | Description |
+|------|-------------|
+| **Image alt-text** | Image descriptions for AEO |
+| **Meta title** | Optimized titles |
+| **Meta description** | Descriptions for results |
+
+### How to use
 
 1. Go to **AEO Tools → Bulk Optimizer**
-2. Select optimization type:
-   - Image alt-text
-   - Meta tags (title + description)
-   - Product tags
-3. Filter products (all, no alt-text, score < 50...)
-4. Click **"Preview"** to see proposed changes
-5. Review and click **"Apply to all"**
+2. Select optimization type
+3. Filter products (no alt-text, score < 50...)
+4. Click **"Preview"**
+5. Review and click **"Apply"**
 
-#### Tips
+### Tips
 
-- Start with a **small batch** (10 products) to verify quality
-- Use **filters** to target problematic products
-- Check preview before applying
+- Start with small batch (10 products)
+- Always check preview before applying
 
-### AEO Reports
+### Availability
 
-Export detailed reports to analyze or share.
+| Plan | Bulk Optimizer |
+|------|----------------|
+| Free | ❌ |
+| Starter+ | ✅ |`,
+        },
+      },
+      {
+        id: 'aeo-reports',
+        title: { fr: "AEO Reports", en: "AEO Reports" },
+        content: {
+          fr: `### Qu'est-ce que AEO Reports ?
 
-#### Report types
+Générez des rapports complets sur la visibilité IA et les audits.
 
-| Report | Content | Format |
-|--------|---------|--------|
-| **Full audit** | AI score, issues, recommendations | CSV, PDF |
-| **Visibility** | Check history, rates | CSV |
-| **Competitors** | Score comparison | CSV |
-| **Progress** | Evolution over time | CSV, PDF |
+### Types de rapports
 
-#### How to export
+| Rapport | Contenu | Formats |
+|---------|---------|---------|
+| **Audit produits** | Score IA, problèmes | CSV, JSON, TXT |
+| **Visibilité IA** | Historique, taux de mention | CSV, JSON, TXT |
+| **Résumé exécutif** | Vue d'ensemble | TXT |
 
-1. Go to **AEO Tools → Reports**
+### Comment exporter
+
+1. Allez dans **Outils AEO → AEO Reports**
+2. Sélectionnez le type de rapport
+3. Choisissez le format
+4. Cliquez sur **"Générer"**
+
+### Utilisations
+
+- Partagez les progrès avec l'équipe
+- Analysez dans Excel/Google Sheets
+- Comparez avant/après optimisation
+
+### Disponibilité
+
+| Plan | AEO Reports |
+|------|-------------|
+| Free | ❌ |
+| Starter | ❌ |
+| Growth+ | ✅ |`,
+          en: `### What is AEO Reports?
+
+Generate comprehensive reports on AI visibility and audits.
+
+### Report types
+
+| Report | Content | Formats |
+|--------|---------|---------|
+| **Product audit** | AI score, issues | CSV, JSON, TXT |
+| **AI Visibility** | History, mention rate | CSV, JSON, TXT |
+| **Executive summary** | Overview | TXT |
+
+### How to export
+
+1. Go to **AEO Tools → AEO Reports**
 2. Select report type
-3. Choose period
-4. Click **"Export"**
+3. Choose format
+4. Click **"Generate"**
 
-#### Availability
+### Uses
 
-| Plan | Bulk Edit | Reports |
-|------|-----------|---------|
-| Free | ❌ | ❌ |
-| Starter | ✅ | ❌ |
-| Growth | ✅ | ✅ |
-| Scale | ✅ | ✅ |`,
+- Share progress with team
+- Analyze in Excel/Google Sheets
+- Compare before/after optimization
+
+### Availability
+
+| Plan | AEO Reports |
+|------|-------------|
+| Free | ❌ |
+| Starter | ❌ |
+| Growth+ | ✅ |`,
         },
       },
     ],
@@ -2537,6 +2667,24 @@ function HelpContent() {
   const [activeCategory, setActiveCategory] = useState<string>('why-aeo');
   const [activeArticle, setActiveArticle] = useState<string>('what-is-aeo');
   const [searchQuery, setSearchQuery] = useState('');
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<string, boolean | null>>({});
+
+  const handleFeedback = (articleId: string, isHelpful: boolean) => {
+    // Store feedback in state
+    setFeedbackGiven((prev) => ({ ...prev, [articleId]: isHelpful }));
+
+    // Store in localStorage for persistence
+    const existingFeedback = JSON.parse(localStorage.getItem('surfaced_help_feedback') || '{}');
+    existingFeedback[articleId] = { helpful: isHelpful, timestamp: new Date().toISOString() };
+    localStorage.setItem('surfaced_help_feedback', JSON.stringify(existingFeedback));
+
+    // Send to API (fire and forget - don't block UI)
+    fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleId, helpful: isHelpful, locale }),
+    }).catch(() => {/* Silently fail */});
+  };
 
   const currentCategory = helpCategories.find((c) => c.id === activeCategory);
   const currentArticle = currentCategory?.articles.find((a) => a.id === activeArticle);
@@ -2717,15 +2865,39 @@ function HelpContent() {
 
               {/* Feedback */}
               <div className="mt-6 bg-white rounded-xl border border-slate-200 p-6 text-center">
-                <p className="text-slate-600 mb-4">{t.help.wasHelpful}</p>
-                <div className="flex justify-center gap-3">
-                  <button className="px-5 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors font-medium">
-                    {t.help.yes}
-                  </button>
-                  <button className="px-5 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium">
-                    {t.help.no}
-                  </button>
-                </div>
+                {feedbackGiven[activeArticle] !== undefined ? (
+                  <div className="text-center">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-3">
+                      <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <p className="text-slate-700 font-medium">
+                      {locale === 'fr' ? 'Merci pour votre retour !' : 'Thank you for your feedback!'}
+                    </p>
+                    <p className="text-slate-500 text-sm mt-1">
+                      {locale === 'fr' ? 'Votre avis nous aide à améliorer.' : 'Your input helps us improve.'}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-slate-600 mb-4">{t.help.wasHelpful}</p>
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => handleFeedback(activeArticle, true)}
+                        className="px-5 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors font-medium"
+                      >
+                        {t.help.yes}
+                      </button>
+                      <button
+                        onClick={() => handleFeedback(activeArticle, false)}
+                        className="px-5 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium"
+                      >
+                        {t.help.no}
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Contact Support */}
