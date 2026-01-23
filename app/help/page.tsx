@@ -2406,13 +2406,16 @@ function parseMarkdown(content: string): string {
   // First, escape any HTML in the content to prevent XSS
   let html = escapeHtml(content);
 
+  // Normalize line endings
+  html = html.replace(/\r\n/g, '\n');
+
   // Code blocks first (before other replacements)
   html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto my-4 text-sm font-mono"><code>$2</code></pre>');
 
   // Headers (must be at start of line)
-  html = html.replace(/^#### (.*$)/gm, '<h4 class="text-base font-semibold mt-5 mb-2 text-slate-800">$1</h4>');
-  html = html.replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold mt-6 mb-3 text-slate-800">$1</h3>');
-  html = html.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold mt-8 mb-4 text-slate-900">$1</h2>');
+  html = html.replace(/^#### (.*$)/gm, '\n<h4 class="text-base font-semibold mt-5 mb-2 text-slate-800">$1</h4>\n');
+  html = html.replace(/^### (.*$)/gm, '\n<h3 class="text-lg font-semibold mt-6 mb-3 text-slate-800">$1</h3>\n');
+  html = html.replace(/^## (.*$)/gm, '\n<h2 class="text-xl font-bold mt-8 mb-4 text-slate-900">$1</h2>\n');
 
   // Bold and inline code
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>');
@@ -2423,48 +2426,91 @@ function parseMarkdown(content: string): string {
   html = html.replace(/☐/g, '<span class="inline-block w-4 h-4 border border-slate-400 rounded mr-1 align-middle"></span>');
   html = html.replace(/☑/g, '<span class="inline-block w-4 h-4 bg-green-500 rounded mr-1 align-middle text-white text-xs text-center">✓</span>');
 
-  // Lists
-  html = html.replace(/^- (.*$)/gm, '<li class="ml-1">$1</li>');
-  html = html.replace(/^(\d+)\. (.*$)/gm, '<li class="ml-1"><span class="font-medium text-slate-700">$1.</span> $2</li>');
+  // Tables - process before lists to avoid conflicts
+  const tableRegex = /(\|.+\|\n)+/g;
+  html = html.replace(tableRegex, (match) => {
+    const rows = match.trim().split('\n');
+    let tableHtml = '<table class="w-full border-collapse my-4 text-sm">';
+    let isFirstRow = true;
 
-  // Wrap consecutive list items
-  html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, (match) => {
-    if (match.includes('<span class="font-medium')) {
-      return `<ol class="list-none pl-4 my-3 space-y-2">${match}</ol>`;
+    for (const row of rows) {
+      const cells = row.split('|').filter(c => c.trim()).map(c => c.trim());
+      // Skip separator rows (|---|---|)
+      if (cells.every(c => /^-+$/.test(c))) continue;
+
+      if (isFirstRow) {
+        tableHtml += '<thead><tr class="bg-slate-50">';
+        tableHtml += cells.map(c => `<th class="border border-slate-200 px-3 py-2 font-semibold text-left">${c}</th>`).join('');
+        tableHtml += '</tr></thead><tbody>';
+        isFirstRow = false;
+      } else {
+        tableHtml += '<tr>';
+        tableHtml += cells.map(c => `<td class="border border-slate-200 px-3 py-2">${c}</td>`).join('');
+        tableHtml += '</tr>';
+      }
     }
-    return `<ul class="list-disc pl-6 my-3 space-y-1.5">${match}</ul>`;
+
+    tableHtml += '</tbody></table>';
+    return '\n' + tableHtml + '\n';
   });
 
-  // Tables
-  html = html.replace(/\|(.+)\|/g, (match, content) => {
-    const cells = content.split('|').map((c: string) => c.trim());
-    const isHeader = cells.some((c: string) => c.includes('---'));
-    if (isHeader) return '';
-    return `<tr>${cells.map((c: string) => `<td class="border border-slate-200 px-3 py-2 text-sm">${c}</td>`).join('')}</tr>`;
-  });
-  html = html.replace(/(<tr>.*<\/tr>\n?)+/g, '<table class="w-full border-collapse my-4">$&</table>');
+  // Lists - process line by line to avoid nested issues
+  const lines = html.split('\n');
+  const processedLines: string[] = [];
+  let inList = false;
+  let listType: 'ul' | 'ol' | null = null;
+  let listItems: string[] = [];
 
-  // Paragraphs - convert double newlines to paragraph breaks
-  html = html.replace(/\n\n/g, '</p><p class="my-3 text-slate-600 leading-relaxed">');
+  const closeList = () => {
+    if (listItems.length > 0) {
+      const listClass = listType === 'ol' ? 'list-decimal' : 'list-disc';
+      processedLines.push(`<${listType} class="${listClass} pl-6 my-3 space-y-1">`);
+      processedLines.push(...listItems);
+      processedLines.push(`</${listType}>`);
+      listItems = [];
+    }
+    inList = false;
+    listType = null;
+  };
 
-  // Single newlines to line breaks (but not inside pre/code blocks)
-  html = html.replace(/\n/g, '<br>');
+  for (const line of lines) {
+    const ulMatch = line.match(/^- (.*)$/);
+    const olMatch = line.match(/^(\d+)\. (.*)$/);
 
-  // Clean up
-  html = html.replace(/<br><h/g, '<h');
-  html = html.replace(/<\/h(\d)><br>/g, '</h$1>');
-  html = html.replace(/<br><ul/g, '<ul');
-  html = html.replace(/<\/ul><br>/g, '</ul>');
-  html = html.replace(/<br><ol/g, '<ol');
-  html = html.replace(/<\/ol><br>/g, '</ol>');
-  html = html.replace(/<br><pre/g, '<pre');
-  html = html.replace(/<\/pre><br>/g, '</pre>');
-  html = html.replace(/<br><table/g, '<table');
-  html = html.replace(/<\/table><br>/g, '</table>');
-  html = html.replace(/<p class="[^"]*"><\/p>/g, '');
+    if (ulMatch) {
+      if (listType && listType !== 'ul') closeList();
+      inList = true;
+      listType = 'ul';
+      listItems.push(`<li>${ulMatch[1]}</li>`);
+    } else if (olMatch) {
+      if (listType && listType !== 'ol') closeList();
+      inList = true;
+      listType = 'ol';
+      listItems.push(`<li>${olMatch[2]}</li>`);
+    } else {
+      if (inList) closeList();
+      processedLines.push(line);
+    }
+  }
+  if (inList) closeList();
 
-  // Wrap in paragraph
-  html = `<p class="my-3 text-slate-600 leading-relaxed">${html}</p>`;
+  html = processedLines.join('\n');
+
+  // Paragraphs - split by double newlines, wrap non-HTML blocks
+  const blocks = html.split(/\n\n+/);
+  html = blocks.map(block => {
+    const trimmed = block.trim();
+    if (!trimmed) return '';
+    // Don't wrap if already a block element
+    if (/^<(h[1-6]|ul|ol|table|pre|div|blockquote)/.test(trimmed)) {
+      return trimmed;
+    }
+    return `<p class="my-3 text-slate-600 leading-relaxed">${trimmed}</p>`;
+  }).filter(Boolean).join('\n');
+
+  // Clean up any remaining stray newlines
+  html = html.replace(/\n+/g, '\n');
+  html = html.replace(/<\/p>\n<p/g, '</p><p');
 
   return html;
 }
