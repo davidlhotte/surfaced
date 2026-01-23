@@ -20,7 +20,7 @@ export default function PrivacyPolicy() {
         Privacy Policy
       </h1>
       <p style={{ color: '#666', marginBottom: '30px' }}>
-        Last updated: January 21, 2025
+        Last updated: January 23, 2025
       </p>
 
       <section style={{ marginBottom: '30px' }}>
@@ -134,7 +134,41 @@ export default function PrivacyPolicy() {
       </section>
 
       <section style={{ marginBottom: '30px' }}>
-        <h2>6. Data Retention</h2>
+        <h2>6. Shopify App Store Compliance</h2>
+        <p>
+          This privacy policy is provided in compliance with{' '}
+          <a
+            href="https://shopify.dev/docs/apps/launch/privacy-requirements"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#0EA5E9' }}
+          >
+            Shopify&apos;s privacy requirements
+          </a>{' '}
+          for apps distributed through the Shopify App Store.
+        </p>
+        <h3>6.1 Data Collected Through Shopify APIs</h3>
+        <ul>
+          <li>Shop information (domain, name, email) via Admin API</li>
+          <li>Product catalog data (titles, descriptions, images, metafields) via Admin API</li>
+          <li>Session tokens for authentication via App Bridge</li>
+        </ul>
+        <h3>6.2 Data Collected Directly From Merchants</h3>
+        <ul>
+          <li>Custom visibility check queries you configure</li>
+          <li>Competitor brand names you add for tracking</li>
+          <li>Settings and preferences within the app</li>
+        </ul>
+        <h3>6.3 Automated Data Generation</h3>
+        <ul>
+          <li>AI readiness scores calculated for your products</li>
+          <li>Visibility check results from AI platforms</li>
+          <li>Audit logs for app activity</li>
+        </ul>
+      </section>
+
+      <section style={{ marginBottom: '30px' }}>
+        <h2>7. Data Retention</h2>
         <p>
           We retain your data only as long as you have the app installed. When you
           uninstall Surfaced:
@@ -152,7 +186,7 @@ export default function PrivacyPolicy() {
       </section>
 
       <section style={{ marginBottom: '30px' }}>
-        <h2>7. Your Rights (GDPR)</h2>
+        <h2>8. Your Rights (GDPR)</h2>
         <p>If you are located in the European Economic Area, you have the right to:</p>
         <ul>
           <li><strong>Access:</strong> Request a copy of your data</li>
@@ -168,7 +202,7 @@ export default function PrivacyPolicy() {
       </section>
 
       <section style={{ marginBottom: '30px' }}>
-        <h2>8. GDPR Compliance</h2>
+        <h2>9. GDPR Compliance</h2>
         <p>
           We comply with GDPR requirements and respond to the following Shopify
           mandatory webhooks:
@@ -181,7 +215,7 @@ export default function PrivacyPolicy() {
       </section>
 
       <section style={{ marginBottom: '30px' }}>
-        <h2>9. Cookies and Tracking</h2>
+        <h2>10. Cookies and Tracking</h2>
         <p>
           The Surfaced admin interface uses sessionStorage (not cookies) to maintain
           your session within the Shopify admin. We do not use tracking cookies or
@@ -190,7 +224,7 @@ export default function PrivacyPolicy() {
       </section>
 
       <section style={{ marginBottom: '30px' }}>
-        <h2>10. Children&apos;s Privacy</h2>
+        <h2>11. Children&apos;s Privacy</h2>
         <p>
           Surfaced is a B2B application designed for Shopify merchants. We do not
           knowingly collect information from children under 16 years of age.
@@ -198,7 +232,7 @@ export default function PrivacyPolicy() {
       </section>
 
       <section style={{ marginBottom: '30px' }}>
-        <h2>11. Changes to This Policy</h2>
+        <h2>12. Changes to This Policy</h2>
         <p>
           We may update this Privacy Policy from time to time. We will notify you of
           any significant changes by posting a notice in the application or sending
@@ -207,7 +241,7 @@ export default function PrivacyPolicy() {
       </section>
 
       <section style={{ marginBottom: '30px' }}>
-        <h2>12. Contact Us</h2>
+        <h2>13. Contact Us</h2>
         <p>
           If you have any questions about this Privacy Policy or our data practices,
           please contact us:

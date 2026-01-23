@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service - LocateUs',
-  description: 'Terms of Service for LocateUs Store Locator App',
+  title: 'Terms of Service - Surfaced',
+  description: 'Terms of Service for Surfaced AI Visibility Optimization App',
   robots: 'index, follow',
 };
 
@@ -16,17 +16,17 @@ export default function TermsOfService() {
       lineHeight: '1.6',
       color: '#333'
     }}>
-      <h1 style={{ borderBottom: '2px solid #007bff', paddingBottom: '10px' }}>
+      <h1 style={{ borderBottom: '2px solid #0EA5E9', paddingBottom: '10px' }}>
         Terms of Service
       </h1>
       <p style={{ color: '#666', marginBottom: '30px' }}>
-        Last updated: January 12, 2025
+        Last updated: January 23, 2025
       </p>
 
       <section style={{ marginBottom: '30px' }}>
         <h2>1. Acceptance of Terms</h2>
         <p>
-          By installing, accessing, or using LocateUs (&quot;the App&quot;, &quot;we&quot;, &quot;our&quot;, or &quot;us&quot;),
+          By installing, accessing, or using Surfaced (&quot;the App&quot;, &quot;we&quot;, &quot;our&quot;, or &quot;us&quot;),
           you agree to be bound by these Terms of Service. If you do not agree to these terms,
           please do not use the App.
         </p>
@@ -35,21 +35,23 @@ export default function TermsOfService() {
       <section style={{ marginBottom: '30px' }}>
         <h2>2. Description of Service</h2>
         <p>
-          LocateUs is a Shopify application that allows merchants to:
+          Surfaced is a Shopify application that helps merchants optimize their product catalog
+          for AI visibility (AEO - AI Engine Optimization). The App provides:
         </p>
         <ul>
-          <li>Add and manage store location information</li>
-          <li>Display an interactive map on their Shopify storefront</li>
-          <li>Allow customers to search and find nearby stores</li>
-          <li>Import and export store data via CSV files</li>
-          <li>Customize the appearance of the store locator</li>
+          <li>AI readiness analysis and scoring for products</li>
+          <li>Visibility checks across AI platforms (ChatGPT, Claude, Perplexity, etc.)</li>
+          <li>llms.txt and JSON-LD structured data generation</li>
+          <li>Product optimization recommendations</li>
+          <li>Competitor visibility tracking</li>
+          <li>Exportable reports in multiple formats</li>
         </ul>
       </section>
 
       <section style={{ marginBottom: '30px' }}>
         <h2>3. Eligibility</h2>
         <p>
-          To use LocateUs, you must:
+          To use Surfaced, you must:
         </p>
         <ul>
           <li>Have an active Shopify store</li>
@@ -151,9 +153,10 @@ export default function TermsOfService() {
           The App integrates with third-party services including:
         </p>
         <ul>
-          <li><strong>OpenStreetMap:</strong> For map display (free)</li>
-          <li><strong>Google Maps:</strong> For map display (paid plans)</li>
-          <li><strong>Geocoding services:</strong> To convert addresses to coordinates</li>
+          <li><strong>Shopify:</strong> For authentication, billing, and product data access</li>
+          <li><strong>AI Platforms (OpenAI, Anthropic, Google, Perplexity):</strong> For visibility checks</li>
+          <li><strong>OpenRouter:</strong> As an API gateway for AI model requests</li>
+          <li><strong>Vercel:</strong> For hosting and infrastructure</li>
         </ul>
         <p>
           Your use of these services is subject to their respective terms of service.
@@ -277,7 +280,7 @@ export default function TermsOfService() {
           If you have any questions about these Terms, please contact us:
         </p>
         <ul>
-          <li><strong>Email:</strong> <a href="mailto:david.lhotte@gmail.com">david.lhotte@gmail.com</a></li>
+          <li><strong>Email:</strong> <a href="mailto:support@surfaced.app">support@surfaced.app</a></li>
         </ul>
       </section>
 
@@ -289,8 +292,19 @@ export default function TermsOfService() {
         fontSize: '14px'
       }}>
         <p>
-          By using LocateUs, you acknowledge that you have read, understood, and agree
+          By using Surfaced, you acknowledge that you have read, understood, and agree
           to be bound by these Terms of Service.
+        </p>
+        <p style={{ marginTop: '10px' }}>
+          This application is built in compliance with the{' '}
+          <a
+            href="https://www.shopify.com/partners/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#0EA5E9' }}
+          >
+            Shopify Partner Program Agreement
+          </a>.
         </p>
       </section>
     </div>
