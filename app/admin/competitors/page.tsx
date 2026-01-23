@@ -28,6 +28,7 @@ import { PlusCircleIcon, RefreshIcon, DeleteIcon } from '@shopify/polaris-icons'
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { PageBanner } from '@/components/admin/PageBanner';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type Competitor = {
@@ -323,6 +324,7 @@ export default function CompetitorsPage() {
       ]}
     >
       <AdminNav locale={locale} />
+      <PageBanner pageKey="competitors" />
       <Layout>
         {error && (
           <Layout.Section>

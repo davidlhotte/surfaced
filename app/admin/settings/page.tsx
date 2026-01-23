@@ -21,6 +21,7 @@ import {
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { PageBanner } from '@/components/admin/PageBanner';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 import type { AdminLocale } from '@/lib/i18n/translations';
 
@@ -380,6 +381,7 @@ export default function SettingsPage() {
       subtitle={t.settings.subtitle}
     >
       <AdminNav locale={locale} />
+      <PageBanner pageKey="settings" />
       <Layout>
         {error && (
           <Layout.Section>

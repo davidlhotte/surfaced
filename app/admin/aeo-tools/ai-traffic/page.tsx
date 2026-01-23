@@ -21,6 +21,7 @@ import {
 import { RefreshIcon, ClipboardIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { PageBanner } from '@/components/admin/PageBanner';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 interface AITrafficStats {
@@ -225,6 +226,7 @@ export default function AITrafficPage() {
       ]}
     >
       <AdminNav locale={locale} />
+      <PageBanner pageKey="aiTraffic" />
       <Layout>
         {error && (
           <Layout.Section>

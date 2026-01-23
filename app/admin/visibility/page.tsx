@@ -27,6 +27,7 @@ import { SearchIcon, ChevronDownIcon, ChevronUpIcon, ClockIcon } from '@shopify/
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { PageBanner } from '@/components/admin/PageBanner';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 // Helper function to highlight terms (query and brand name) in text
@@ -359,6 +360,7 @@ export default function VisibilityPage() {
       subtitle={t.subtitle}
     >
       <AdminNav locale={locale} />
+      <PageBanner pageKey="visibility" />
       <Layout>
         {/* Error Banner */}
         {error && (

@@ -22,6 +22,7 @@ import {
 import { ClipboardIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { PageBanner } from '@/components/admin/PageBanner';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 const DEFAULT_AI_BOTS = [
@@ -242,6 +243,7 @@ export default function RobotsTxtPage() {
       backAction={{ content: t.back, url: '/admin/aeo-tools' }}
     >
       <AdminNav locale={locale} />
+      <PageBanner pageKey="robotsTxt" />
       <Layout>
         {error && (
           <Layout.Section>

@@ -28,6 +28,7 @@ import {
 import Link from 'next/link';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { PageBanner } from '@/components/admin/PageBanner';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type TimePeriod = '7d' | '30d' | '90d' | '365d';
@@ -277,6 +278,7 @@ export default function InsightsPage() {
       ]}
     >
       <AdminNav locale={locale} />
+      <PageBanner pageKey="insights" />
       <Layout>
         {error && (
           <Layout.Section>

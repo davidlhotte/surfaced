@@ -21,6 +21,7 @@ import { RefreshIcon } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { PageBanner } from '@/components/admin/PageBanner';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 const AEO_TOOLS = [
@@ -251,6 +252,7 @@ export default function AeoToolsPage() {
       ]}
     >
       <AdminNav locale={locale} />
+      <PageBanner pageKey="aeoTools" />
       <Layout>
         {error && (
           <Layout.Section>
