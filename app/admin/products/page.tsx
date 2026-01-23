@@ -24,6 +24,7 @@ import {
   Modal,
   Tabs,
   Checkbox,
+  TextField,
 } from '@shopify/polaris';
 import {
   RefreshIcon,
@@ -146,6 +147,9 @@ export default function ProductsPage() {
   // Selection state for checkboxes
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
 
+  // Edited suggestions state - allows users to modify suggestions before applying
+  const [editedSuggestions, setEditedSuggestions] = useState<Record<number, string>>({});
+
   // Apply confirmation state
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
   const [suggestionsToApply, setSuggestionsToApply] = useState<OptimizationSuggestion[]>([]);
@@ -219,6 +223,7 @@ export default function ProductsPage() {
       setShowModal(true);
       setOptimization(null);
       setSelectedSuggestions(new Set());
+      setEditedSuggestions({});
 
       const response = await authFetch('/api/optimize', {
         method: 'POST',
@@ -267,14 +272,45 @@ export default function ProductsPage() {
     setSelectedSuggestions(newSelected);
   };
 
-  const handleApplySingle = (suggestion: OptimizationSuggestion) => {
-    setSuggestionsToApply([suggestion]);
+  // Get the current value for a suggestion (edited or original)
+  const getSuggestionValue = (index: number, suggestion: OptimizationSuggestion) => {
+    return editedSuggestions[index] ?? suggestion.suggested;
+  };
+
+  // Update edited suggestion
+  const handleSuggestionEdit = (index: number, value: string) => {
+    setEditedSuggestions((prev) => ({ ...prev, [index]: value }));
+  };
+
+  // Reset suggestion to original
+  const resetSuggestion = (index: number) => {
+    setEditedSuggestions((prev) => {
+      const newEdited = { ...prev };
+      delete newEdited[index];
+      return newEdited;
+    });
+  };
+
+  const handleApplySingle = (suggestion: OptimizationSuggestion, index: number) => {
+    // Use edited value if available
+    const editedSuggestion = {
+      ...suggestion,
+      suggested: getSuggestionValue(index, suggestion),
+    };
+    setSuggestionsToApply([editedSuggestion]);
     setShowApplyConfirm(true);
   };
 
   const handleApplySelected = () => {
     if (!optimization) return;
-    const selected = optimization.suggestions.filter((_, i) => selectedSuggestions.has(i));
+    // Get selected suggestions with edited values
+    const selected = optimization.suggestions
+      .map((s, i) => ({
+        ...s,
+        suggested: getSuggestionValue(i, s),
+        index: i,
+      }))
+      .filter((_, i) => selectedSuggestions.has(i));
     if (selected.length === 0) {
       setError(locale === 'fr' ? 'Veuillez selectionner au moins une suggestion a appliquer' : 'Please select at least one suggestion to apply');
       return;
@@ -1121,7 +1157,7 @@ export default function ProductsPage() {
                               icon={CheckIcon}
                               size="slim"
                               variant="primary"
-                              onClick={() => handleApplySingle(suggestion)}
+                              onClick={() => handleApplySingle(suggestion, index)}
                               loading={applying}
                             >
                               {locale === 'fr' ? 'Appliquer' : 'Apply'}
@@ -1154,19 +1190,36 @@ export default function ProductsPage() {
                             </BlockStack>
                           </Box>
 
-                          {/* After */}
+                          {/* After - Editable */}
                           <Box minWidth="45%">
                             <BlockStack gap="100">
-                              <Text as="p" variant="bodySm" fontWeight="semibold">
-                                {locale === 'fr' ? 'Apres :' : 'After:'}
-                              </Text>
-                              <Box padding="200" background="bg-surface-success" borderRadius="100">
-                                <Text as="p" variant="bodySm">
-                                  {suggestion.suggested.length > 150
-                                    ? `${suggestion.suggested.substring(0, 150)}...`
-                                    : suggestion.suggested}
+                              <InlineStack align="space-between" blockAlign="center">
+                                <Text as="p" variant="bodySm" fontWeight="semibold">
+                                  {locale === 'fr' ? 'Apres (editable) :' : 'After (editable):'}
                                 </Text>
-                              </Box>
+                                {editedSuggestions[index] !== undefined && (
+                                  <Button
+                                    size="slim"
+                                    variant="plain"
+                                    onClick={() => resetSuggestion(index)}
+                                  >
+                                    {locale === 'fr' ? 'Reinitialiser' : 'Reset'}
+                                  </Button>
+                                )}
+                              </InlineStack>
+                              <TextField
+                                label=""
+                                labelHidden
+                                value={getSuggestionValue(index, suggestion)}
+                                onChange={(value) => handleSuggestionEdit(index, value)}
+                                multiline={suggestion.field === 'description' || suggestion.field === 'seo_description' || suggestion.field === 'seoDescription' ? 4 : 2}
+                                autoComplete="off"
+                              />
+                              {editedSuggestions[index] !== undefined && (
+                                <Text as="p" variant="bodySm" tone="caution">
+                                  {locale === 'fr' ? 'Modifie par vous' : 'Modified by you'}
+                                </Text>
+                              )}
                             </BlockStack>
                           </Box>
                         </InlineStack>
