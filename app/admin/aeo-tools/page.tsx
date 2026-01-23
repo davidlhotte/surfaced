@@ -17,15 +17,27 @@ import {
   Box,
   Divider,
 } from '@shopify/polaris';
-import {
-  RefreshIcon,
-  FileIcon,
-} from '@shopify/polaris-icons';
+import { RefreshIcon } from '@shopify/polaris-icons';
 import Link from 'next/link';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 const AEO_TOOLS = [
+  {
+    id: 'llmsTxt',
+    icon: '📄',
+    color: 'linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%)',
+    href: '/admin/tools?tool=llms',
+    plans: ['FREE', 'BASIC', 'PLUS', 'PREMIUM'],
+  },
+  {
+    id: 'jsonLd',
+    icon: '🏷️',
+    color: 'linear-gradient(135deg, #14B8A6 0%, #2DD4BF 100%)',
+    href: '/admin/tools?tool=jsonld',
+    plans: ['FREE', 'BASIC', 'PLUS', 'PREMIUM'],
+  },
   {
     id: 'robots',
     icon: '🤖',
@@ -110,6 +122,16 @@ export default function AeoToolsPage() {
       available: 'Available',
       requiresUpgrade: 'Requires upgrade',
       tools: {
+        llmsTxt: {
+          title: 'llms.txt Generator',
+          description: 'Create a guide file that helps AI assistants understand your store and recommend your products',
+          stat: 'File configured',
+        },
+        jsonLd: {
+          title: 'JSON-LD Schemas',
+          description: 'Add structured data to help AI crawlers understand your products, prices, and reviews',
+          stat: 'Schema active',
+        },
         robots: {
           title: 'AI Bot Manager',
           description: 'Control which AI bots (GPTBot, ClaudeBot, PerplexityBot) can crawl and learn from your store',
@@ -151,6 +173,16 @@ export default function AeoToolsPage() {
       available: 'Disponible',
       requiresUpgrade: 'Mise a niveau requise',
       tools: {
+        llmsTxt: {
+          title: 'Generateur llms.txt',
+          description: 'Creez un fichier guide qui aide les assistants IA a comprendre votre boutique et recommander vos produits',
+          stat: 'Fichier configure',
+        },
+        jsonLd: {
+          title: 'Schemas JSON-LD',
+          description: 'Ajoutez des donnees structurees pour aider les crawlers IA a comprendre vos produits, prix et avis',
+          stat: 'Schema actif',
+        },
         robots: {
           title: 'Gestionnaire Bots IA',
           description: 'Controlez quels bots IA (GPTBot, ClaudeBot, PerplexityBot) peuvent explorer votre boutique',
@@ -218,6 +250,7 @@ export default function AeoToolsPage() {
         },
       ]}
     >
+      <AdminNav locale={locale} />
       <Layout>
         {error && (
           <Layout.Section>
@@ -299,24 +332,6 @@ export default function AeoToolsPage() {
               );
             })}
           </div>
-        </Layout.Section>
-
-        {/* Quick Links to AI Guide Tools */}
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">
-                {locale === 'fr' ? 'Outils AI Guide' : 'AI Guide Tools'}
-              </Text>
-              <InlineStack gap="400" wrap>
-                <Link href="/admin/tools">
-                  <Button icon={FileIcon}>
-                    llms.txt & JSON-LD
-                  </Button>
-                </Link>
-              </InlineStack>
-            </BlockStack>
-          </Card>
         </Layout.Section>
       </Layout>
     </Page>

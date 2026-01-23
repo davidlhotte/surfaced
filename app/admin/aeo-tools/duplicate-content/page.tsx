@@ -21,6 +21,7 @@ import {
 } from '@shopify/polaris';
 import { RefreshIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 interface DuplicateGroup {
@@ -178,6 +179,7 @@ export default function DuplicateContentPage() {
           : undefined
       }
     >
+      <AdminNav locale={locale} />
       <Layout>
         {error && (
           <Layout.Section>

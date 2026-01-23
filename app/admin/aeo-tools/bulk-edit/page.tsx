@@ -26,6 +26,7 @@ import {
 } from '@shopify/polaris';
 import { RefreshIcon, ImageIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 interface Product {
@@ -259,6 +260,7 @@ export default function BulkEditPage() {
         },
       ]}
     >
+      <AdminNav locale={locale} />
       <Layout>
         {error && (
           <Layout.Section>

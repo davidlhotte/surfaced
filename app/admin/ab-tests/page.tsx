@@ -26,6 +26,7 @@ import {
 import { PlusCircleIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type ABTest = {
@@ -52,7 +53,7 @@ type Quota = {
 };
 
 export default function ABTestsPage() {
-  const { t } = useAdminLanguage();
+  const { t, locale } = useAdminLanguage();
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, shopDetectionFailed, error: shopError } = useShopContext();
   const [tests, setTests] = useState<ABTest[]>([]);
@@ -263,6 +264,7 @@ export default function ABTestsPage() {
         disabled: !quota?.canCreate,
       }}
     >
+      <AdminNav locale={locale} />
       <Layout>
         {error && (
           <Layout.Section>

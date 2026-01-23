@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Page,
   Layout,
@@ -28,6 +29,7 @@ import {
   StarFilledIcon,
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 // AI crawlers that can access your store via llms.txt
@@ -68,14 +70,19 @@ type ToolType = 'llms' | 'jsonld';
 
 export default function ToolsPage() {
   const { fetch } = useAuthenticatedFetch();
-  const { t } = useAdminLanguage();
+  const { t, locale } = useAdminLanguage();
+  const searchParams = useSearchParams();
+
+  // Get initial tool from URL parameter
+  const toolParam = searchParams.get('tool');
+  const initialTool: ToolType = toolParam === 'jsonld' ? 'jsonld' : 'llms';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<ToolType>('llms');
+  const [selectedTool, setSelectedTool] = useState<ToolType>(initialTool);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // AI Guide (llms.txt) state
@@ -281,6 +288,7 @@ export default function ToolsPage() {
         },
       ]}
     >
+      <AdminNav locale={locale} />
       <Layout>
         {error && (
           <Layout.Section>

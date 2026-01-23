@@ -20,6 +20,7 @@ import {
 } from '@shopify/polaris';
 import { RefreshIcon, ExportIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch } from '@/components/providers/ShopProvider';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 type ReportType = 'audit' | 'visibility' | 'summary';
@@ -204,6 +205,7 @@ export default function ReportsPage() {
       title={t.title}
       backAction={{ content: t.back, url: '/admin/aeo-tools' }}
     >
+      <AdminNav locale={locale} />
       <Layout>
         {error && (
           <Layout.Section>
