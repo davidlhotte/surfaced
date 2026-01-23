@@ -262,6 +262,92 @@ Surfaced actually queries AI assistants to see if your brand is mentioned.
         },
       },
       {
+        id: 'dashboard-metrics',
+        title: { fr: 'Métriques du Tableau de Bord', en: 'Dashboard Metrics' },
+        content: {
+          fr: `### Tableau de bord interactif
+
+Le tableau de bord affiche vos métriques clés de visibilité IA de façon interactive.
+
+#### Métriques cliquables
+Chaque métrique est cliquable et vous emmène vers des détails :
+
+- **Visibilité IA** : Cliquez pour voir la répartition par plateforme
+- **Score IA** : Cliquez pour voir la distribution des scores produits
+- **Concurrents** : Cliquez pour voir les détails concurrentiels
+
+#### Mini-graphiques
+Chaque métrique affiche un mini-graphique montrant la tendance récente.
+
+#### Navigation rapide
+Depuis le tableau de bord, accédez directement à :
+- **Produits** : Optimisez vos fiches
+- **Visibilité** : Lancez des tests
+- **Statistiques** : Analysez vos données en détail`,
+          en: `### Interactive Dashboard
+
+The dashboard displays your key AI visibility metrics interactively.
+
+#### Clickable metrics
+Each metric is clickable and takes you to details:
+
+- **AI Visibility**: Click to see platform breakdown
+- **AI Score**: Click to see product score distribution
+- **Competitors**: Click to see competitive details
+
+#### Mini-charts
+Each metric displays a mini-chart showing recent trends.
+
+#### Quick navigation
+From the dashboard, directly access:
+- **Products**: Optimize your listings
+- **Visibility**: Run tests
+- **Statistics**: Analyze your data in detail`,
+        },
+      },
+      {
+        id: 'editing-suggestions',
+        title: { fr: 'Modifier les Suggestions IA', en: 'Editing AI Suggestions' },
+        content: {
+          fr: `### Personnalisez avant d'appliquer
+
+Vous pouvez maintenant modifier les suggestions IA avant de les appliquer à vos produits.
+
+#### Comment ça marche
+1. Générez des suggestions pour un produit
+2. Cliquez sur le champ "Après" pour modifier
+3. Personnalisez le texte comme vous le souhaitez
+4. Cliquez sur **Appliquer** pour sauvegarder
+
+#### Indicateurs
+- **Modifié par vous** : Badge indiquant que vous avez personnalisé
+- **Réinitialiser** : Bouton pour revenir à la suggestion originale
+
+#### Conseils
+- Gardez les mots-clés importants de la suggestion IA
+- Ajoutez des détails spécifiques à votre marque
+- Vérifiez l'orthographe avant d'appliquer`,
+          en: `### Customize before applying
+
+You can now edit AI suggestions before applying them to your products.
+
+#### How it works
+1. Generate suggestions for a product
+2. Click on the "After" field to edit
+3. Customize the text as you wish
+4. Click **Apply** to save
+
+#### Indicators
+- **Modified by you**: Badge showing you customized
+- **Reset**: Button to revert to original suggestion
+
+#### Tips
+- Keep important keywords from AI suggestion
+- Add details specific to your brand
+- Check spelling before applying`,
+        },
+      },
+      {
         id: 'aeo-tools',
         title: { fr: 'Outils AEO Avancés', en: 'Advanced AEO Tools' },
         content: {
