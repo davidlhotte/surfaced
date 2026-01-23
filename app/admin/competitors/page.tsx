@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Page,
   Layout,
@@ -22,8 +22,9 @@ import {
   Avatar,
   Modal,
   ProgressBar,
+  Tabs,
 } from '@shopify/polaris';
-import { PlusCircleIcon } from '@shopify/polaris-icons';
+import { PlusCircleIcon, RefreshIcon, DeleteIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { AdminNav } from '@/components/admin/AdminNav';
@@ -97,6 +98,17 @@ export default function CompetitorsPage() {
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
 
+  // Analysis configuration - editable by user
+  const [brandName, setBrandName] = useState('');
+  const [customQueries, setCustomQueries] = useState<string[]>([]);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [tempBrandName, setTempBrandName] = useState('');
+  const [tempQueries, setTempQueries] = useState('');
+
+  // History state
+  const [history, setHistory] = useState<CompetitorAnalysis[]>([]);
+  const [selectedTab, setSelectedTab] = useState(0);
+
   const fetchCompetitors = useCallback(async () => {
     try {
       setLoading(true);
@@ -105,6 +117,11 @@ export default function CompetitorsPage() {
       const result = await response.json();
       if (result.success) {
         setData(result.data);
+        // Initialize brand name from shop domain if not set
+        if (!brandName && result.data.shopDomain) {
+          const shopName = result.data.shopDomain.replace('.myshopify.com', '').replace(/-/g, ' ');
+          setBrandName(shopName.charAt(0).toUpperCase() + shopName.slice(1));
+        }
       } else {
         setError(result.error || t.common.error);
       }
@@ -113,7 +130,7 @@ export default function CompetitorsPage() {
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch, t.common.error]);
+  }, [authenticatedFetch, t.common.error, brandName]);
 
   useEffect(() => {
     fetchCompetitors();
@@ -181,7 +198,11 @@ export default function CompetitorsPage() {
       const response = await authenticatedFetch('/api/competitors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'analyze' }),
+        body: JSON.stringify({
+          action: 'analyze',
+          brandName: brandName || undefined,
+          customQueries: customQueries.length > 0 ? customQueries : undefined,
+        }),
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -190,6 +211,8 @@ export default function CompetitorsPage() {
       const result = await response.json();
       if (result.success) {
         setAnalysis(result.data);
+        // Add to history
+        setHistory((prev) => [result.data, ...prev].slice(0, 10));
       } else {
         setError(result.error || t.common.error);
       }
@@ -199,6 +222,32 @@ export default function CompetitorsPage() {
       setAnalyzing(false);
     }
   };
+
+  // Open config modal with current values
+  const openConfigModal = () => {
+    setTempBrandName(brandName);
+    setTempQueries(customQueries.join('\n'));
+    setShowConfigModal(true);
+  };
+
+  // Save config from modal
+  const saveConfig = () => {
+    setBrandName(tempBrandName);
+    setCustomQueries(tempQueries.split('\n').map((q) => q.trim()).filter((q) => q.length > 0));
+    setShowConfigModal(false);
+  };
+
+  // Default query suggestions based on competitors
+  const suggestedQueries = useMemo(() => {
+    const brand = brandName || 'your store';
+    return [
+      locale === 'fr' ? `Quel est le meilleur ${brand} ?` : `What is the best ${brand}?`,
+      locale === 'fr' ? `Ou acheter des produits comme ${brand} ?` : `Where to buy products like ${brand}?`,
+      locale === 'fr' ? `${brand} vs concurrents` : `${brand} vs competitors`,
+      locale === 'fr' ? `Avis sur ${brand}` : `${brand} reviews`,
+      locale === 'fr' ? `Alternative a ${brand}` : `Alternative to ${brand}`,
+    ];
+  }, [brandName, locale]);
 
   const getInsightBadge = (type: string) => {
     const tones: Record<string, 'critical' | 'warning' | 'success'> = {
@@ -217,6 +266,18 @@ export default function CompetitorsPage() {
     };
     return labels[type] || type;
   };
+
+  // Tabs for main view
+  const tabs = useMemo(() => [
+    {
+      id: 'analysis',
+      content: locale === 'fr' ? 'Analyse' : 'Analysis',
+    },
+    {
+      id: 'history',
+      content: locale === 'fr' ? `Historique (${history.length})` : `History (${history.length})`,
+    },
+  ], [history.length, locale]);
 
   // Show authentication error if shop detection failed
   if (shopDetectionFailed) {
@@ -268,6 +329,124 @@ export default function CompetitorsPage() {
             <Banner tone="critical" title={t.common.error} onDismiss={() => setError(null)}>
               <p>{error}</p>
             </Banner>
+          </Layout.Section>
+        )}
+
+        {/* Analysis Configuration Section */}
+        {data?.competitors && data.competitors.length > 0 && (
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400">
+                <InlineStack align="space-between" blockAlign="center">
+                  <BlockStack gap="100">
+                    <Text as="h3" variant="headingMd">
+                      {locale === 'fr' ? 'Configuration de l\'analyse' : 'Analysis Configuration'}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {locale === 'fr'
+                        ? 'Personnalisez les questions posees aux IA pour comparer votre marque avec vos concurrents.'
+                        : 'Customize the questions asked to AI to compare your brand with competitors.'}
+                    </Text>
+                  </BlockStack>
+                  <Button onClick={openConfigModal}>
+                    {locale === 'fr' ? 'Configurer' : 'Configure'}
+                  </Button>
+                </InlineStack>
+                <Divider />
+                <InlineStack gap="400" wrap>
+                  <Box minWidth="200px">
+                    <BlockStack gap="100">
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        {locale === 'fr' ? 'Nom de votre marque' : 'Your brand name'}
+                      </Text>
+                      <Text as="p" fontWeight="semibold">
+                        {brandName || (locale === 'fr' ? '(non defini)' : '(not set)')}
+                      </Text>
+                    </BlockStack>
+                  </Box>
+                  <Box minWidth="300px">
+                    <BlockStack gap="100">
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        {locale === 'fr' ? 'Questions personnalisees' : 'Custom queries'}
+                      </Text>
+                      <Text as="p" fontWeight="semibold">
+                        {customQueries.length > 0
+                          ? `${customQueries.length} ${locale === 'fr' ? 'questions' : 'queries'}`
+                          : locale === 'fr' ? 'Questions par defaut' : 'Default queries'}
+                      </Text>
+                    </BlockStack>
+                  </Box>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+        )}
+
+        {/* Tabs for Analysis/History */}
+        {data?.competitors && data.competitors.length > 0 && (
+          <Layout.Section>
+            <Card>
+              <Tabs tabs={tabs} selected={selectedTab} onSelect={setSelectedTab}>
+                <Box paddingBlockStart="400" />
+              </Tabs>
+            </Card>
+          </Layout.Section>
+        )}
+
+        {/* History Tab Content */}
+        {selectedTab === 1 && (
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400">
+                <Text as="h3" variant="headingMd">
+                  {locale === 'fr' ? 'Historique des analyses' : 'Analysis History'}
+                </Text>
+                <Divider />
+                {history.length === 0 ? (
+                  <Box padding="600">
+                    <BlockStack gap="300" inlineAlign="center">
+                      <Text as="p" variant="headingMd">
+                        {locale === 'fr' ? 'Pas encore d\'historique' : 'No history yet'}
+                      </Text>
+                      <Text as="p" tone="subdued">
+                        {locale === 'fr'
+                          ? 'Lancez votre premiere analyse pour voir les resultats ici.'
+                          : 'Run your first analysis to see results here.'}
+                      </Text>
+                    </BlockStack>
+                  </Box>
+                ) : (
+                  <BlockStack gap="300">
+                    {history.map((entry, index) => (
+                      <Box
+                        key={index}
+                        padding="300"
+                        background="bg-surface-secondary"
+                        borderRadius="200"
+                      >
+                        <InlineStack align="space-between" blockAlign="center" gap="400" wrap>
+                          <BlockStack gap="100">
+                            <InlineStack gap="200" blockAlign="center">
+                              <Text as="p" fontWeight="semibold">{entry.brandName}</Text>
+                              <Badge tone={entry.summary.yourMentionRate >= 30 ? 'success' : 'warning'}>
+                                {`${entry.summary.yourMentionRate}% ${locale === 'fr' ? 'mentions' : 'mentions'}`}
+                              </Badge>
+                            </InlineStack>
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              {entry.comparisons.length} {locale === 'fr' ? 'questions testees' : 'queries tested'} •{' '}
+                              {entry.competitors.length} {locale === 'fr' ? 'concurrents' : 'competitors'}
+                            </Text>
+                          </BlockStack>
+                          <Button size="slim" onClick={() => { setAnalysis(entry); setSelectedTab(0); }}>
+                            {locale === 'fr' ? 'Voir' : 'View'}
+                          </Button>
+                        </InlineStack>
+                      </Box>
+                    ))}
+                  </BlockStack>
+                )}
+              </BlockStack>
+            </Card>
           </Layout.Section>
         )}
 
@@ -367,8 +546,8 @@ export default function CompetitorsPage() {
           </Layout.Section>
         )}
 
-        {/* Analysis Results */}
-        {analysis && (
+        {/* Analysis Results - Only show on Analysis tab */}
+        {analysis && selectedTab === 0 && (
           <>
             <Layout.Section>
               <Card>
@@ -728,6 +907,83 @@ export default function CompetitorsPage() {
               autoComplete="off"
               helpText={t.competitors.nameHelp}
             />
+          </BlockStack>
+        </Modal.Section>
+      </Modal>
+
+      {/* Analysis Configuration Modal */}
+      <Modal
+        open={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        title={locale === 'fr' ? 'Configurer l\'analyse' : 'Configure Analysis'}
+        primaryAction={{
+          content: locale === 'fr' ? 'Enregistrer' : 'Save',
+          onAction: saveConfig,
+        }}
+        secondaryActions={[
+          {
+            content: t.common.cancel,
+            onAction: () => setShowConfigModal(false),
+          },
+        ]}
+        size="large"
+      >
+        <Modal.Section>
+          <BlockStack gap="500">
+            <Banner tone="info">
+              <Text as="p">
+                {locale === 'fr'
+                  ? 'Personnalisez les parametres d\'analyse pour obtenir des resultats plus pertinents.'
+                  : 'Customize analysis settings to get more relevant results.'}
+              </Text>
+            </Banner>
+
+            <TextField
+              label={locale === 'fr' ? 'Nom de votre marque' : 'Your brand name'}
+              value={tempBrandName}
+              onChange={setTempBrandName}
+              autoComplete="off"
+              helpText={locale === 'fr'
+                ? 'Le nom qui sera recherche dans les reponses IA'
+                : 'The name that will be searched for in AI responses'}
+            />
+
+            <BlockStack gap="200">
+              <Text as="p" fontWeight="semibold">
+                {locale === 'fr' ? 'Questions a poser aux IA' : 'Questions to ask AI'}
+              </Text>
+              <Text as="p" variant="bodySm" tone="subdued">
+                {locale === 'fr'
+                  ? 'Une question par ligne. Laissez vide pour utiliser les questions par defaut.'
+                  : 'One question per line. Leave empty to use default questions.'}
+              </Text>
+              <TextField
+                label=""
+                labelHidden
+                value={tempQueries}
+                onChange={setTempQueries}
+                multiline={5}
+                autoComplete="off"
+                placeholder={suggestedQueries.join('\n')}
+              />
+            </BlockStack>
+
+            <BlockStack gap="200">
+              <Text as="p" variant="bodySm" fontWeight="semibold">
+                {locale === 'fr' ? 'Questions suggerees :' : 'Suggested questions:'}
+              </Text>
+              <InlineStack gap="200" wrap>
+                {suggestedQueries.map((q, i) => (
+                  <Button
+                    key={i}
+                    size="slim"
+                    onClick={() => setTempQueries((prev) => prev ? `${prev}\n${q}` : q)}
+                  >
+                    + {q.length > 30 ? `${q.substring(0, 30)}...` : q}
+                  </Button>
+                ))}
+              </InlineStack>
+            </BlockStack>
           </BlockStack>
         </Modal.Section>
       </Modal>
