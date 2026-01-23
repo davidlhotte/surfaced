@@ -103,7 +103,7 @@ export async function handleCustomersDataRequest(
   shopDomain: string,
   _payload: Record<string, unknown>
 ): Promise<void> {
-  // LocateUs doesn't store customer data, so we respond with empty data
+  // Surfaced doesn't store customer data, so we respond with empty data
   logger.info({ shopDomain }, 'Customers data request received');
   auditLog('customers_data_request', shopDomain, { hasData: false });
 }
@@ -112,7 +112,7 @@ export async function handleCustomersRedact(
   shopDomain: string,
   _payload: Record<string, unknown>
 ): Promise<void> {
-  // LocateUs doesn't store customer data, nothing to redact
+  // Surfaced doesn't store customer data, nothing to redact
   logger.info({ shopDomain }, 'Customers redact request received');
   auditLog('customers_redact', shopDomain, { dataRedacted: false });
 }

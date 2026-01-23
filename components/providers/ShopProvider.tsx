@@ -25,6 +25,11 @@ const ShopContext = createContext<ShopContextType>({
  */
 const STORAGE_KEY = 'surfaced_shop_domain';
 const TOKEN_EXCHANGED_KEY = 'surfaced_token_exchanged';
+const SESSION_TOKEN_KEY = 'surfaced_session_token';
+const SESSION_TOKEN_EXPIRY_KEY = 'surfaced_session_token_expiry';
+
+// Session token cache duration (4 minutes - tokens are valid for 5 minutes)
+const SESSION_TOKEN_CACHE_DURATION = 4 * 60 * 1000;
 
 function getStoredShop(): string | null {
   if (typeof window === 'undefined') return null;
@@ -57,6 +62,33 @@ function markTokenExchanged(): void {
   if (typeof window === 'undefined') return;
   try {
     sessionStorage.setItem(TOKEN_EXCHANGED_KEY, 'true');
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function getCachedSessionToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const token = sessionStorage.getItem(SESSION_TOKEN_KEY);
+    const expiry = sessionStorage.getItem(SESSION_TOKEN_EXPIRY_KEY);
+    if (token && expiry && Date.now() < parseInt(expiry, 10)) {
+      return token;
+    }
+    // Clear expired token
+    sessionStorage.removeItem(SESSION_TOKEN_KEY);
+    sessionStorage.removeItem(SESSION_TOKEN_EXPIRY_KEY);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedSessionToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    sessionStorage.setItem(SESSION_TOKEN_EXPIRY_KEY, String(Date.now() + SESSION_TOKEN_CACHE_DURATION));
   } catch {
     // Ignore storage errors
   }
@@ -319,13 +351,21 @@ export function useAuthenticatedFetch() {
         debugLog(`WARNING: No shop domain for authenticated fetch to: ${url}`);
       }
 
-      // Add session token if App Bridge is available
-      if (typeof window !== 'undefined' && window.shopify?.idToken) {
-        try {
-          const sessionToken = await window.shopify.idToken();
+      // Add session token if App Bridge is available (with caching for performance)
+      if (typeof window !== 'undefined') {
+        let sessionToken = getCachedSessionToken();
+        if (!sessionToken && window.shopify?.idToken) {
+          try {
+            sessionToken = await window.shopify.idToken();
+            if (sessionToken) {
+              setCachedSessionToken(sessionToken);
+            }
+          } catch (error) {
+            debugLog('Could not get session token for fetch:', error);
+          }
+        }
+        if (sessionToken) {
           headers.set('Authorization', `Bearer ${sessionToken}`);
-        } catch (error) {
-          debugLog('Could not get session token for fetch:', error);
         }
       }
 

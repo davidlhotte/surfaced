@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
       'GDPR customers/data_request webhook received'
     );
 
-    // LocateUs doesn't store customer data directly
-    // Store locations are merchant data, not customer data
+    // Surfaced doesn't store customer data directly
+    // Product audit data is merchant data, not customer data
     // Log the request for compliance purposes
     logger.info(
       { shop: shop_domain, customerId: customer?.id },

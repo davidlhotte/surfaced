@@ -17,6 +17,9 @@ import { getDevShop } from '@/lib/utils/dev';
 import { encryptToken } from '@/lib/security/encryption';
 import { logger } from '@/lib/monitoring/logger';
 
+// Module-level cache for dev shop creation (avoid repeated upserts)
+let devShopCreated = false;
+
 export type GetShopOptions = {
   /** Whether to apply rate limiting (default: true) */
   rateLimit?: boolean;
@@ -48,15 +51,18 @@ export async function getShopFromRequest(
   const devShop = getDevShop();
   if (devShop) {
     logger.info({ devShop }, 'Using development shop');
-    // Ensure dev shop exists in DB (upsert to avoid race conditions)
-    await prisma.shop.upsert({
-      where: { shopDomain: devShop },
-      update: {},
-      create: {
-        shopDomain: devShop,
-        accessToken: encryptToken('dev-token-' + Date.now()),
-      },
-    });
+    // Ensure dev shop exists in DB (only once per server instance)
+    if (!devShopCreated) {
+      await prisma.shop.upsert({
+        where: { shopDomain: devShop },
+        update: {},
+        create: {
+          shopDomain: devShop,
+          accessToken: encryptToken('dev-token-' + Date.now()),
+        },
+      });
+      devShopCreated = true;
+    }
 
     return devShop;
   }
