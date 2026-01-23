@@ -621,9 +621,9 @@ export default function VisibilityPage() {
               </BlockStack>
               <Divider />
 
-              {/* Table Header */}
+              {/* Table Header - Hidden on mobile via CSS */}
               <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 1fr', gap: '8px', alignItems: 'center' }}>
+                <div className="platform-grid platform-grid-header">
                   <Text as="span" variant="bodySm" fontWeight="bold">{t.platform}</Text>
                   <Text as="span" variant="bodySm" fontWeight="bold">{t.status}</Text>
                   <Text as="span" variant="bodySm" fontWeight="bold">{t.position}</Text>
@@ -648,7 +648,7 @@ export default function VisibilityPage() {
                       borderRadius="200"
                       background={isMentioned ? 'bg-surface-success' : check && !isMentioned ? 'bg-surface-critical' : 'bg-surface'}
                     >
-                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 1fr', gap: '8px', alignItems: 'center' }}>
+                      <div className="platform-grid">
                         {/* Platform */}
                         <InlineStack gap="200" blockAlign="center">
                           <Text as="span" variant="headingMd">{platform.icon}</Text>

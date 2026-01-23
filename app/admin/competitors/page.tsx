@@ -480,8 +480,8 @@ export default function CompetitorsPage() {
 
                   <BlockStack gap="300">
                     <Text as="h3" variant="headingMd">{t.competitors.howItWorksTitle}</Text>
-                    <InlineStack gap="400" wrap>
-                      <Box minWidth="200px" maxWidth="300px">
+                    <div className="feature-grid">
+                      <div>
                         <BlockStack gap="200">
                           <div style={{
                             width: '32px',
@@ -499,8 +499,8 @@ export default function CompetitorsPage() {
                             {t.competitors.step1Desc}
                           </Text>
                         </BlockStack>
-                      </Box>
-                      <Box minWidth="200px" maxWidth="300px">
+                      </div>
+                      <div>
                         <BlockStack gap="200">
                           <div style={{
                             width: '32px',
@@ -518,8 +518,8 @@ export default function CompetitorsPage() {
                             {t.competitors.step2Desc}
                           </Text>
                         </BlockStack>
-                      </Box>
-                      <Box minWidth="200px" maxWidth="300px">
+                      </div>
+                      <div>
                         <BlockStack gap="200">
                           <div style={{
                             width: '32px',
@@ -537,8 +537,8 @@ export default function CompetitorsPage() {
                             {t.competitors.step3Desc}
                           </Text>
                         </BlockStack>
-                      </Box>
-                    </InlineStack>
+                      </div>
+                    </div>
                   </BlockStack>
 
                   <Box paddingBlockStart="200">
@@ -566,9 +566,9 @@ export default function CompetitorsPage() {
                   </InlineStack>
                   <Divider />
 
-                  {/* Summary */}
-                  <InlineStack gap="400" align="start" wrap>
-                    <Box minWidth="180px">
+                  {/* Summary - Responsive stats row */}
+                  <div className="stats-row">
+                    <div>
                       <Card>
                         <BlockStack gap="200">
                           <Text as="p" variant="bodySm" tone="subdued">{t.competitors.yourMentionRate}</Text>
@@ -580,8 +580,8 @@ export default function CompetitorsPage() {
                           </Text>
                         </BlockStack>
                       </Card>
-                    </Box>
-                    <Box minWidth="180px">
+                    </div>
+                    <div>
                       <Card>
                         <BlockStack gap="200">
                           <Text as="p" variant="bodySm" tone="subdued">{t.competitors.bestCompetitor}</Text>
@@ -593,8 +593,8 @@ export default function CompetitorsPage() {
                           </Text>
                         </BlockStack>
                       </Card>
-                    </Box>
-                    <Box minWidth="180px">
+                    </div>
+                    <div>
                       <Card>
                         <BlockStack gap="200">
                           <Text as="p" variant="bodySm" tone="subdued">{t.competitors.gap}</Text>
@@ -611,8 +611,8 @@ export default function CompetitorsPage() {
                           </Text>
                         </BlockStack>
                       </Card>
-                    </Box>
-                  </InlineStack>
+                    </div>
+                  </div>
                 </BlockStack>
               </Card>
             </Layout.Section>

@@ -178,3 +178,127 @@ html, body {
     padding-right: 16px !important;
   }
 }
+
+/* ===== RESPONSIVE GRID LAYOUTS ===== */
+
+/* Visibility/Competitors platform grid - 5 columns on desktop */
+.platform-grid {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Desktop: 5 columns */
+@media (min-width: 1024px) {
+  .platform-grid {
+    grid-template-columns: 2fr 1.5fr 1fr 1.5fr 1fr;
+  }
+}
+
+/* Tablet: 3 columns, stack some items */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .platform-grid {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+  .platform-grid > *:nth-child(4),
+  .platform-grid > *:nth-child(5) {
+    grid-column: span 1;
+  }
+}
+
+/* Mobile: 2 columns */
+@media (max-width: 639px) {
+  .platform-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .platform-grid-header {
+    display: none; /* Hide header on mobile */
+  }
+}
+
+/* Before/After comparison layout */
+.comparison-layout {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.comparison-layout > * {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .comparison-layout > * {
+    flex: 1 1 100%;
+  }
+}
+
+/* Stats row - for 3-4 stat cards */
+.stats-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stats-row > * {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .stats-row > * {
+    flex: 1 1 calc(50% - 8px);
+  }
+}
+
+@media (max-width: 400px) {
+  .stats-row > * {
+    flex: 1 1 100%;
+  }
+}
+
+/* Plan comparison cards */
+.plans-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.plans-row > * {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .plans-row > * {
+    flex: 1 1 100%;
+  }
+}
+
+/* Feature cards grid */
+.feature-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+@media (max-width: 600px) {
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile-friendly table alternative */
+.mobile-card-view {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .desktop-table-view {
+    display: none;
+  }
+  .mobile-card-view {
+    display: block;
+  }
+}

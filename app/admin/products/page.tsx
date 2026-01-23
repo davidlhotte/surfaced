@@ -1183,9 +1183,9 @@ export default function ProductsPage() {
 
                         <Divider />
 
-                        <InlineStack gap="400" align="start">
+                        <div className="comparison-layout">
                           {/* Before */}
-                          <Box minWidth="45%">
+                          <div>
                             <BlockStack gap="100">
                               <Text as="p" variant="bodySm" fontWeight="semibold">
                                 {locale === 'fr' ? 'Avant :' : 'Before:'}
@@ -1200,10 +1200,10 @@ export default function ProductsPage() {
                                 </Text>
                               </Box>
                             </BlockStack>
-                          </Box>
+                          </div>
 
                           {/* After - Editable */}
-                          <Box minWidth="45%">
+                          <div>
                             <BlockStack gap="100">
                               <InlineStack align="space-between" blockAlign="center">
                                 <Text as="p" variant="bodySm" fontWeight="semibold">
@@ -1233,8 +1233,8 @@ export default function ProductsPage() {
                                 </Text>
                               )}
                             </BlockStack>
-                          </Box>
-                        </InlineStack>
+                          </div>
+                        </div>
                       </BlockStack>
                     </Card>
                   ))}

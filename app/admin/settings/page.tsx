@@ -443,8 +443,8 @@ export default function SettingsPage() {
 
             <BlockStack gap="400">
               <Text as="h3" variant="headingMd">{t.settings.whyUpgrade}</Text>
-              <InlineStack gap="400" wrap>
-                <div style={{ flex: '1', minWidth: '200px' }}>
+              <div className="feature-grid">
+                <div>
                   <BlockStack gap="200">
                     <InlineStack gap="200" blockAlign="center">
                       <div style={{
@@ -466,7 +466,7 @@ export default function SettingsPage() {
                     </Text>
                   </BlockStack>
                 </div>
-                <div style={{ flex: '1', minWidth: '200px' }}>
+                <div>
                   <BlockStack gap="200">
                     <InlineStack gap="200" blockAlign="center">
                       <div style={{
@@ -488,7 +488,7 @@ export default function SettingsPage() {
                     </Text>
                   </BlockStack>
                 </div>
-                <div style={{ flex: '1', minWidth: '200px' }}>
+                <div>
                   <BlockStack gap="200">
                     <InlineStack gap="200" blockAlign="center">
                       <div style={{
@@ -510,7 +510,7 @@ export default function SettingsPage() {
                     </Text>
                   </BlockStack>
                 </div>
-              </InlineStack>
+              </div>
             </BlockStack>
           </Card>
         </Layout.Section>
