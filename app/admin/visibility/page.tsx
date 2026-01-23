@@ -29,6 +29,46 @@ import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
+// Helper function to highlight terms (query and brand name) in text
+function highlightTerms(text: string, terms: string[]): React.ReactNode {
+  if (!text || terms.length === 0) return text;
+
+  // Filter out empty terms and create a regex pattern
+  const validTerms = terms.filter(t => t && t.trim().length > 0);
+  if (validTerms.length === 0) return text;
+
+  // Escape special regex characters and join with OR
+  const escapedTerms = validTerms.map(t =>
+    t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  );
+  const pattern = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
+
+  // Split text by the pattern, keeping the matches
+  const parts = text.split(pattern);
+
+  return parts.map((part, index) => {
+    // Check if this part matches any of our terms (case-insensitive)
+    const isHighlighted = validTerms.some(
+      term => part.toLowerCase() === term.toLowerCase()
+    );
+
+    if (isHighlighted) {
+      return (
+        <strong key={index} style={{
+          color: '#0EA5E9',
+          fontWeight: '600',
+          backgroundColor: 'rgba(14, 165, 233, 0.1)',
+          padding: '1px 4px',
+          borderRadius: '3px'
+        }}>
+          {part}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
 // Types
 type Platform = 'chatgpt' | 'perplexity' | 'gemini' | 'claude' | 'copilot' | 'llama' | 'deepseek' | 'mistral' | 'qwen';
 
@@ -855,7 +895,9 @@ export default function VisibilityPage() {
                 <Box padding="300" background="bg-surface-success" borderRadius="200">
                   <BlockStack gap="200">
                     <Badge tone="success">{t.mentioned}</Badge>
-                    <Text as="p" variant="bodySm">&quot;...{selectedCheck.mentionContext}...&quot;</Text>
+                    <Text as="p" variant="bodySm">
+                      &quot;...{highlightTerms(selectedCheck.mentionContext, [searchTerm || brandName, selectedCheck.query])}...&quot;
+                    </Text>
                   </BlockStack>
                 </Box>
               )}
@@ -886,7 +928,9 @@ export default function VisibilityPage() {
                 <Box padding="300" background="bg-surface-secondary" borderRadius="200">
                   <Scrollable style={{ maxHeight: '300px' }}>
                     <Text as="p" variant="bodyMd">
-                      {selectedCheck.rawResponse || (locale === 'fr' ? 'Réponse non disponible' : 'Response not available')}
+                      {selectedCheck.rawResponse
+                        ? highlightTerms(selectedCheck.rawResponse, [searchTerm || brandName, selectedCheck.query])
+                        : (locale === 'fr' ? 'Réponse non disponible' : 'Response not available')}
                     </Text>
                   </Scrollable>
                 </Box>
