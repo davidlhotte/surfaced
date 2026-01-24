@@ -156,7 +156,7 @@ The merchants optimizing for AI today will be the ones AI recommends tomorrow.
 
 ---
 
-*Ready to check your AI visibility? [Try Surfaced free](https://apps.shopify.com/surfaced) — the first AEO tool for Shopify.*
+*Ready to check your AI visibility? [Try Surfaced free](https://apps.shopify.com/surfaced) — complete AEO for Shopify.*
 `,
     contentFr: `
 # AEO : Le Guide Complet pour E-commerce (2025)
@@ -289,7 +289,7 @@ Les marchands qui optimisent pour l'IA aujourd'hui seront ceux que l'IA recomman
 
 ---
 
-*Prêt à vérifier votre visibilité IA ? [Essayez Surfaced gratuitement](https://apps.shopify.com/surfaced) — le premier outil AEO pour Shopify.*
+*Prêt à vérifier votre visibilité IA ? [Essayez Surfaced gratuitement](https://apps.shopify.com/surfaced) — AEO complet pour Shopify.*
 `,
   },
 ];

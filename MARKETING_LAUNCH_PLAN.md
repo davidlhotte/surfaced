@@ -395,10 +395,17 @@ Avec conversion 1-3% sur 2 ans :
 **Page Entreprise :**
 ```
 Nom : Surfaced - AI Visibility for E-commerce
-Tagline : Get your products recommended by ChatGPT, Perplexity & Claude
+Tagline : Get your Shopify products recommended by ChatGPT, Perplexity & Claude
 Industry : Software Development
 Size : 1-10 employees
 ```
+
+**IMPORTANT - Claims à éviter :**
+- ❌ "The first AEO tool" (faux, d'autres existent)
+- ❌ "The only solution" (faux)
+- ❌ Stats non vérifiables
+- ✅ "Une solution AEO complète pour Shopify"
+- ✅ "Optimisez votre catalogue pour l'IA"
 
 **Premier post (ciblant P2) :**
 ```

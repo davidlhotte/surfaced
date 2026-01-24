@@ -119,7 +119,7 @@ export const translations = {
     },
     whyChoose: {
       title: 'Pourquoi choisir Surfaced ?',
-      subtitle: 'La première solution AEO conçue spécifiquement pour les marchands Shopify',
+      subtitle: 'Une solution AEO complète conçue spécifiquement pour les marchands Shopify',
       reasons: [
         {
           icon: '🎯',
@@ -252,7 +252,7 @@ export const translations = {
       note: 'Aucune carte bancaire requise • Configuration en 30 secondes',
     },
     footer: {
-      description: 'La première solution d\'AEO (AI Engine Optimization) pour Shopify. Faites recommander vos produits par ChatGPT, Claude, Perplexity et les assistants IA.',
+      description: 'Solution AEO (AI Engine Optimization) complète pour Shopify. Faites recommander vos produits par ChatGPT, Claude, Perplexity et les assistants IA.',
       product: {
         title: 'Produit',
         features: 'Fonctionnalités',
@@ -437,7 +437,7 @@ export const translations = {
     },
     whyChoose: {
       title: 'Why choose Surfaced?',
-      subtitle: 'The first AEO solution designed specifically for Shopify merchants',
+      subtitle: 'A complete AEO solution designed specifically for Shopify merchants',
       reasons: [
         {
           icon: '🎯',
@@ -570,7 +570,7 @@ export const translations = {
       note: 'No credit card required • 30-second setup',
     },
     footer: {
-      description: 'The first AEO (AI Engine Optimization) solution for Shopify. Get your products recommended by ChatGPT, Claude, Perplexity and AI assistants.',
+      description: 'Complete AEO (AI Engine Optimization) solution for Shopify. Get your products recommended by ChatGPT, Claude, Perplexity and AI assistants.',
       product: {
         title: 'Product',
         features: 'Features',
