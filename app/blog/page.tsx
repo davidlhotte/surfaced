@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { getAllArticles, BlogArticle } from '@/lib/blog/articles';
 
-export default function BlogPage() {
+function BlogContent() {
   const searchParams = useSearchParams();
   const locale = searchParams.get('lang') === 'fr' ? 'fr' : 'en';
 
@@ -122,5 +123,13 @@ export default function BlogPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function BlogPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading...</div>}>
+      <BlogContent />
+    </Suspense>
   );
 }

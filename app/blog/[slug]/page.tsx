@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { use } from 'react';
+import { use, Suspense } from 'react';
 import { getArticleBySlug } from '@/lib/blog/articles';
 import { notFound } from 'next/navigation';
 
@@ -10,7 +10,7 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export default function BlogArticlePage({ params }: PageProps) {
+function BlogArticleContent({ params }: PageProps) {
   const { slug } = use(params);
   const searchParams = useSearchParams();
   const locale = searchParams.get('lang') === 'fr' ? 'fr' : 'en';
@@ -168,5 +168,13 @@ export default function BlogArticlePage({ params }: PageProps) {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function BlogArticlePage({ params }: PageProps) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>}>
+      <BlogArticleContent params={params} />
+    </Suspense>
   );
 }
