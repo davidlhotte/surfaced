@@ -117,36 +117,33 @@ export const translations = {
         { icon: '📈', title: 'Rapports AEO', desc: 'Exportez vos audits de visibilité IA' },
       ],
     },
-    testimonials: {
-      title: 'Des résultats concrets',
-      subtitle: 'Ce que disent les marchands Shopify qui utilisent Surfaced',
-      testimonial1: {
-        quote: 'En 3 semaines, notre visibilité sur ChatGPT est passée de 0 à 47%. On reçoit maintenant du trafic organique qu\'on n\'avait jamais eu.',
-        author: 'Marie L.',
-        role: 'Fondatrice, Cosmétiques Bio',
-        metric: '+47%',
-        metricLabel: 'visibilité IA',
-      },
-      testimonial2: {
-        quote: 'Surfaced nous a montré pourquoi nos produits n\'apparaissaient jamais. Après optimisation, nos ventes ont augmenté de 23%.',
-        author: 'Thomas D.',
-        role: 'E-commerce Manager, Mode',
-        metric: '+23%',
-        metricLabel: 'ventes',
-      },
-      testimonial3: {
-        quote: 'Le ROI est incroyable. Contrairement aux pubs, le trafic IA est gratuit et les conversions sont meilleures.',
-        author: 'Sophie M.',
-        role: 'CEO, Décoration Intérieure',
-        metric: '5.2x',
-        metricLabel: 'ROI',
-      },
-      stats: {
-        shops: 'Boutiques optimisées',
-        products: 'Produits analysés',
-        visibility: 'Gain moyen de visibilité',
-        rating: 'Note App Store',
-      },
+    whyChoose: {
+      title: 'Pourquoi choisir Surfaced ?',
+      subtitle: 'La première solution AEO conçue spécifiquement pour les marchands Shopify',
+      reasons: [
+        {
+          icon: '🎯',
+          title: 'Spécialiste E-commerce',
+          description: 'Contrairement aux outils SEO génériques, Surfaced est conçu pour optimiser les catalogues produits pour l\'IA.',
+        },
+        {
+          icon: '⚡',
+          title: 'Résultats Rapides',
+          description: 'Voyez votre score AEO en 2 minutes. Optimisez vos produits en un clic avec nos suggestions IA.',
+        },
+        {
+          icon: '🔒',
+          title: 'Intégration Native Shopify',
+          description: 'Installation en 30 secondes. Synchronisation automatique avec votre catalogue. Aucune configuration technique.',
+        },
+      ],
+    },
+    earlyAccess: {
+      title: 'Soyez parmi les premiers',
+      subtitle: 'Inscrivez-vous pour recevoir un accès anticipé et un essai gratuit prolongé de 30 jours.',
+      placeholder: 'votre@email.com',
+      button: 'Me notifier',
+      note: 'Pas de spam. Désinscription en un clic.',
     },
     pricing: {
       title: 'Tarification simple et transparente',
@@ -228,7 +225,7 @@ export const translations = {
         },
         {
           q: 'Combien de temps pour voir des résultats ?',
-          a: 'Vous pouvez optimiser vos produits immédiatement après installation. Les IA indexent généralement les changements en 1-4 semaines. Nos clients voient en moyenne une amélioration de 35% de leur visibilité IA dans le premier mois.',
+          a: 'Vous pouvez optimiser vos produits immédiatement après installation. Les IA indexent généralement les changements en 1-4 semaines. Les améliorations varient selon votre catalogue, mais les optimisations ont un impact mesurable sur votre visibilité IA.',
         },
         {
           q: 'Est-ce compatible avec mes efforts SEO existants ?',
@@ -438,36 +435,33 @@ export const translations = {
         { icon: '📈', title: 'AEO Reports', desc: 'Export AI visibility audits to CSV' },
       ],
     },
-    testimonials: {
-      title: 'Real results',
-      subtitle: 'What Shopify merchants using Surfaced are saying',
-      testimonial1: {
-        quote: 'In 3 weeks, our ChatGPT visibility went from 0 to 47%. We now receive organic traffic we never had before.',
-        author: 'Marie L.',
-        role: 'Founder, Organic Cosmetics',
-        metric: '+47%',
-        metricLabel: 'AI visibility',
-      },
-      testimonial2: {
-        quote: 'Surfaced showed us why our products never appeared. After optimization, our sales increased by 23%.',
-        author: 'Thomas D.',
-        role: 'E-commerce Manager, Fashion',
-        metric: '+23%',
-        metricLabel: 'sales',
-      },
-      testimonial3: {
-        quote: 'The ROI is incredible. Unlike ads, AI traffic is free and conversions are better.',
-        author: 'Sophie M.',
-        role: 'CEO, Interior Design',
-        metric: '5.2x',
-        metricLabel: 'ROI',
-      },
-      stats: {
-        shops: 'Optimized stores',
-        products: 'Products analyzed',
-        visibility: 'Average visibility gain',
-        rating: 'App Store rating',
-      },
+    whyChoose: {
+      title: 'Why choose Surfaced?',
+      subtitle: 'The first AEO solution designed specifically for Shopify merchants',
+      reasons: [
+        {
+          icon: '🎯',
+          title: 'E-commerce Specialist',
+          description: 'Unlike generic SEO tools, Surfaced is designed to optimize product catalogs for AI.',
+        },
+        {
+          icon: '⚡',
+          title: 'Fast Results',
+          description: 'See your AEO score in 2 minutes. Optimize your products in one click with our AI suggestions.',
+        },
+        {
+          icon: '🔒',
+          title: 'Native Shopify Integration',
+          description: '30-second installation. Automatic catalog sync. No technical configuration required.',
+        },
+      ],
+    },
+    earlyAccess: {
+      title: 'Be among the first',
+      subtitle: 'Sign up to get early access and an extended 30-day free trial.',
+      placeholder: 'your@email.com',
+      button: 'Notify me',
+      note: 'No spam. Unsubscribe in one click.',
     },
     pricing: {
       title: 'Simple and transparent pricing',
@@ -549,7 +543,7 @@ export const translations = {
         },
         {
           q: 'How long to see results?',
-          a: 'You can optimize your products immediately after installation. AI typically indexes changes in 1-4 weeks. Our customers see an average 35% improvement in AI visibility in the first month.',
+          a: 'You can optimize your products immediately after installation. AI typically indexes changes in 1-4 weeks. Improvements vary by catalog, but optimizations have a measurable impact on your AI visibility.',
         },
         {
           q: 'Is it compatible with my existing SEO efforts?',

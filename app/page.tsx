@@ -121,30 +121,6 @@ function HomeContent() {
     },
   ];
 
-  const testimonials = [
-    {
-      quote: t.testimonials.testimonial1.quote,
-      author: t.testimonials.testimonial1.author,
-      role: t.testimonials.testimonial1.role,
-      metric: t.testimonials.testimonial1.metric,
-      metricLabel: t.testimonials.testimonial1.metricLabel,
-    },
-    {
-      quote: t.testimonials.testimonial2.quote,
-      author: t.testimonials.testimonial2.author,
-      role: t.testimonials.testimonial2.role,
-      metric: t.testimonials.testimonial2.metric,
-      metricLabel: t.testimonials.testimonial2.metricLabel,
-    },
-    {
-      quote: t.testimonials.testimonial3.quote,
-      author: t.testimonials.testimonial3.author,
-      role: t.testimonials.testimonial3.role,
-      metric: t.testimonials.testimonial3.metric,
-      metricLabel: t.testimonials.testimonial3.metricLabel,
-    },
-  ];
-
   const faqs = t.faq.questions;
 
   // Pricing synced with lib/constants/plans.ts (PLAN_LIMITS and PLAN_PRICES)
@@ -571,61 +547,55 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* Social Proof / Testimonials */}
+      {/* Early Access / Email Capture */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
+          {/* Why Choose Surfaced */}
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              {t.testimonials.title}
+              {t.whyChoose.title}
             </h2>
-            <p className="text-lg text-slate-600">
-              {t.testimonials.subtitle}
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              {t.whyChoose.subtitle}
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-slate-50 rounded-2xl p-8 border border-slate-200">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center text-white font-bold text-xl">
-                    {testimonial.author[0]}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-slate-900">{testimonial.author}</div>
-                    <div className="text-sm text-slate-500">{testimonial.role}</div>
-                  </div>
-                </div>
-                <blockquote className="text-slate-700 mb-6 leading-relaxed">
-                  &quot;{testimonial.quote}&quot;
-                </blockquote>
-                <div className="flex items-center gap-2 pt-4 border-t border-slate-200">
-                  <span className="text-3xl font-bold text-sky-600">{testimonial.metric}</span>
-                  <span className="text-sm text-slate-500">{testimonial.metricLabel}</span>
-                </div>
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {t.whyChoose.reasons.map((reason, index) => (
+              <div key={index} className="bg-slate-50 rounded-2xl p-8 border border-slate-200 text-center">
+                <div className="text-4xl mb-4">{reason.icon}</div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">{reason.title}</h3>
+                <p className="text-slate-600">{reason.description}</p>
               </div>
             ))}
           </div>
 
-          {/* Stats bar */}
-          <div className="mt-16 bg-gradient-to-r from-sky-500 to-cyan-500 rounded-2xl p-8 text-white">
-            <div className="grid sm:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-4xl font-bold">500+</div>
-                <div className="text-sky-200">{t.testimonials.stats.shops}</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold">50K+</div>
-                <div className="text-sky-200">{t.testimonials.stats.products}</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold">35%</div>
-                <div className="text-sky-200">{t.testimonials.stats.visibility}</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold">4.9/5</div>
-                <div className="text-sky-200">{t.testimonials.stats.rating}</div>
-              </div>
-            </div>
+          {/* Email Capture */}
+          <div className="bg-gradient-to-r from-sky-500 to-cyan-500 rounded-2xl p-8 md:p-12 text-white text-center">
+            <h3 className="text-2xl md:text-3xl font-bold mb-4">
+              {t.earlyAccess.title}
+            </h3>
+            <p className="text-lg text-sky-100 mb-8 max-w-xl mx-auto">
+              {t.earlyAccess.subtitle}
+            </p>
+            <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto" action="https://formspree.io/f/your-form-id" method="POST">
+              <input
+                type="email"
+                name="email"
+                placeholder={t.earlyAccess.placeholder}
+                required
+                className="flex-1 px-4 py-3 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-300"
+              />
+              <button
+                type="submit"
+                className="px-6 py-3 bg-white text-sky-600 font-bold rounded-lg hover:bg-sky-50 transition-colors"
+              >
+                {t.earlyAccess.button}
+              </button>
+            </form>
+            <p className="text-sm text-sky-200 mt-4">
+              {t.earlyAccess.note}
+            </p>
           </div>
         </div>
       </section>
