@@ -208,7 +208,6 @@ const Posts: CollectionConfig = {
 // ============================================
 
 export default buildConfig({
-  serverURL: process.env.NEXT_PUBLIC_APP_URL || 'https://surfaced.vercel.app',
   routes: {
     admin: '/cms',
   },
