@@ -14,7 +14,12 @@ const dirname = path.dirname(filename);
 
 const Users: CollectionConfig = {
   slug: 'users',
-  auth: true,
+  auth: {
+    cookies: {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+    },
+  },
   admin: {
     useAsTitle: 'email',
   },
@@ -203,6 +208,7 @@ const Posts: CollectionConfig = {
 // ============================================
 
 export default buildConfig({
+  serverURL: process.env.NEXT_PUBLIC_APP_URL || 'https://surfaced.vercel.app',
   routes: {
     admin: '/cms',
   },
