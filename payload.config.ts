@@ -222,8 +222,8 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
-    // Enable push in development for auto-migration
-    push: process.env.NODE_ENV !== 'production',
+    // Enable push to create/sync tables
+    push: true,
   }),
   localization: {
     locales: [
