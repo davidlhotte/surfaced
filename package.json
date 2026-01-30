@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "npx shopify app deploy --force && prisma generate && next build",
-    "vercel-build": "prisma generate && prisma db push && node scripts/init-payload-tables.mjs && next build",
+    "vercel-build": "prisma generate && prisma db push && node scripts/init-payload-db.mjs && next build",
     "deploy:shopify": "npx shopify app deploy --force",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
