@@ -1,4 +1,4 @@
--- Payload CMS Tables - Minimal schema for initial setup
+-- Payload CMS Tables - Full schema for Payload 3.x
 -- Tables will be auto-migrated by Payload on subsequent deployments
 
 CREATE TABLE IF NOT EXISTS "users" (
@@ -17,13 +17,43 @@ CREATE TABLE IF NOT EXISTS "users" (
 );
 
 CREATE TABLE IF NOT EXISTS "users_sessions" (
-  "id" SERIAL PRIMARY KEY,
+  "id" TEXT PRIMARY KEY,
   "_order" INTEGER NOT NULL,
   "_parent_id" INTEGER NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
-  "created_at" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  "expires_at" TIMESTAMPTZ
+  "created_at" TIMESTAMPTZ,
+  "expires_at" TIMESTAMPTZ NOT NULL
 );
 CREATE INDEX IF NOT EXISTS "users_sessions_parent_idx" ON "users_sessions"("_parent_id");
+CREATE INDEX IF NOT EXISTS "users_sessions_order_idx" ON "users_sessions"("_order");
+
+-- Payload system tables
+CREATE TABLE IF NOT EXISTS "payload_kv" (
+  "id" SERIAL PRIMARY KEY,
+  "key" TEXT UNIQUE NOT NULL,
+  "data" JSONB NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "payload_kv_key_idx" ON "payload_kv"("key");
+
+CREATE TABLE IF NOT EXISTS "payload_locked_documents" (
+  "id" SERIAL PRIMARY KEY,
+  "global_slug" TEXT,
+  "updated_at" TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  "created_at" TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "payload_locked_documents_global_slug_idx" ON "payload_locked_documents"("global_slug");
+
+CREATE TABLE IF NOT EXISTS "payload_locked_documents_rels" (
+  "id" SERIAL PRIMARY KEY,
+  "order" INTEGER,
+  "parent_id" INTEGER NOT NULL REFERENCES "payload_locked_documents"("id") ON DELETE CASCADE,
+  "path" TEXT NOT NULL,
+  "users_id" INTEGER REFERENCES "users"("id") ON DELETE CASCADE,
+  "media_id" INTEGER,
+  "categories_id" INTEGER,
+  "posts_id" INTEGER
+);
+CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_parent_idx" ON "payload_locked_documents_rels"("parent_id");
+CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_path_idx" ON "payload_locked_documents_rels"("path");
 
 CREATE TABLE IF NOT EXISTS "media" (
   "id" SERIAL PRIMARY KEY,
