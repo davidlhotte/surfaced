@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs';
+import { withPayload } from '@payloadcms/next/withPayload';
 
 const nextConfig: NextConfig = {
   // Enable React strict mode for better development experience
@@ -89,8 +90,9 @@ const sentryWebpackPluginOptions = {
 };
 
 // Only wrap with Sentry if DSN is configured
-const config = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
+const sentryConfig = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
   ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
   : nextConfig;
 
-export default config;
+// Wrap with Payload CMS
+export default withPayload(sentryConfig);
