@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -8,6 +8,30 @@ export default function UniversalLanding() {
   const router = useRouter();
   const [brandInput, setBrandInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const hasCheckedRedirect = useRef(false);
+
+  // Handle Shopify redirects
+  useEffect(() => {
+    if (hasCheckedRedirect.current) return;
+    hasCheckedRedirect.current = true;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const host = urlParams.get('host');
+    const shop = urlParams.get('shop');
+    const embedded = urlParams.get('embedded');
+
+    // If coming from Shopify embedded app, redirect to admin
+    if (host || embedded === '1') {
+      const adminUrl = `/admin${window.location.search}`;
+      window.location.href = adminUrl;
+      return;
+    }
+
+    // If shop param but not embedded, start OAuth
+    if (shop && !host) {
+      window.location.href = `/api/auth?shop=${shop}`;
+    }
+  }, []);
 
   const handleCheck = (e: React.FormEvent) => {
     e.preventDefault();
