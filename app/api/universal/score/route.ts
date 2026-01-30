@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { analyzeWebsite } from '@/lib/services/universal/website-analyzer';
+import { logger } from '@/lib/monitoring/logger';
 
 // Rate limiting
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -48,143 +50,127 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Normalize URL
-    let domain = url.trim();
-    domain = domain.replace(/^https?:\/\//, '');
-    domain = domain.replace(/\/.*$/, '');
+    // Run real website analysis
+    const result = await analyzeWebsite(url);
 
-    // In production, this would actually fetch and analyze the website
-    const checks = await analyzeWebsite(domain);
-    const score = calculateScore(checks);
+    // Transform to legacy format for backwards compatibility
+    const legacyChecks = [
+      {
+        name: 'llms.txt',
+        status: result.checks.llmsTxt.exists && result.checks.llmsTxt.isValid
+          ? 'pass'
+          : result.checks.llmsTxt.exists
+          ? 'warning'
+          : 'fail',
+        message: result.checks.llmsTxt.exists
+          ? result.checks.llmsTxt.isValid
+            ? 'llms.txt file found and valid'
+            : 'llms.txt found but incomplete'
+          : 'No llms.txt file detected',
+        points: result.checks.llmsTxt.exists && result.checks.llmsTxt.isValid ? 15 : result.checks.llmsTxt.exists ? 8 : 0,
+        maxPoints: 15,
+        details: result.checks.llmsTxt,
+      },
+      {
+        name: 'JSON-LD Schema',
+        status: result.checks.jsonLd.exists
+          ? result.checks.jsonLd.hasOrganization
+            ? 'pass'
+            : 'warning'
+          : 'fail',
+        message: result.checks.jsonLd.exists
+          ? `Found ${result.checks.jsonLd.schemas.length} schema(s): ${result.checks.jsonLd.schemas.map(s => s.type).join(', ')}`
+          : 'No JSON-LD structured data found',
+        points: result.checks.jsonLd.exists
+          ? (result.checks.jsonLd.hasOrganization ? 5 : 0) +
+            (result.checks.jsonLd.hasProduct ? 5 : 0) +
+            (result.checks.jsonLd.hasWebSite ? 5 : 0) +
+            (result.checks.jsonLd.hasFAQ ? 5 : 0)
+          : 0,
+        maxPoints: 20,
+        details: {
+          hasOrganization: result.checks.jsonLd.hasOrganization,
+          hasProduct: result.checks.jsonLd.hasProduct,
+          hasWebSite: result.checks.jsonLd.hasWebSite,
+          hasFAQ: result.checks.jsonLd.hasFAQ,
+          schemaCount: result.checks.jsonLd.schemas.length,
+        },
+      },
+      {
+        name: 'GPTBot Access',
+        status: result.checks.robotsTxt.gptBotAllowed ? 'pass' : 'fail',
+        message: result.checks.robotsTxt.gptBotAllowed
+          ? 'GPTBot allowed in robots.txt'
+          : 'GPTBot blocked or restricted',
+        points: result.checks.robotsTxt.gptBotAllowed ? 15 : 0,
+        maxPoints: 15,
+      },
+      {
+        name: 'ClaudeBot Access',
+        status: result.checks.robotsTxt.claudeBotAllowed ? 'pass' : 'fail',
+        message: result.checks.robotsTxt.claudeBotAllowed
+          ? 'ClaudeBot allowed'
+          : 'ClaudeBot blocked or restricted',
+        points: result.checks.robotsTxt.claudeBotAllowed ? 10 : 0,
+        maxPoints: 10,
+      },
+      {
+        name: 'PerplexityBot Access',
+        status: result.checks.robotsTxt.perplexityBotAllowed ? 'pass' : 'fail',
+        message: result.checks.robotsTxt.perplexityBotAllowed
+          ? 'PerplexityBot allowed'
+          : 'PerplexityBot blocked or restricted',
+        points: result.checks.robotsTxt.perplexityBotAllowed ? 10 : 0,
+        maxPoints: 10,
+      },
+      {
+        name: 'XML Sitemap',
+        status: result.checks.sitemap.exists
+          ? result.checks.sitemap.issues.length === 0
+            ? 'pass'
+            : 'warning'
+          : 'fail',
+        message: result.checks.sitemap.exists
+          ? `Found sitemap with ${result.checks.sitemap.urlCount} URLs`
+          : 'No sitemap.xml found',
+        points: result.checks.sitemap.exists ? 10 : 0,
+        maxPoints: 10,
+        details: result.checks.sitemap,
+      },
+      {
+        name: 'Content Structure',
+        status: result.checks.content.hasH1 && result.checks.content.hasMeta
+          ? 'pass'
+          : result.checks.content.hasH1 || result.checks.content.hasMeta
+          ? 'warning'
+          : 'fail',
+        message: result.checks.content.issues.length === 0
+          ? 'Good content structure'
+          : result.checks.content.issues.join(', '),
+        points:
+          (result.checks.content.hasH1 ? 3 : 0) +
+          (result.checks.content.hasMeta ? 4 : 0) +
+          (result.checks.content.hasOpenGraph ? 4 : 0) +
+          (result.checks.content.hasTwitterCard ? 4 : 0),
+        maxPoints: 15,
+        details: result.checks.content,
+      },
+    ];
 
     return NextResponse.json({
-      domain,
-      score,
-      checks,
-      recommendations: generateRecommendations(checks),
-      analyzedAt: new Date().toISOString(),
+      domain: result.domain,
+      score: result.score,
+      checks: legacyChecks,
+      detailedChecks: result.checks,
+      recommendations: result.recommendations,
+      analyzedAt: result.analyzedAt,
       remaining,
     });
   } catch (error) {
-    console.error('AEO Score error:', error);
+    logger.error({ error }, 'AEO Score error');
     return NextResponse.json(
       { error: 'Failed to analyze website' },
       { status: 500 }
     );
   }
-}
-
-interface CheckResult {
-  name: string;
-  status: 'pass' | 'fail' | 'warning';
-  message: string;
-  points: number;
-  maxPoints: number;
-}
-
-async function analyzeWebsite(domain: string): Promise<CheckResult[]> {
-  // In production, this would:
-  // 1. Fetch robots.txt and check for AI bot rules
-  // 2. Check for llms.txt
-  // 3. Fetch and validate JSON-LD
-  // 4. Check sitemap.xml
-  // 5. Analyze page structure
-
-  // Mock implementation
-  const checks: CheckResult[] = [
-    {
-      name: 'llms.txt',
-      status: Math.random() > 0.7 ? 'pass' : 'fail',
-      message: Math.random() > 0.7 ? 'llms.txt file found and valid' : 'No llms.txt file detected',
-      points: Math.random() > 0.7 ? 15 : 0,
-      maxPoints: 15,
-    },
-    {
-      name: 'JSON-LD Schema',
-      status: Math.random() > 0.5 ? 'pass' : Math.random() > 0.5 ? 'warning' : 'fail',
-      message: Math.random() > 0.5 ? 'Organization and WebSite schema found' : 'Missing structured data',
-      points: Math.random() > 0.5 ? 20 : Math.random() > 0.5 ? 10 : 0,
-      maxPoints: 20,
-    },
-    {
-      name: 'GPTBot Access',
-      status: Math.random() > 0.6 ? 'pass' : 'fail',
-      message: Math.random() > 0.6 ? 'GPTBot allowed in robots.txt' : 'GPTBot blocked or not specified',
-      points: Math.random() > 0.6 ? 15 : 0,
-      maxPoints: 15,
-    },
-    {
-      name: 'ClaudeBot Access',
-      status: Math.random() > 0.5 ? 'pass' : 'fail',
-      message: Math.random() > 0.5 ? 'ClaudeBot allowed' : 'ClaudeBot blocked',
-      points: Math.random() > 0.5 ? 10 : 0,
-      maxPoints: 10,
-    },
-    {
-      name: 'XML Sitemap',
-      status: Math.random() > 0.7 ? 'pass' : 'warning',
-      message: Math.random() > 0.7 ? 'Valid sitemap.xml found' : 'Sitemap has minor issues',
-      points: Math.random() > 0.7 ? 10 : 5,
-      maxPoints: 10,
-    },
-    {
-      name: 'Content Structure',
-      status: Math.random() > 0.4 ? 'pass' : 'warning',
-      message: Math.random() > 0.4 ? 'Good heading hierarchy' : 'Could use more structured content',
-      points: Math.random() > 0.4 ? 15 : 8,
-      maxPoints: 15,
-    },
-    {
-      name: 'Page Speed',
-      status: Math.random() > 0.5 ? 'pass' : 'warning',
-      message: Math.random() > 0.5 ? 'Fast loading time' : 'Moderate loading time',
-      points: Math.random() > 0.5 ? 15 : 8,
-      maxPoints: 15,
-    },
-  ];
-
-  // Ensure the mock uses the domain for something
-  console.log(`Analyzing: ${domain}`);
-
-  return checks;
-}
-
-function calculateScore(checks: CheckResult[]): number {
-  const totalPoints = checks.reduce((acc, c) => acc + c.points, 0);
-  const maxPoints = checks.reduce((acc, c) => acc + c.maxPoints, 0);
-  return Math.round((totalPoints / maxPoints) * 100);
-}
-
-function generateRecommendations(checks: CheckResult[]): string[] {
-  const recommendations: string[] = [];
-
-  checks.forEach((check) => {
-    if (check.status === 'fail') {
-      switch (check.name) {
-        case 'llms.txt':
-          recommendations.push('Add an llms.txt file to help AI crawlers understand your site');
-          break;
-        case 'JSON-LD Schema':
-          recommendations.push('Add JSON-LD structured data (Organization, WebSite, Product schemas)');
-          break;
-        case 'GPTBot Access':
-          recommendations.push('Allow GPTBot in your robots.txt file');
-          break;
-        case 'ClaudeBot Access':
-          recommendations.push('Allow ClaudeBot in your robots.txt file');
-          break;
-        case 'XML Sitemap':
-          recommendations.push('Create or fix your XML sitemap');
-          break;
-        case 'Content Structure':
-          recommendations.push('Improve content structure with clear headings and FAQ sections');
-          break;
-        case 'Page Speed':
-          recommendations.push('Optimize page loading speed for better crawl success');
-          break;
-      }
-    }
-  });
-
-  return recommendations;
 }

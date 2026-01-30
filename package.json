@@ -37,12 +37,14 @@
     "@shopify/polaris-icons": "^9.3.1",
     "@shopify/shopify-api": "^12.2.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@upstash/ratelimit": "^2.0.7",
     "@vercel/kv": "^3.0.0",
     "@vercel/postgres": "^0.10.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "graphql": "^16.12.0",
+    "jsonwebtoken": "^9.0.3",
     "next": "16.1.1",
     "openai": "^6.16.0",
     "payload": "^3.73.0",
@@ -52,6 +54,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "resend": "^6.7.0",
+    "stripe": "^20.3.0",
     "zod": "^4.3.5"
   },
   "devDependencies": {

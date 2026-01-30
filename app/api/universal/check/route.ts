@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { runUniversalAICheck, isAIConfigured } from '@/lib/services/universal/ai-checker';
+import { logger } from '@/lib/monitoring/logger';
 
 // Rate limiting - simple in-memory store (use Redis in production)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { brand } = body;
+    const { brand, domain } = body;
 
     if (!brand || typeof brand !== 'string') {
       return NextResponse.json(
@@ -54,15 +56,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In production, this would call actual AI APIs
-    // For now, return mock data
-    const results = await checkAIVisibility(brand);
+    // Check if OpenRouter is configured
+    if (!isAIConfigured()) {
+      logger.warn('OpenRouter API key not configured, using mock data');
+      // Fallback to mock data if not configured
+      const mockResults = await getMockResults(brand);
+      return NextResponse.json({
+        ...mockResults,
+        remaining,
+        mock: true,
+      }, {
+        headers: {
+          'X-RateLimit-Remaining': remaining.toString(),
+        },
+      });
+    }
+
+    // Run real AI visibility check
+    const results = await runUniversalAICheck(brand, domain);
 
     return NextResponse.json({
-      brand,
-      results,
-      aeoScore: calculateAEOScore(results),
-      checkedAt: new Date().toISOString(),
+      brand: results.brand,
+      domain: results.domain,
+      aeoScore: results.aeoScore,
+      platforms: results.platforms.map(p => ({
+        platform: p.platform,
+        displayName: p.displayName,
+        mentioned: p.mentioned,
+        position: p.position,
+        sentiment: p.sentiment,
+        snippet: p.snippet,
+        competitors: p.competitors,
+      })),
+      recommendations: results.recommendations,
+      checkedAt: results.checkedAt,
       remaining,
     }, {
       headers: {
@@ -70,7 +97,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('AI Check error:', error);
+    logger.error({ error }, 'AI Check error');
     return NextResponse.json(
       { error: 'Failed to check AI visibility' },
       { status: 500 }
@@ -78,41 +105,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-interface AIResult {
-  platform: string;
-  mentioned: boolean;
-  position: number | null;
-  snippet: string;
-  sentiment: 'positive' | 'neutral' | 'negative';
-}
+// Mock implementation for fallback
+async function getMockResults(brand: string) {
+  const platforms = [
+    { platform: 'chatgpt', displayName: 'ChatGPT' },
+    { platform: 'claude', displayName: 'Claude' },
+    { platform: 'perplexity', displayName: 'Perplexity' },
+    { platform: 'gemini', displayName: 'Gemini' },
+  ];
 
-async function checkAIVisibility(brand: string): Promise<AIResult[]> {
-  // In production, this would:
-  // 1. Call OpenAI API with prompts like "What can you tell me about {brand}?"
-  // 2. Call Anthropic API
-  // 3. Call Perplexity API
-  // 4. Call Google AI API
-
-  // Mock implementation
-  const platforms = ['ChatGPT', 'Claude', 'Perplexity', 'Gemini'];
-
-  return platforms.map((platform) => {
+  const results = platforms.map(({ platform, displayName }) => {
     const mentioned = Math.random() > 0.3;
     return {
       platform,
+      displayName,
       mentioned,
       position: mentioned ? Math.floor(Math.random() * 5) + 1 : null,
-      snippet: mentioned
-        ? `${brand} is a well-known brand that offers...`
-        : '',
+      snippet: mentioned ? `${brand} is a well-known brand that offers...` : '',
       sentiment: mentioned
         ? (['positive', 'neutral', 'negative'][Math.floor(Math.random() * 3)] as 'positive' | 'neutral' | 'negative')
         : 'neutral',
+      competitors: [],
     };
   });
-}
 
-function calculateAEOScore(results: AIResult[]): number {
   const mentionedCount = results.filter((r) => r.mentioned).length;
   const avgPosition = results
     .filter((r) => r.position)
@@ -120,14 +136,20 @@ function calculateAEOScore(results: AIResult[]): number {
     Math.max(results.filter((r) => r.position).length, 1);
 
   const positiveCount = results.filter((r) => r.sentiment === 'positive').length;
-
-  // Score calculation:
-  // - 40% for being mentioned
-  // - 40% for position (lower = better)
-  // - 20% for positive sentiment
   const mentionScore = (mentionedCount / results.length) * 40;
   const positionScore = avgPosition ? ((6 - avgPosition) / 5) * 40 : 0;
   const sentimentScore = (positiveCount / Math.max(mentionedCount, 1)) * 20;
+  const aeoScore = Math.round(mentionScore + positionScore + sentimentScore);
 
-  return Math.round(mentionScore + positionScore + sentimentScore);
+  return {
+    brand,
+    aeoScore,
+    platforms: results,
+    recommendations: [
+      'Add an llms.txt file to your website',
+      'Implement JSON-LD structured data',
+      'Create content that answers common questions',
+    ],
+    checkedAt: new Date().toISOString(),
+  };
 }
