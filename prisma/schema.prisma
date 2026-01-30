@@ -516,3 +516,193 @@ enum ABTestWinner {
   B           // Variant B (test) won
   tie         // No significant difference
 }
+
+// ============================================
+// UNIVERSAL USER MODELS (Non-Shopify)
+// ============================================
+
+model UniversalUser {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String?   // For email/password auth (null if using OAuth only)
+  googleId          String?   @unique // For Google OAuth
+
+  name              String?
+  avatarUrl         String?
+
+  // Subscription
+  plan              UniversalPlan @default(FREE)
+  planStartedAt     DateTime?
+  trialEndsAt       DateTime?
+  stripeCustomerId  String?   @unique
+
+  // Email verification
+  emailVerified     Boolean   @default(false)
+  emailVerifyToken  String?   @unique
+
+  // Password reset
+  passwordResetToken    String?   @unique
+  passwordResetExpires  DateTime?
+
+  // Activity
+  lastLoginAt       DateTime?
+  loginCount        Int       @default(0)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  brands            Brand[]
+  sessions          UniversalSession[]
+
+  @@index([email])
+  @@index([stripeCustomerId])
+}
+
+model UniversalSession {
+  id            String    @id @default(cuid())
+  userId        String
+  user          UniversalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  token         String    @unique
+  expiresAt     DateTime
+
+  // Session info
+  ipAddress     String?
+  userAgent     String?
+
+  createdAt     DateTime  @default(now())
+  lastActiveAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model Brand {
+  id            String    @id @default(cuid())
+  userId        String
+  user          UniversalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  domain        String?   // Optional website URL
+  industry      String?   // For better AI prompts
+  description   String?   @db.Text
+
+  // AEO Metrics
+  aeoScore      Int?      // 0-100 overall score
+  lastCheckAt   DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  visibilityChecks    BrandVisibilityCheck[]
+  competitors         BrandCompetitor[]
+  customPrompts       BrandPrompt[]
+  alerts              BrandAlert[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model BrandVisibilityCheck {
+  id                String    @id @default(cuid())
+  brandId           String
+  brand             Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // Results
+  aeoScore          Int       // Score for this check
+  chatgptResult     Json?     // {mentioned, position, snippet, sentiment}
+  claudeResult      Json?
+  perplexityResult  Json?
+  geminiResult      Json?
+
+  // Prompts used
+  promptsUsed       Json      @default("[]")
+
+  checkedAt         DateTime  @default(now())
+
+  @@index([brandId])
+  @@index([checkedAt(sort: Desc)])
+}
+
+model BrandCompetitor {
+  id              String    @id @default(cuid())
+  brandId         String
+  brand           Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  competitorName  String
+  competitorDomain String?
+
+  // Last comparison data
+  lastComparedAt  DateTime?
+  yourScore       Int?
+  theirScore      Int?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([brandId, competitorName])
+  @@index([brandId])
+}
+
+model BrandPrompt {
+  id          String    @id @default(cuid())
+  brandId     String
+  brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  prompt      String    @db.Text
+  category    String    // 'general', 'product', 'comparison'
+
+  createdAt   DateTime  @default(now())
+
+  @@index([brandId])
+}
+
+model BrandAlert {
+  id          String    @id @default(cuid())
+  brandId     String
+  brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  type        AlertType
+  threshold   Int?      // For score alerts
+
+  isActive    Boolean   @default(true)
+  lastTriggeredAt DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([brandId])
+}
+
+// Email signups from free tools
+model EmailSignup {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  source          String    // 'checker', 'score', 'compare', 'landing'
+  brandChecked    String?   // What brand they checked
+
+  convertedToUser Boolean   @default(false)
+  convertedAt     DateTime?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([email])
+  @@index([source])
+}
+
+enum UniversalPlan {
+  FREE      // 3 checks/month
+  STARTER   // $29/month
+  GROWTH    // $79/month
+  SCALE     // $149/month
+}
+
+enum AlertType {
+  SCORE_DROP    // Alert when AEO score drops below threshold
+  COMPETITOR    // Alert when competitor gains position
+  MENTION_LOST  // Alert when brand stops being mentioned
+  WEEKLY_REPORT // Weekly summary
+}
