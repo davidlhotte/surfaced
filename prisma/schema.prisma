@@ -563,8 +563,8 @@ model UniversalUser {
   avatarUrl         String?
 
   // Auth provider
-  authProvider      String?   // 'email', 'google'
-  providerId        String?   // Provider-specific ID
+  authProvider      String?   // 'email', 'google', 'supabase'
+  providerId        String?   // Provider-specific ID (Supabase user ID, Google ID, etc.)
 
   // Subscription
   plan              String    @default("FREE") // FREE, PRO, BUSINESS, ENTERPRISE
