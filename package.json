@@ -36,6 +36,8 @@
     "@shopify/polaris": "^13.9.5",
     "@shopify/polaris-icons": "^9.3.1",
     "@shopify/shopify-api": "^12.2.0",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.93.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@upstash/ratelimit": "^2.0.7",

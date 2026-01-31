@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 function SignupForm() {
   const router = useRouter();
@@ -14,11 +15,15 @@ function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setIsLoading(true);
 
     if (password.length < 8) {
@@ -28,24 +33,44 @@ function SignupForm() {
     }
 
     try {
-      const res = await fetch('/api/auth/universal/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            plan: plan,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Registration failed');
+      if (error) {
+        setError(error.message);
         setIsLoading(false);
         return;
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard?welcome=true');
+      // Show success message for email confirmation
+      setSuccess('Check your email to confirm your account!');
+      setIsLoading(false);
     } catch {
       setError('An error occurred. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    setIsLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
       setIsLoading(false);
     }
   };
@@ -85,6 +110,12 @@ function SignupForm() {
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm">
+              {success}
             </div>
           )}
 
@@ -136,7 +167,7 @@ function SignupForm() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !!success}
               className="w-full py-3 text-white font-semibold rounded-lg transition-all disabled:opacity-50"
               style={{ background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)' }}
             >
@@ -156,7 +187,9 @@ function SignupForm() {
 
             <button
               type="button"
-              className="mt-4 w-full flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              onClick={handleGoogleSignup}
+              disabled={isLoading}
+              className="mt-4 w-full flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path

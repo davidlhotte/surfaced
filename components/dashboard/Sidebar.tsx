@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 interface SidebarProps {
   user: {
@@ -14,6 +15,7 @@ interface SidebarProps {
 export function DashboardSidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const supabase = createClient();
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -29,8 +31,9 @@ export function DashboardSidebar({ user }: SidebarProps) {
   ];
 
   const handleLogout = async () => {
-    await fetch('/api/auth/universal/logout', { method: 'POST' });
+    await supabase.auth.signOut();
     router.push('/login');
+    router.refresh();
   };
 
   return (

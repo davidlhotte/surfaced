@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  // Handle Supabase auth session refresh for dashboard routes
+  if (request.nextUrl.pathname.startsWith('/dashboard') ||
+      request.nextUrl.pathname === '/login' ||
+      request.nextUrl.pathname === '/signup') {
+    return updateSession(request);
+  }
+
   const response = NextResponse.next();
 
   // Security headers
@@ -28,7 +36,7 @@ export function middleware(request: NextRequest) {
       "style-src 'self' 'unsafe-inline' https://unpkg.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.shopify.com https://*.openstreetmap.org https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org",
+      "connect-src 'self' https://*.shopify.com https://*.openstreetmap.org https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://*.supabase.co",
       "frame-ancestors https://*.myshopify.com https://admin.shopify.com",
     ].join('; ')
   );

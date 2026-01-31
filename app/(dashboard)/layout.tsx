@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { Outfit, JetBrains_Mono } from 'next/font/google';
-import { getUniversalUser } from '@/lib/auth/universal';
+import { createClient } from '@/lib/supabase/server';
 import { DashboardSidebar } from '@/components/dashboard/Sidebar';
 import '../globals.css';
 
@@ -23,11 +23,19 @@ export default async function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getUniversalUser();
+  const supabase = await createClient();
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!supabaseUser) {
     redirect('/login');
   }
+
+  // Map Supabase user to expected format
+  const user = {
+    email: supabaseUser.email || '',
+    name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || null,
+    plan: supabaseUser.user_metadata?.plan || 'FREE',
+  };
 
   return (
     <html lang="en">
