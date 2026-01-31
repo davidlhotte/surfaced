@@ -7,10 +7,16 @@ export interface BlogArticle {
   content: string;
   contentFr: string;
   author: string;
+  authorRole?: string;
+  authorAvatar?: string;
   date: string;
   readTime: number;
   category: 'aeo' | 'shopify' | 'ai' | 'tutorial';
   featured?: boolean;
+  coverImage: string;
+  coverImageAlt: string;
+  coverImageAltFr: string;
+  tableOfContents?: { id: string; title: string; titleFr: string }[];
 }
 
 export const articles: BlogArticle[] = [
@@ -21,10 +27,22 @@ export const articles: BlogArticle[] = [
     description: 'Learn what AI Engine Optimization is, why it matters for e-commerce, and how to optimize your Shopify store for ChatGPT, Claude, and Perplexity.',
     descriptionFr: 'Découvrez ce qu\'est l\'AI Engine Optimization, pourquoi c\'est crucial pour le e-commerce, et comment optimiser votre boutique Shopify pour ChatGPT, Claude et Perplexity.',
     author: 'Surfaced Team',
+    authorRole: 'AEO Experts',
+    authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=0ea5e9',
     date: '2025-01-24',
     readTime: 8,
     category: 'aeo',
     featured: true,
+    coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=600&fit=crop',
+    coverImageAlt: 'AI assistant helping with e-commerce optimization',
+    coverImageAltFr: 'Assistant IA aidant à l\'optimisation e-commerce',
+    tableOfContents: [
+      { id: 'problem', title: 'The Problem You Don\'t See Yet', titleFr: 'Le problème que vous ne voyez pas encore' },
+      { id: 'what-is-aeo', title: 'What is AEO?', titleFr: 'Qu\'est-ce que l\'AEO ?' },
+      { id: 'why-matters', title: 'Why AEO Matters', titleFr: 'Pourquoi l\'AEO est important' },
+      { id: 'five-pillars', title: 'The 5 Pillars of AEO', titleFr: 'Les 5 Piliers de l\'AEO' },
+      { id: 'get-started', title: 'How to Get Started', titleFr: 'Comment Commencer' },
+    ],
     content: `
 # AEO: The Complete Guide for E-commerce (2025)
 
@@ -299,10 +317,23 @@ Les marchands qui optimisent pour l'IA aujourd'hui seront ceux que l'IA recomman
     description: 'SEO and AEO are complementary strategies. Learn how they differ, why you need both, and how to balance your optimization efforts for Google and AI assistants.',
     descriptionFr: 'Le SEO et l\'AEO sont des stratégies complémentaires. Découvrez leurs différences, pourquoi vous avez besoin des deux, et comment équilibrer vos efforts d\'optimisation pour Google et les assistants IA.',
     author: 'Surfaced Team',
+    authorRole: 'AEO Experts',
+    authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=0ea5e9',
     date: '2025-01-28',
     readTime: 10,
     category: 'aeo',
     featured: false,
+    coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=600&fit=crop',
+    coverImageAlt: 'Analytics dashboard comparing SEO and AEO metrics',
+    coverImageAltFr: 'Tableau de bord analytique comparant les métriques SEO et AEO',
+    tableOfContents: [
+      { id: 'core-difference', title: 'The Core Difference', titleFr: 'La Différence Fondamentale' },
+      { id: 'comparison', title: 'Side-by-Side Comparison', titleFr: 'Comparaison Côte à Côte' },
+      { id: 'user-search', title: 'How Users Search Differently', titleFr: 'Comment les Utilisateurs Recherchent' },
+      { id: 'need-both', title: 'Why You Need Both', titleFr: 'Pourquoi les Deux' },
+      { id: 'technical', title: 'Technical Differences', titleFr: 'Différences Techniques' },
+      { id: 'action-plan', title: 'Action Plan', titleFr: 'Plan d\'Action' },
+    ],
     content: `
 # AEO vs SEO: Understanding the Key Differences in 2025
 
@@ -665,10 +696,25 @@ La différence clé est **l'intention** : le SEO capture les utilisateurs qui re
     description: 'A practical, step-by-step guide to making your e-commerce store visible to AI assistants. Includes code examples, templates, and real-world implementation tips.',
     descriptionFr: 'Un guide pratique étape par étape pour rendre votre boutique e-commerce visible aux assistants IA. Inclut des exemples de code, templates et conseils d\'implémentation concrets.',
     author: 'Surfaced Team',
+    authorRole: 'AEO Experts',
+    authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=0ea5e9',
     date: '2025-01-29',
     readTime: 12,
     category: 'tutorial',
     featured: true,
+    coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop',
+    coverImageAlt: 'Developer implementing AI optimization on laptop',
+    coverImageAltFr: 'Développeur implémentant l\'optimisation IA sur ordinateur',
+    tableOfContents: [
+      { id: 'robots-txt', title: 'Step 1: robots.txt', titleFr: 'Étape 1 : robots.txt' },
+      { id: 'json-ld', title: 'Step 2: JSON-LD Schema', titleFr: 'Étape 2 : Schema JSON-LD' },
+      { id: 'llms-txt', title: 'Step 3: llms.txt File', titleFr: 'Étape 3 : Fichier llms.txt' },
+      { id: 'descriptions', title: 'Step 4: Product Descriptions', titleFr: 'Étape 4 : Descriptions' },
+      { id: 'faq', title: 'Step 5: FAQ Sections', titleFr: 'Étape 5 : Sections FAQ' },
+      { id: 'content', title: 'Step 6: Authority Content', titleFr: 'Étape 6 : Contenu Autoritaire' },
+      { id: 'monitoring', title: 'Step 7: Monitoring', titleFr: 'Étape 7 : Monitoring' },
+      { id: 'checklist', title: 'Technical Checklist', titleFr: 'Checklist Technique' },
+    ],
     content: `
 # How to Optimize Your Store for ChatGPT, Claude, and Perplexity
 
@@ -1411,10 +1457,24 @@ Avant de lancer, vérifiez que tout est en place :
     description: 'Everything you need to know about llms.txt — the emerging standard for helping AI assistants understand your website. Includes templates, best practices, and real examples.',
     descriptionFr: 'Tout ce que vous devez savoir sur llms.txt — le nouveau standard pour aider les assistants IA à comprendre votre site. Templates, bonnes pratiques et exemples concrets inclus.',
     author: 'Surfaced Team',
+    authorRole: 'AEO Experts',
+    authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=0ea5e9',
     date: '2025-01-30',
     readTime: 8,
     category: 'tutorial',
     featured: false,
+    coverImage: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=1200&h=600&fit=crop',
+    coverImageAlt: 'Code editor showing llms.txt file structure',
+    coverImageAltFr: 'Éditeur de code montrant la structure du fichier llms.txt',
+    tableOfContents: [
+      { id: 'what-is', title: 'What is llms.txt?', titleFr: 'Qu\'est-ce que llms.txt ?' },
+      { id: 'why-matters', title: 'Why llms.txt Matters', titleFr: 'Pourquoi c\'est Important' },
+      { id: 'structure', title: 'File Structure', titleFr: 'Structure du Fichier' },
+      { id: 'template', title: 'Complete Template', titleFr: 'Template Complet' },
+      { id: 'examples', title: 'Real-World Examples', titleFr: 'Exemples Concrets' },
+      { id: 'best-practices', title: 'Best Practices', titleFr: 'Bonnes Pratiques' },
+      { id: 'mistakes', title: 'Common Mistakes', titleFr: 'Erreurs Courantes' },
+    ],
     content: `
 # llms.txt: The Complete Guide to the New AI Crawling Standard
 
