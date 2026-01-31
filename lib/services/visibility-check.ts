@@ -20,16 +20,23 @@ const openrouter = process.env.OPENROUTER_API_KEY
 // OpenRouter model mapping for each platform
 // Paid models provide premium quality, free models offer cost-effective alternatives
 const OPENROUTER_MODELS: Record<Platform, { model: string; free: boolean; displayName: string }> = {
-  // Major AI Assistants (Paid)
+  // Core Platforms (Paid)
   chatgpt: { model: 'openai/gpt-4o-mini', free: false, displayName: 'ChatGPT' },
   perplexity: { model: 'perplexity/sonar', free: false, displayName: 'Perplexity' }, // Has web search
   gemini: { model: 'google/gemini-2.0-flash-001', free: false, displayName: 'Gemini' },
-  copilot: { model: 'google/gemma-3-27b-it:free', free: true, displayName: 'Copilot' }, // Free alternative
   claude: { model: 'anthropic/claude-3.5-haiku', free: false, displayName: 'Claude' },
 
-  // Free Models (via OpenRouter)
-  llama: { model: 'meta-llama/llama-3.3-70b-instruct:free', free: true, displayName: 'Llama 3.3' },
+  // Extended Platforms (PRO+)
+  google_ai: { model: 'google/gemini-2.0-flash-001', free: false, displayName: 'Google AI Overviews' },
+  copilot: { model: 'google/gemma-3-27b-it:free', free: true, displayName: 'Copilot' }, // Free alternative
+
+  // Premium Platforms (BUSINESS+)
   deepseek: { model: 'tngtech/deepseek-r1t2-chimera:free', free: true, displayName: 'DeepSeek' },
+  grok: { model: 'x-ai/grok-3-mini-beta', free: false, displayName: 'Grok' },
+  meta_ai: { model: 'meta-llama/llama-3.3-70b-instruct:free', free: true, displayName: 'Meta AI' },
+
+  // Legacy (kept for compatibility)
+  llama: { model: 'meta-llama/llama-3.3-70b-instruct:free', free: true, displayName: 'Llama 3.3' },
   mistral: { model: 'mistralai/devstral-2512:free', free: true, displayName: 'Mistral' },
   qwen: { model: 'google/gemma-3-12b-it:free', free: true, displayName: 'Gemma 12B' },
 };
