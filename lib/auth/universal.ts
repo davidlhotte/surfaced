@@ -55,7 +55,11 @@ export async function getUniversalUser(): Promise<UniversalUserSession | null> {
   // First, try Supabase auth
   try {
     const supabase = await createClient();
-    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+    const { data: { user: supabaseUser }, error: authError } = await supabase.auth.getUser();
+
+    if (authError) {
+      console.error('[getUniversalUser] Supabase auth error:', authError.message);
+    }
 
     if (supabaseUser) {
       // Find or create UniversalUser for this Supabase user
@@ -108,8 +112,9 @@ export async function getUniversalUser(): Promise<UniversalUserSession | null> {
         plan: universalUser.plan,
       };
     }
-  } catch {
+  } catch (error) {
     // Supabase not configured or error, fall through to JWT auth
+    console.error('[getUniversalUser] Error in Supabase/Prisma flow:', error);
   }
 
   // Fallback to custom JWT session

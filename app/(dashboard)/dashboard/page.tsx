@@ -1,6 +1,7 @@
 import { getUniversalUser } from '@/lib/auth/universal';
 import prisma from '@/lib/db/client';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { QuickCheckWidget } from '@/components/dashboard/QuickCheckWidget';
 
 // Plan limits for reference
@@ -15,7 +16,8 @@ export default async function DashboardPage() {
   const user = await getUniversalUser();
 
   if (!user) {
-    return null;
+    console.log('[DashboardPage] No user found, redirecting to login');
+    redirect('/login');
   }
 
   // Get user's brands
