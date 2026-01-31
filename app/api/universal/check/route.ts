@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runUniversalAICheck, isAIConfigured } from '@/lib/services/universal/ai-checker';
+import {
+  runUniversalAICheck,
+  isAIConfigured,
+  AIPlatform,
+  JourneyStage,
+  Region,
+} from '@/lib/services/universal/ai-checker';
 import { logger } from '@/lib/monitoring/logger';
 
 // Rate limiting - simple in-memory store (use Redis in production)
@@ -47,7 +53,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { brand, domain } = body;
+    const {
+      brand,
+      domain,
+      platforms,
+      competitors,
+      region,
+      industry,
+      journeyStages,
+      includeGapAnalysis,
+      includeCitations,
+    } = body;
 
     if (!brand || typeof brand !== 'string') {
       return NextResponse.json(
@@ -59,7 +75,6 @@ export async function POST(request: NextRequest) {
     // Check if OpenRouter is configured
     if (!isAIConfigured()) {
       logger.warn('OpenRouter API key not configured, using mock data');
-      // Fallback to mock data if not configured
       const mockResults = await getMockResults(brand);
       return NextResponse.json({
         ...mockResults,
@@ -72,26 +87,59 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Run real AI visibility check
-    const results = await runUniversalAICheck(brand, domain);
+    // Run enhanced AI visibility check with Phase 1-3 features
+    const results = await runUniversalAICheck(brand, {
+      domain,
+      platforms: platforms as AIPlatform[],
+      competitors,
+      region: region as Region,
+      industry,
+      includeGapAnalysis: includeGapAnalysis ?? true,
+      journeyStages: journeyStages as JourneyStage[],
+    });
 
-    return NextResponse.json({
+    // Build response with enhanced data
+    const response: Record<string, unknown> = {
       brand: results.brand,
       domain: results.domain,
       aeoScore: results.aeoScore,
       platforms: results.platforms.map(p => ({
         platform: p.platform,
         displayName: p.displayName,
+        icon: p.icon,
+        tier: p.tier,
         mentioned: p.mentioned,
         position: p.position,
         sentiment: p.sentiment,
         snippet: p.snippet,
         competitors: p.competitors,
+        journeyStage: p.journeyStage,
+        region: p.region,
+        ...(includeCitations && { citations: p.citations }),
       })),
       recommendations: results.recommendations,
+      journeyBreakdown: results.journeyBreakdown,
+      region: results.region,
       checkedAt: results.checkedAt,
       remaining,
-    }, {
+    };
+
+    // Include citations summary if requested
+    if (includeCitations) {
+      response.citations = results.citations;
+    }
+
+    // Include gap analysis if requested
+    if (includeGapAnalysis && results.gapAnalysis.length > 0) {
+      response.gapAnalysis = results.gapAnalysis;
+    }
+
+    // Include competitor comparison if competitors were provided
+    if (competitors && competitors.length > 0) {
+      response.competitorComparison = results.competitorComparison;
+    }
+
+    return NextResponse.json(response, {
       headers: {
         'X-RateLimit-Remaining': remaining.toString(),
       },

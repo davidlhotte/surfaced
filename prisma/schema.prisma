@@ -408,18 +408,50 @@ enum Plan {
 }
 
 enum Platform {
-  // Major AI Assistants (Paid via OpenRouter)
+  // Core Platforms (All Plans)
   chatgpt       // OpenAI GPT-4o-mini
+  claude        // Anthropic Claude
   perplexity    // Perplexity Sonar (with web search)
   gemini        // Google Gemini 2.0 Flash
-  copilot       // Microsoft Copilot alternative
-  claude        // Anthropic Claude
 
-  // Free Models (via OpenRouter)
-  llama         // Meta Llama 3.3 70B
-  deepseek      // DeepSeek R1
+  // Extended Platforms (PRO+)
+  google_ai     // Google AI Overviews
+  copilot       // Microsoft Copilot
+
+  // Premium Platforms (BUSINESS+)
+  deepseek      // DeepSeek
+  grok          // xAI Grok
+  meta_ai       // Meta AI (Llama)
+
+  // Legacy (kept for compatibility)
+  llama         // Meta Llama 3.3 70B (deprecated, use meta_ai)
   mistral       // Mistral AI
   qwen          // Alibaba Qwen
+}
+
+enum JourneyStage {
+  awareness     // Top of funnel - discovering options
+  consideration // Middle - comparing solutions
+  decision      // Bottom - ready to buy
+  branded       // Searching specifically for your brand
+}
+
+enum Region {
+  us            // United States
+  eu            // European Union
+  uk            // United Kingdom
+  ca            // Canada
+  au            // Australia
+  fr            // France
+  de            // Germany
+  jp            // Japan
+  global        // Global/Unspecified
+}
+
+enum PlatformTier {
+  core          // All plans
+  extended      // PRO+
+  premium       // BUSINESS+
 }
 
 enum ResponseQuality {
@@ -618,6 +650,14 @@ model Brand {
   customPrompts       BrandPrompt[]
   alerts              BrandAlert[]
 
+  // Phase 1-3 Relations
+  citations               Citation[]
+  gapAnalysisResults      GapAnalysisResult[]
+  trafficEstimations      TrafficEstimation[]
+  axpConfig               AXPConfig?
+  ga4Integration          GA4Integration?
+  enhancedVisibilityChecks EnhancedVisibilityCheck[]
+
   @@unique([userId, name])
   @@index([userId])
   @@index([teamId])
@@ -777,4 +817,212 @@ enum AlertType {
   COMPETITOR    // Alert when competitor gains position
   MENTION_LOST  // Alert when brand stops being mentioned
   WEEKLY_REPORT // Weekly summary
+}
+
+// ============================================
+// ENHANCED AI VISIBILITY MODELS (Phase 1-3)
+// ============================================
+
+// Citation tracking - URLs cited by AI platforms
+model Citation {
+  id              String    @id @default(cuid())
+  brandId         String
+  brand           Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  visibilityCheckId String?
+
+  url             String
+  domain          String
+  isOwnSite       Boolean   @default(false)
+  context         String?   @db.Text
+
+  platform        Platform
+  journeyStage    JourneyStage
+  region          Region    @default(global)
+
+  discoveredAt    DateTime  @default(now())
+
+  @@index([brandId])
+  @@index([domain])
+  @@index([platform])
+}
+
+// Gap Analysis - where competitors appear but you don't
+model GapAnalysisResult {
+  id              String    @id @default(cuid())
+  brandId         String
+  brand           Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  platform        Platform
+  query           String
+  journeyStage    JourneyStage
+  region          Region    @default(global)
+
+  // Your brand
+  yourMentioned   Boolean   @default(false)
+  yourPosition    Int?
+
+  // Competitors found in this gap
+  competitorsMentioned Json  @default("[]") // Array of {name, position}
+  competitorCount Int       @default(0)
+
+  // Opportunity assessment
+  opportunity     String    @default("medium") // high, medium, low
+  recommendation  String?   @db.Text
+
+  analyzedAt      DateTime  @default(now())
+
+  @@index([brandId])
+  @@index([opportunity])
+  @@index([journeyStage])
+}
+
+// Traffic Estimation - estimates based on visibility
+model TrafficEstimation {
+  id                      String    @id @default(cuid())
+  brandId                 String
+  brand                   Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // Monthly estimates
+  estimatedMonthlyAIVisits      Int
+  estimatedMonthlyAIReferrals   Int
+
+  // Breakdown by platform
+  platformBreakdown       Json      @default("[]") // Array of {platform, visits, marketShare}
+
+  // Breakdown by journey stage
+  journeyBreakdown        Json      @default("{}") // {awareness, consideration, decision, branded}
+
+  // Missed opportunity
+  estimatedLostVisits     Int       @default(0)
+  topMissedPlatforms      Json      @default("[]")
+  recommendations         Json      @default("[]")
+
+  // Calculation metadata
+  monthlySearchVolume     Int?      // If known
+  industry                String?
+  confidence              String    @default("medium") // high, medium, low
+
+  calculatedAt            DateTime  @default(now())
+
+  @@index([brandId])
+  @@index([calculatedAt(sort: Desc)])
+}
+
+// AXP Configuration - AI Experience Platform settings
+model AXPConfig {
+  id                  String    @id @default(cuid())
+  brandId             String    @unique
+  brand               Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // llms.txt configuration
+  llmsTxtEnabled      Boolean   @default(false)
+  llmsTxtContent      String?   @db.Text
+  llmsFullTxtContent  String?   @db.Text
+
+  // JSON-LD configuration
+  jsonLdEnabled       Boolean   @default(false)
+  organizationSchema  Json?
+  websiteSchema       Json?
+  productSchemas      Json?     @default("[]")
+  faqSchema           Json?
+
+  // Meta descriptions
+  metaDescriptions    Json?     @default("{}")
+
+  // AI snippets
+  aiSnippets          Json?     @default("[]")
+
+  // Content recommendations
+  contentRecommendations Json?  @default("[]")
+
+  // Validation results
+  llmsTxtScore        Int?      // 0-100
+  lastValidatedAt     DateTime?
+  validationErrors    Json?     @default("[]")
+  validationWarnings  Json?     @default("[]")
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([brandId])
+}
+
+// GA4 Integration - Google Analytics connection
+model GA4Integration {
+  id                  String    @id @default(cuid())
+  brandId             String    @unique
+  brand               Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // GA4 Property
+  propertyId          String
+  propertyName        String?
+
+  // OAuth tokens (encrypted)
+  accessToken         String?   // Encrypted
+  refreshToken        String?   // Encrypted
+  tokenExpiresAt      DateTime?
+
+  // Cached analytics data
+  lastFetchedAt       DateTime?
+  cachedTotalSessions Int?
+  cachedAITraffic     Json?     // AI traffic breakdown
+  cachedAIPercent     Float?    // % of traffic from AI
+  cachedTrend         Json?     // {direction, changePercent}
+
+  // Top landing pages for AI traffic
+  cachedTopPages      Json?     @default("[]")
+
+  // Correlation data
+  correlationData     Json?     @default("[]")
+
+  // Settings
+  autoFetchEnabled    Boolean   @default(true)
+  fetchFrequency      String    @default("daily") // daily, weekly
+
+  isConnected         Boolean   @default(false)
+  connectionError     String?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([brandId])
+}
+
+// Enhanced Visibility Check with Phase 1-3 data
+model EnhancedVisibilityCheck {
+  id                String    @id @default(cuid())
+  brandId           String
+  brand             Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // Basic results
+  aeoScore          Int
+  platform          Platform
+  journeyStage      JourneyStage
+  region            Region    @default(global)
+
+  // Mention details
+  mentioned         Boolean   @default(false)
+  position          Int?
+  sentiment         String?   // positive, neutral, negative
+  snippet           String?   @db.Text
+
+  // Query used
+  query             String
+
+  // Competitors found
+  competitorsFound  Json      @default("[]")
+
+  // Citations extracted
+  citationsFound    Json      @default("[]")
+  ownSiteCited      Boolean   @default(false)
+
+  // Raw response for analysis
+  rawResponse       String?   @db.Text
+
+  checkedAt         DateTime  @default(now())
+
+  @@index([brandId])
+  @@index([platform])
+  @@index([journeyStage])
+  @@index([checkedAt(sort: Desc)])
 }
