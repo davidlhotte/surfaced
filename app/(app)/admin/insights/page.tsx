@@ -507,89 +507,168 @@ export default function InsightsPage() {
                             </InlineStack>
                           </BlockStack>
 
-                          {/* Score Trend Chart - Improved with labels */}
-                          <BlockStack gap="300">
-                            <InlineStack align="space-between" blockAlign="center">
+                          {/* Score Trend Chart - Clear explanation and line chart */}
+                          <BlockStack gap="400">
+                            {/* Clear title with explanation */}
+                            <BlockStack gap="100">
                               <Text as="h4" variant="headingSm">
-                                {locale === 'fr' ? 'Évolution du Score' : 'Score Trend'}
+                                {locale === 'fr' ? 'Évolution du Score AEO moyen' : 'Average AEO Score Evolution'}
                               </Text>
-                              {metrics?.scoreTrend && metrics.scoreTrend.length > 1 && (
-                                <Badge tone={
-                                  metrics.scoreTrend[metrics.scoreTrend.length - 1]?.value >= metrics.scoreTrend[0]?.value
-                                    ? 'success' : 'critical'
-                                }>
-                                  {metrics.scoreTrend[metrics.scoreTrend.length - 1]?.value >= metrics.scoreTrend[0]?.value
-                                    ? (locale === 'fr' ? '↑ En hausse' : '↑ Improving')
-                                    : (locale === 'fr' ? '↓ En baisse' : '↓ Declining')}
-                                </Badge>
-                              )}
-                            </InlineStack>
+                              <Text as="p" variant="bodySm" tone="subdued">
+                                {locale === 'fr'
+                                  ? 'Score moyen de qualité IA de tous vos produits (0-100). Plus le score est élevé, mieux vos produits sont optimisés pour les assistants IA.'
+                                  : 'Average AI quality score across all your products (0-100). Higher score means better optimization for AI assistants.'}
+                              </Text>
+                            </BlockStack>
 
-                            {/* Chart with value labels */}
-                            <div style={{ position: 'relative', paddingTop: '20px' }}>
-                              <div style={{ display: 'flex', gap: '4px', height: '80px', alignItems: 'flex-end' }}>
-                                {(metrics?.scoreTrend || []).slice(-7).map((point, i, arr) => {
-                                  const isLast = i === arr.length - 1;
-                                  const isFirst = i === 0;
-                                  return (
-                                    <div key={i} style={{
-                                      flex: 1,
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                      position: 'relative'
-                                    }}>
-                                      {/* Value label on first and last bars */}
-                                      {(isFirst || isLast) && (
-                                        <div style={{
-                                          position: 'absolute',
-                                          top: '-20px',
-                                          fontSize: '11px',
-                                          fontWeight: isLast ? '700' : '400',
-                                          color: isLast ? '#0EA5E9' : '#6B7280'
-                                        }}>
-                                          {point.value}
+                            {(() => {
+                              const trendData = metrics?.scoreTrend || [];
+                              if (trendData.length < 2) {
+                                return (
+                                  <Box padding="400" background="bg-surface-secondary" borderRadius="200">
+                                    <Text as="p" tone="subdued" alignment="center">
+                                      {locale === 'fr'
+                                        ? 'Pas assez de données pour afficher la tendance. Continuez à analyser vos produits.'
+                                        : 'Not enough data to show trend. Keep analyzing your products.'}
+                                    </Text>
+                                  </Box>
+                                );
+                              }
+
+                              const displayData = trendData.slice(-7);
+                              const firstValue = displayData[0]?.value ?? 0;
+                              const lastValue = displayData[displayData.length - 1]?.value ?? 0;
+                              const change = lastValue - firstValue;
+                              const minValue = Math.min(...displayData.map(d => d.value));
+                              const maxValue = Math.max(...displayData.map(d => d.value));
+                              const range = maxValue - minValue || 1;
+
+                              return (
+                                <BlockStack gap="300">
+                                  {/* Summary cards */}
+                                  <InlineStack gap="300" wrap>
+                                    <Box padding="300" background="bg-surface-secondary" borderRadius="200" minWidth="120px">
+                                      <BlockStack gap="100">
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {locale === 'fr' ? 'Début de période' : 'Period start'}
+                                        </Text>
+                                        <Text as="p" variant="headingMd" fontWeight="bold">{firstValue}/100</Text>
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {displayData[0]?.date ? new Date(displayData[0].date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' }) : ''}
+                                        </Text>
+                                      </BlockStack>
+                                    </Box>
+                                    <Box padding="300" background="bg-surface-secondary" borderRadius="200" minWidth="120px">
+                                      <BlockStack gap="100">
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {locale === 'fr' ? 'Aujourd\'hui' : 'Today'}
+                                        </Text>
+                                        <Text as="p" variant="headingMd" fontWeight="bold">{lastValue}/100</Text>
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {displayData[displayData.length - 1]?.date ? new Date(displayData[displayData.length - 1].date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' }) : ''}
+                                        </Text>
+                                      </BlockStack>
+                                    </Box>
+                                    <Box
+                                      padding="300"
+                                      background={change >= 0 ? 'bg-surface-success' : 'bg-surface-critical'}
+                                      borderRadius="200"
+                                      minWidth="120px"
+                                    >
+                                      <BlockStack gap="100">
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {locale === 'fr' ? 'Évolution' : 'Change'}
+                                        </Text>
+                                        <Text as="p" variant="headingMd" fontWeight="bold" tone={change >= 0 ? 'success' : 'critical'}>
+                                          {change >= 0 ? '+' : ''}{change} pts
+                                        </Text>
+                                        <Text as="span" variant="bodySm" tone={change >= 0 ? 'success' : 'critical'}>
+                                          {change >= 0
+                                            ? (locale === 'fr' ? '↑ Amélioration' : '↑ Improving')
+                                            : (locale === 'fr' ? '↓ Baisse' : '↓ Declining')}
+                                        </Text>
+                                      </BlockStack>
+                                    </Box>
+                                  </InlineStack>
+
+                                  {/* Line chart with SVG */}
+                                  <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                                    <div style={{ position: 'relative', height: '120px', width: '100%' }}>
+                                      {/* Y-axis labels */}
+                                      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 20, width: '35px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                        <Text as="span" variant="bodySm" tone="subdued">{maxValue}</Text>
+                                        <Text as="span" variant="bodySm" tone="subdued">{minValue}</Text>
+                                      </div>
+
+                                      {/* Chart area */}
+                                      <div style={{ marginLeft: '40px', height: '100px', position: 'relative' }}>
+                                        <svg width="100%" height="100" style={{ overflow: 'visible' }}>
+                                          {/* Grid lines */}
+                                          <line x1="0" y1="0" x2="100%" y2="0" stroke="#E5E7EB" strokeDasharray="4" />
+                                          <line x1="0" y1="50" x2="100%" y2="50" stroke="#E5E7EB" strokeDasharray="4" />
+                                          <line x1="0" y1="100" x2="100%" y2="100" stroke="#E5E7EB" />
+
+                                          {/* Line path */}
+                                          <polyline
+                                            fill="none"
+                                            stroke="#0EA5E9"
+                                            strokeWidth="3"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            points={displayData.map((point, i) => {
+                                              const x = (i / (displayData.length - 1)) * 100;
+                                              const y = 100 - ((point.value - minValue) / range) * 100;
+                                              return `${x}%,${y}`;
+                                            }).join(' ')}
+                                          />
+
+                                          {/* Data points */}
+                                          {displayData.map((point, i) => {
+                                            const x = (i / (displayData.length - 1)) * 100;
+                                            const y = 100 - ((point.value - minValue) / range) * 100;
+                                            const isLast = i === displayData.length - 1;
+                                            return (
+                                              <g key={i}>
+                                                <circle
+                                                  cx={`${x}%`}
+                                                  cy={y}
+                                                  r={isLast ? 6 : 4}
+                                                  fill={isLast ? '#0EA5E9' : 'white'}
+                                                  stroke="#0EA5E9"
+                                                  strokeWidth="2"
+                                                />
+                                                {/* Value label on hover area - show on first and last */}
+                                                {(i === 0 || isLast) && (
+                                                  <text
+                                                    x={`${x}%`}
+                                                    y={y - 12}
+                                                    textAnchor="middle"
+                                                    fontSize="11"
+                                                    fontWeight={isLast ? 'bold' : 'normal'}
+                                                    fill={isLast ? '#0EA5E9' : '#6B7280'}
+                                                  >
+                                                    {point.value}
+                                                  </text>
+                                                )}
+                                              </g>
+                                            );
+                                          })}
+                                        </svg>
+
+                                        {/* X-axis date labels */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                          {displayData.map((point, i) => (
+                                            <Text key={i} as="span" variant="bodySm" tone="subdued">
+                                              {point.date ? new Date(point.date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' }).replace('.', '') : ''}
+                                            </Text>
+                                          ))}
                                         </div>
-                                      )}
-                                      <div style={{
-                                        width: '100%',
-                                        maxWidth: '30px',
-                                        height: `${Math.max(point.value * 0.8, 5)}px`,
-                                        backgroundColor: isLast ? '#0EA5E9' : (point.value >= 70 ? '#10B981' : point.value >= 40 ? '#F59E0B' : '#EF4444'),
-                                        borderRadius: '4px 4px 0 0',
-                                        opacity: isLast ? 1 : 0.7,
-                                      }} />
+                                      </div>
                                     </div>
-                                  );
-                                })}
-                              </div>
-                              {/* X-axis labels */}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                <Text as="span" variant="bodySm" tone="subdued">
-                                  {locale === 'fr' ? 'Il y a 7j' : '7 days ago'}
-                                </Text>
-                                <Text as="span" variant="bodySm" tone="subdued">
-                                  {locale === 'fr' ? 'Aujourd\'hui' : 'Today'}
-                                </Text>
-                              </div>
-                            </div>
-
-                            {/* Legend */}
-                            <InlineStack gap="300">
-                              <InlineStack gap="100" blockAlign="center">
-                                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#10B981' }} />
-                                <Text as="span" variant="bodySm" tone="subdued">70+ {locale === 'fr' ? 'Excellent' : 'Excellent'}</Text>
-                              </InlineStack>
-                              <InlineStack gap="100" blockAlign="center">
-                                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#F59E0B' }} />
-                                <Text as="span" variant="bodySm" tone="subdued">40-69 {locale === 'fr' ? 'Moyen' : 'Average'}</Text>
-                              </InlineStack>
-                              <InlineStack gap="100" blockAlign="center">
-                                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#EF4444' }} />
-                                <Text as="span" variant="bodySm" tone="subdued">&lt;40 {locale === 'fr' ? 'Critique' : 'Critical'}</Text>
-                              </InlineStack>
-                            </InlineStack>
+                                  </Box>
+                                </BlockStack>
+                              );
+                            })()}
                           </BlockStack>
 
                           <InlineStack gap="200">
@@ -643,79 +722,199 @@ export default function InsightsPage() {
                             </div>
                           </BlockStack>
 
-                          {/* Visibility Trend Chart - Improved with labels */}
-                          <BlockStack gap="300">
-                            <InlineStack align="space-between" blockAlign="center">
+                          {/* Visibility Trend Chart - Clear explanation and line chart */}
+                          <BlockStack gap="400">
+                            {/* Clear title with explanation */}
+                            <BlockStack gap="100">
                               <Text as="h4" variant="headingSm">
-                                {locale === 'fr' ? 'Évolution de la Visibilité' : 'Visibility Trend'}
+                                {locale === 'fr' ? 'Évolution du Taux de Mention IA' : 'AI Mention Rate Evolution'}
                               </Text>
-                              {metrics?.visibilityTrend && metrics.visibilityTrend.length > 1 && (
-                                <Badge tone={
-                                  metrics.visibilityTrend[metrics.visibilityTrend.length - 1]?.value >= metrics.visibilityTrend[0]?.value
-                                    ? 'success' : 'critical'
-                                }>
-                                  {metrics.visibilityTrend[metrics.visibilityTrend.length - 1]?.value >= metrics.visibilityTrend[0]?.value
-                                    ? (locale === 'fr' ? '↑ En hausse' : '↑ Improving')
-                                    : (locale === 'fr' ? '↓ En baisse' : '↓ Declining')}
-                                </Badge>
-                              )}
-                            </InlineStack>
+                              <Text as="p" variant="bodySm" tone="subdued">
+                                {locale === 'fr'
+                                  ? 'Pourcentage de fois où votre marque est recommandée par les assistants IA (ChatGPT, Perplexity, etc.) lors des tests de visibilité.'
+                                  : 'Percentage of times your brand is recommended by AI assistants (ChatGPT, Perplexity, etc.) during visibility tests.'}
+                              </Text>
+                            </BlockStack>
 
-                            {/* Chart with value labels */}
-                            <div style={{ position: 'relative', paddingTop: '20px' }}>
-                              <div style={{ display: 'flex', gap: '4px', height: '80px', alignItems: 'flex-end' }}>
-                                {(metrics?.visibilityTrend || []).slice(-7).map((point, i, arr) => {
-                                  const isLast = i === arr.length - 1;
-                                  const isFirst = i === 0;
-                                  return (
-                                    <div key={i} style={{
-                                      flex: 1,
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                      position: 'relative'
-                                    }}>
-                                      {/* Value label on first and last bars */}
-                                      {(isFirst || isLast) && (
-                                        <div style={{
-                                          position: 'absolute',
-                                          top: '-20px',
-                                          fontSize: '11px',
-                                          fontWeight: isLast ? '700' : '400',
-                                          color: isLast ? '#0EA5E9' : '#6B7280'
-                                        }}>
-                                          {point.value}%
+                            {(() => {
+                              const trendData = metrics?.visibilityTrend || [];
+                              if (trendData.length < 2) {
+                                return (
+                                  <Box padding="400" background="bg-surface-secondary" borderRadius="200">
+                                    <BlockStack gap="200" inlineAlign="center">
+                                      <Text as="p" tone="subdued" alignment="center">
+                                        {locale === 'fr'
+                                          ? 'Pas assez de données. Lancez des tests de visibilité pour voir la tendance.'
+                                          : 'Not enough data. Run visibility tests to see the trend.'}
+                                      </Text>
+                                      <Link href="/admin/visibility">
+                                        <Button size="slim">
+                                          {locale === 'fr' ? 'Lancer un test' : 'Run a test'}
+                                        </Button>
+                                      </Link>
+                                    </BlockStack>
+                                  </Box>
+                                );
+                              }
+
+                              const displayData = trendData.slice(-7);
+                              const firstValue = displayData[0]?.value ?? 0;
+                              const lastValue = displayData[displayData.length - 1]?.value ?? 0;
+                              const change = lastValue - firstValue;
+                              const minValue = Math.max(0, Math.min(...displayData.map(d => d.value)) - 10);
+                              const maxValue = Math.min(100, Math.max(...displayData.map(d => d.value)) + 10);
+                              const range = maxValue - minValue || 1;
+
+                              return (
+                                <BlockStack gap="300">
+                                  {/* Summary cards */}
+                                  <InlineStack gap="300" wrap>
+                                    <Box padding="300" background="bg-surface-secondary" borderRadius="200" minWidth="120px">
+                                      <BlockStack gap="100">
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {locale === 'fr' ? 'Début de période' : 'Period start'}
+                                        </Text>
+                                        <Text as="p" variant="headingMd" fontWeight="bold">{firstValue}%</Text>
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {displayData[0]?.date ? new Date(displayData[0].date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' }) : ''}
+                                        </Text>
+                                      </BlockStack>
+                                    </Box>
+                                    <Box padding="300" background="bg-surface-secondary" borderRadius="200" minWidth="120px">
+                                      <BlockStack gap="100">
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {locale === 'fr' ? 'Aujourd\'hui' : 'Today'}
+                                        </Text>
+                                        <Text as="p" variant="headingMd" fontWeight="bold">{lastValue}%</Text>
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {displayData[displayData.length - 1]?.date ? new Date(displayData[displayData.length - 1].date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' }) : ''}
+                                        </Text>
+                                      </BlockStack>
+                                    </Box>
+                                    <Box
+                                      padding="300"
+                                      background={change >= 0 ? 'bg-surface-success' : 'bg-surface-critical'}
+                                      borderRadius="200"
+                                      minWidth="120px"
+                                    >
+                                      <BlockStack gap="100">
+                                        <Text as="span" variant="bodySm" tone="subdued">
+                                          {locale === 'fr' ? 'Évolution' : 'Change'}
+                                        </Text>
+                                        <Text as="p" variant="headingMd" fontWeight="bold" tone={change >= 0 ? 'success' : 'critical'}>
+                                          {change >= 0 ? '+' : ''}{change}%
+                                        </Text>
+                                        <Text as="span" variant="bodySm" tone={change >= 0 ? 'success' : 'critical'}>
+                                          {change >= 0
+                                            ? (locale === 'fr' ? '↑ Plus visible' : '↑ More visible')
+                                            : (locale === 'fr' ? '↓ Moins visible' : '↓ Less visible')}
+                                        </Text>
+                                      </BlockStack>
+                                    </Box>
+                                  </InlineStack>
+
+                                  {/* Line chart with SVG */}
+                                  <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                                    <div style={{ position: 'relative', height: '120px', width: '100%' }}>
+                                      {/* Y-axis labels */}
+                                      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 20, width: '35px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                        <Text as="span" variant="bodySm" tone="subdued">{maxValue}%</Text>
+                                        <Text as="span" variant="bodySm" tone="subdued">{minValue}%</Text>
+                                      </div>
+
+                                      {/* Chart area */}
+                                      <div style={{ marginLeft: '45px', height: '100px', position: 'relative' }}>
+                                        <svg width="100%" height="100" style={{ overflow: 'visible' }}>
+                                          {/* Grid lines */}
+                                          <line x1="0" y1="0" x2="100%" y2="0" stroke="#E5E7EB" strokeDasharray="4" />
+                                          <line x1="0" y1="50" x2="100%" y2="50" stroke="#E5E7EB" strokeDasharray="4" />
+                                          <line x1="0" y1="100" x2="100%" y2="100" stroke="#E5E7EB" />
+
+                                          {/* 50% reference line (good visibility threshold) */}
+                                          {minValue < 50 && maxValue > 50 && (
+                                            <>
+                                              <line
+                                                x1="0"
+                                                y1={100 - ((50 - minValue) / range) * 100}
+                                                x2="100%"
+                                                y2={100 - ((50 - minValue) / range) * 100}
+                                                stroke="#10B981"
+                                                strokeDasharray="4"
+                                                strokeWidth="1"
+                                              />
+                                              <text
+                                                x="100%"
+                                                y={100 - ((50 - minValue) / range) * 100 - 4}
+                                                textAnchor="end"
+                                                fontSize="9"
+                                                fill="#10B981"
+                                              >
+                                                {locale === 'fr' ? 'Objectif 50%' : '50% goal'}
+                                              </text>
+                                            </>
+                                          )}
+
+                                          {/* Line path */}
+                                          <polyline
+                                            fill="none"
+                                            stroke="#8B5CF6"
+                                            strokeWidth="3"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            points={displayData.map((point, i) => {
+                                              const x = (i / (displayData.length - 1)) * 100;
+                                              const y = 100 - ((point.value - minValue) / range) * 100;
+                                              return `${x}%,${y}`;
+                                            }).join(' ')}
+                                          />
+
+                                          {/* Data points */}
+                                          {displayData.map((point, i) => {
+                                            const x = (i / (displayData.length - 1)) * 100;
+                                            const y = 100 - ((point.value - minValue) / range) * 100;
+                                            const isLast = i === displayData.length - 1;
+                                            return (
+                                              <g key={i}>
+                                                <circle
+                                                  cx={`${x}%`}
+                                                  cy={y}
+                                                  r={isLast ? 6 : 4}
+                                                  fill={isLast ? '#8B5CF6' : 'white'}
+                                                  stroke="#8B5CF6"
+                                                  strokeWidth="2"
+                                                />
+                                                {/* Value label on first and last */}
+                                                {(i === 0 || isLast) && (
+                                                  <text
+                                                    x={`${x}%`}
+                                                    y={y - 12}
+                                                    textAnchor="middle"
+                                                    fontSize="11"
+                                                    fontWeight={isLast ? 'bold' : 'normal'}
+                                                    fill={isLast ? '#8B5CF6' : '#6B7280'}
+                                                  >
+                                                    {point.value}%
+                                                  </text>
+                                                )}
+                                              </g>
+                                            );
+                                          })}
+                                        </svg>
+
+                                        {/* X-axis date labels */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                          {displayData.map((point, i) => (
+                                            <Text key={i} as="span" variant="bodySm" tone="subdued">
+                                              {point.date ? new Date(point.date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' }).replace('.', '') : ''}
+                                            </Text>
+                                          ))}
                                         </div>
-                                      )}
-                                      <div style={{
-                                        width: '100%',
-                                        maxWidth: '30px',
-                                        height: `${Math.max(point.value * 0.8, 5)}px`,
-                                        backgroundColor: isLast ? '#0EA5E9' : (point.value >= 50 ? '#10B981' : point.value >= 20 ? '#F59E0B' : '#EF4444'),
-                                        borderRadius: '4px 4px 0 0',
-                                        opacity: isLast ? 1 : 0.7,
-                                      }} />
+                                      </div>
                                     </div>
-                                  );
-                                })}
-                              </div>
-                              {/* X-axis labels */}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                <Text as="span" variant="bodySm" tone="subdued">
-                                  {locale === 'fr' ? 'Il y a 7j' : '7 days ago'}
-                                </Text>
-                                <Text as="span" variant="bodySm" tone="subdued">
-                                  {locale === 'fr' ? 'Aujourd\'hui' : 'Today'}
-                                </Text>
-                              </div>
-                            </div>
-
-                            <Text as="p" variant="bodySm" tone="subdued">
-                              {locale === 'fr'
-                                ? 'Pourcentage de fois où votre marque est mentionnée par les IA'
-                                : 'Percentage of times your brand is mentioned by AI assistants'}
-                            </Text>
+                                  </Box>
+                                </BlockStack>
+                              );
+                            })()}
                           </BlockStack>
 
                           <InlineStack gap="200">
