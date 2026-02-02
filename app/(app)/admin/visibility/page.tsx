@@ -195,8 +195,11 @@ export default function VisibilityPage() {
     loading: locale === 'fr' ? 'Chargement...' : 'Loading...',
   };
 
-  // Fetch history
-  const fetchHistory = useCallback(async (preserveSearchTerm = false) => {
+  // Track if initial load has been done
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
+  // Fetch history - no searchTerm dependency to avoid re-fetching on every keystroke
+  const fetchHistory = useCallback(async (options: { preserveSearchTerm?: boolean; isInitialLoad?: boolean } = {}) => {
     try {
       setLoading(true);
       const response = await authenticatedFetch('/api/visibility');
@@ -206,8 +209,8 @@ export default function VisibilityPage() {
         setSessions(result.sessions || []);
         if (result.brandName) {
           setBrandName(result.brandName);
-          // Initialize searchTerm with brandName only on first load (not after running a check)
-          if (!preserveSearchTerm && !searchTerm) {
+          // Initialize searchTerm with brandName only on initial load
+          if (options.isInitialLoad) {
             setSearchTerm(result.brandName);
           }
         }
@@ -223,11 +226,15 @@ export default function VisibilityPage() {
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch, searchTerm]);
+  }, [authenticatedFetch]);
 
+  // Initial load only once
   useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+    if (!initialLoadDone) {
+      fetchHistory({ isInitialLoad: true });
+      setInitialLoadDone(true);
+    }
+  }, [fetchHistory, initialLoadDone]);
 
   // Run visibility check
   const runCheck = async (query: string) => {
@@ -275,7 +282,7 @@ export default function VisibilityPage() {
       if (result.success) {
         if (result.data.brandName) setBrandName(result.data.brandName);
         // Refresh to get updated history, but preserve the user's search term
-        await fetchHistory(true);
+        await fetchHistory({ preserveSearchTerm: true });
       } else {
         setError(result.error || 'Error');
       }

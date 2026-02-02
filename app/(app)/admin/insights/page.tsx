@@ -404,43 +404,57 @@ export default function InsightsPage() {
                         </div>
                       </Box>
 
-                      {/* Critical Issues - Actionable metric */}
+                      {/* Critical Issues - Clickable, navigates to products page */}
                       <Box minWidth="180px">
-                        <Card>
-                          <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">
-                              {locale === 'fr' ? 'Problemes Critiques' : 'Critical Issues'}
-                            </Text>
-                            <Text
-                              as="p"
-                              variant="heading2xl"
-                              fontWeight="bold"
-                              tone={(metrics?.productsWithCriticalIssues ?? 0) > 0 ? 'critical' : 'success'}
-                            >
-                              {metrics?.productsWithCriticalIssues ?? 0}
-                            </Text>
-                            <Text as="p" variant="bodySm" tone="subdued">
-                              {locale === 'fr' ? 'produits a corriger' : 'products to fix'}
-                            </Text>
-                          </BlockStack>
-                        </Card>
+                        <Link href="/admin/products?filter=critical" style={{ textDecoration: 'none' }}>
+                          <div style={{ cursor: 'pointer' }}>
+                            <Card>
+                              <BlockStack gap="200">
+                                <InlineStack align="space-between" blockAlign="center">
+                                  <Text as="h3" variant="bodySm" tone="subdued">
+                                    {locale === 'fr' ? 'Problèmes Critiques' : 'Critical Issues'}
+                                  </Text>
+                                  <Text as="span" variant="bodySm" tone="subdued">→</Text>
+                                </InlineStack>
+                                <Text
+                                  as="p"
+                                  variant="heading2xl"
+                                  fontWeight="bold"
+                                  tone={(metrics?.productsWithCriticalIssues ?? 0) > 0 ? 'critical' : 'success'}
+                                >
+                                  {metrics?.productsWithCriticalIssues ?? 0}
+                                </Text>
+                                <Text as="p" variant="bodySm" tone="subdued">
+                                  {locale === 'fr' ? 'produits à corriger' : 'products to fix'}
+                                </Text>
+                              </BlockStack>
+                            </Card>
+                          </div>
+                        </Link>
                       </Box>
 
-                      {/* Total Products Analyzed */}
+                      {/* Total Products Analyzed - Clickable, navigates to products page */}
                       <Box minWidth="180px">
-                        <Card>
-                          <BlockStack gap="200">
-                            <Text as="h3" variant="bodySm" tone="subdued">
-                              {locale === 'fr' ? 'Produits Analyses' : 'Products Analyzed'}
-                            </Text>
-                            <Text as="p" variant="heading2xl" fontWeight="bold">
-                              {metrics?.totalProducts ?? 0}
-                            </Text>
-                            <Text as="p" variant="bodySm" tone="subdued">
-                              {locale === 'fr' ? 'dans votre catalogue' : 'in your catalog'}
-                            </Text>
-                          </BlockStack>
-                        </Card>
+                        <Link href="/admin/products" style={{ textDecoration: 'none' }}>
+                          <div style={{ cursor: 'pointer' }}>
+                            <Card>
+                              <BlockStack gap="200">
+                                <InlineStack align="space-between" blockAlign="center">
+                                  <Text as="h3" variant="bodySm" tone="subdued">
+                                    {locale === 'fr' ? 'Produits Analysés' : 'Products Analyzed'}
+                                  </Text>
+                                  <Text as="span" variant="bodySm" tone="subdued">→</Text>
+                                </InlineStack>
+                                <Text as="p" variant="heading2xl" fontWeight="bold">
+                                  {metrics?.totalProducts ?? 0}
+                                </Text>
+                                <Text as="p" variant="bodySm" tone="subdued">
+                                  {locale === 'fr' ? 'dans votre catalogue' : 'in your catalog'}
+                                </Text>
+                              </BlockStack>
+                            </Card>
+                          </div>
+                        </Link>
                       </Box>
                     </InlineStack>
 
@@ -493,27 +507,89 @@ export default function InsightsPage() {
                             </InlineStack>
                           </BlockStack>
 
-                          {/* Score Trend Chart */}
+                          {/* Score Trend Chart - Improved with labels */}
                           <BlockStack gap="300">
-                            <Text as="h4" variant="headingSm">
-                              {locale === 'fr' ? 'Évolution du Score' : 'Score Trend'}
-                            </Text>
-                            <div style={{ display: 'flex', gap: '4px', height: '60px', alignItems: 'flex-end' }}>
-                              {(metrics?.scoreTrend || []).slice(-14).map((point, i) => (
-                                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                  <div style={{
-                                    width: '100%',
-                                    maxWidth: '20px',
-                                    height: `${Math.max(point.value * 0.6, 5)}px`,
-                                    backgroundColor: point.value >= 70 ? '#10B981' : point.value >= 40 ? '#F59E0B' : '#EF4444',
-                                    borderRadius: '4px 4px 0 0',
-                                  }} />
-                                </div>
-                              ))}
+                            <InlineStack align="space-between" blockAlign="center">
+                              <Text as="h4" variant="headingSm">
+                                {locale === 'fr' ? 'Évolution du Score' : 'Score Trend'}
+                              </Text>
+                              {metrics?.scoreTrend && metrics.scoreTrend.length > 1 && (
+                                <Badge tone={
+                                  metrics.scoreTrend[metrics.scoreTrend.length - 1]?.value >= metrics.scoreTrend[0]?.value
+                                    ? 'success' : 'critical'
+                                }>
+                                  {metrics.scoreTrend[metrics.scoreTrend.length - 1]?.value >= metrics.scoreTrend[0]?.value
+                                    ? (locale === 'fr' ? '↑ En hausse' : '↑ Improving')
+                                    : (locale === 'fr' ? '↓ En baisse' : '↓ Declining')}
+                                </Badge>
+                              )}
+                            </InlineStack>
+
+                            {/* Chart with value labels */}
+                            <div style={{ position: 'relative', paddingTop: '20px' }}>
+                              <div style={{ display: 'flex', gap: '4px', height: '80px', alignItems: 'flex-end' }}>
+                                {(metrics?.scoreTrend || []).slice(-7).map((point, i, arr) => {
+                                  const isLast = i === arr.length - 1;
+                                  const isFirst = i === 0;
+                                  return (
+                                    <div key={i} style={{
+                                      flex: 1,
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      position: 'relative'
+                                    }}>
+                                      {/* Value label on first and last bars */}
+                                      {(isFirst || isLast) && (
+                                        <div style={{
+                                          position: 'absolute',
+                                          top: '-20px',
+                                          fontSize: '11px',
+                                          fontWeight: isLast ? '700' : '400',
+                                          color: isLast ? '#0EA5E9' : '#6B7280'
+                                        }}>
+                                          {point.value}
+                                        </div>
+                                      )}
+                                      <div style={{
+                                        width: '100%',
+                                        maxWidth: '30px',
+                                        height: `${Math.max(point.value * 0.8, 5)}px`,
+                                        backgroundColor: isLast ? '#0EA5E9' : (point.value >= 70 ? '#10B981' : point.value >= 40 ? '#F59E0B' : '#EF4444'),
+                                        borderRadius: '4px 4px 0 0',
+                                        opacity: isLast ? 1 : 0.7,
+                                      }} />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {/* X-axis labels */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                <Text as="span" variant="bodySm" tone="subdued">
+                                  {locale === 'fr' ? 'Il y a 7j' : '7 days ago'}
+                                </Text>
+                                <Text as="span" variant="bodySm" tone="subdued">
+                                  {locale === 'fr' ? 'Aujourd\'hui' : 'Today'}
+                                </Text>
+                              </div>
                             </div>
-                            <Text as="p" variant="bodySm" tone="subdued">
-                              {locale === 'fr' ? 'Les 14 derniers jours' : 'Last 14 days'}
-                            </Text>
+
+                            {/* Legend */}
+                            <InlineStack gap="300">
+                              <InlineStack gap="100" blockAlign="center">
+                                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#10B981' }} />
+                                <Text as="span" variant="bodySm" tone="subdued">70+ {locale === 'fr' ? 'Excellent' : 'Excellent'}</Text>
+                              </InlineStack>
+                              <InlineStack gap="100" blockAlign="center">
+                                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#F59E0B' }} />
+                                <Text as="span" variant="bodySm" tone="subdued">40-69 {locale === 'fr' ? 'Moyen' : 'Average'}</Text>
+                              </InlineStack>
+                              <InlineStack gap="100" blockAlign="center">
+                                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#EF4444' }} />
+                                <Text as="span" variant="bodySm" tone="subdued">&lt;40 {locale === 'fr' ? 'Critique' : 'Critical'}</Text>
+                              </InlineStack>
+                            </InlineStack>
                           </BlockStack>
 
                           <InlineStack gap="200">
@@ -567,26 +643,78 @@ export default function InsightsPage() {
                             </div>
                           </BlockStack>
 
-                          {/* Visibility Trend Chart */}
+                          {/* Visibility Trend Chart - Improved with labels */}
                           <BlockStack gap="300">
-                            <Text as="h4" variant="headingSm">
-                              {locale === 'fr' ? 'Évolution de la Visibilité' : 'Visibility Trend'}
-                            </Text>
-                            <div style={{ display: 'flex', gap: '4px', height: '60px', alignItems: 'flex-end' }}>
-                              {(metrics?.visibilityTrend || []).slice(-14).map((point, i) => (
-                                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                  <div style={{
-                                    width: '100%',
-                                    maxWidth: '20px',
-                                    height: `${Math.max(point.value * 0.6, 5)}px`,
-                                    backgroundColor: point.value >= 50 ? '#0EA5E9' : point.value >= 20 ? '#F59E0B' : '#EF4444',
-                                    borderRadius: '4px 4px 0 0',
-                                  }} />
-                                </div>
-                              ))}
+                            <InlineStack align="space-between" blockAlign="center">
+                              <Text as="h4" variant="headingSm">
+                                {locale === 'fr' ? 'Évolution de la Visibilité' : 'Visibility Trend'}
+                              </Text>
+                              {metrics?.visibilityTrend && metrics.visibilityTrend.length > 1 && (
+                                <Badge tone={
+                                  metrics.visibilityTrend[metrics.visibilityTrend.length - 1]?.value >= metrics.visibilityTrend[0]?.value
+                                    ? 'success' : 'critical'
+                                }>
+                                  {metrics.visibilityTrend[metrics.visibilityTrend.length - 1]?.value >= metrics.visibilityTrend[0]?.value
+                                    ? (locale === 'fr' ? '↑ En hausse' : '↑ Improving')
+                                    : (locale === 'fr' ? '↓ En baisse' : '↓ Declining')}
+                                </Badge>
+                              )}
+                            </InlineStack>
+
+                            {/* Chart with value labels */}
+                            <div style={{ position: 'relative', paddingTop: '20px' }}>
+                              <div style={{ display: 'flex', gap: '4px', height: '80px', alignItems: 'flex-end' }}>
+                                {(metrics?.visibilityTrend || []).slice(-7).map((point, i, arr) => {
+                                  const isLast = i === arr.length - 1;
+                                  const isFirst = i === 0;
+                                  return (
+                                    <div key={i} style={{
+                                      flex: 1,
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      position: 'relative'
+                                    }}>
+                                      {/* Value label on first and last bars */}
+                                      {(isFirst || isLast) && (
+                                        <div style={{
+                                          position: 'absolute',
+                                          top: '-20px',
+                                          fontSize: '11px',
+                                          fontWeight: isLast ? '700' : '400',
+                                          color: isLast ? '#0EA5E9' : '#6B7280'
+                                        }}>
+                                          {point.value}%
+                                        </div>
+                                      )}
+                                      <div style={{
+                                        width: '100%',
+                                        maxWidth: '30px',
+                                        height: `${Math.max(point.value * 0.8, 5)}px`,
+                                        backgroundColor: isLast ? '#0EA5E9' : (point.value >= 50 ? '#10B981' : point.value >= 20 ? '#F59E0B' : '#EF4444'),
+                                        borderRadius: '4px 4px 0 0',
+                                        opacity: isLast ? 1 : 0.7,
+                                      }} />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {/* X-axis labels */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                <Text as="span" variant="bodySm" tone="subdued">
+                                  {locale === 'fr' ? 'Il y a 7j' : '7 days ago'}
+                                </Text>
+                                <Text as="span" variant="bodySm" tone="subdued">
+                                  {locale === 'fr' ? 'Aujourd\'hui' : 'Today'}
+                                </Text>
+                              </div>
                             </div>
+
                             <Text as="p" variant="bodySm" tone="subdued">
-                              {locale === 'fr' ? 'Les 14 derniers jours' : 'Last 14 days'}
+                              {locale === 'fr'
+                                ? 'Pourcentage de fois où votre marque est mentionnée par les IA'
+                                : 'Percentage of times your brand is mentioned by AI assistants'}
                             </Text>
                           </BlockStack>
 
