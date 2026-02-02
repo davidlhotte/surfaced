@@ -101,6 +101,7 @@ export default function CompetitorsPage() {
 
   // Analysis configuration - editable by user (inline, no modal needed)
   const [brandName, setBrandName] = useState('');
+  const [customQueriesRaw, setCustomQueriesRaw] = useState(''); // Raw text for editing
   const [customQueries, setCustomQueries] = useState<string[]>([]);
 
   // History state
@@ -201,13 +202,19 @@ export default function CompetitorsPage() {
     try {
       setAnalyzing(true);
       setError(null);
+
+      // Process raw queries in case user hasn't left the field
+      const queries = customQueriesRaw
+        ? customQueriesRaw.split('\n').map((q) => q.trim()).filter((q) => q.length > 0)
+        : customQueries;
+
       const response = await authenticatedFetch('/api/competitors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'analyze',
           brandName: brandName || undefined,
-          customQueries: customQueries.length > 0 ? customQueries : undefined,
+          customQueries: queries.length > 0 ? queries : undefined,
         }),
       });
       if (!response.ok) {
@@ -343,15 +350,15 @@ export default function CompetitorsPage() {
                 </BlockStack>
                 <Divider />
 
-                {/* Brand Name - Inline editable */}
+                {/* Product Description - Inline editable */}
                 <TextField
-                  label={locale === 'fr' ? 'Nom de votre marque' : 'Your brand name'}
+                  label={locale === 'fr' ? 'Description du produit' : 'Product description'}
                   value={brandName}
                   onChange={setBrandName}
                   autoComplete="off"
                   helpText={locale === 'fr'
-                    ? 'Le nom qui sera recherche dans les reponses IA'
-                    : 'The name that will be searched for in AI responses'}
+                    ? 'Le terme qui sera recherche dans les reponses IA (ex: nom de marque, type de produit)'
+                    : 'The term that will be searched for in AI responses (e.g., brand name, product type)'}
                 />
 
                 {/* Custom Queries - Inline editable */}
@@ -362,8 +369,13 @@ export default function CompetitorsPage() {
                   <TextField
                     label=""
                     labelHidden
-                    value={customQueries.join('\n')}
-                    onChange={(value) => setCustomQueries(value.split('\n').map((q) => q.trim()).filter((q) => q.length > 0))}
+                    value={customQueriesRaw}
+                    onChange={setCustomQueriesRaw}
+                    onBlur={() => {
+                      // Only process into array when leaving the field
+                      const queries = customQueriesRaw.split('\n').map((q) => q.trim()).filter((q) => q.length > 0);
+                      setCustomQueries(queries);
+                    }}
                     multiline={4}
                     autoComplete="off"
                     placeholder={suggestedQueries.join('\n')}
@@ -376,7 +388,10 @@ export default function CompetitorsPage() {
                       <Button
                         key={i}
                         size="slim"
-                        onClick={() => setCustomQueries((prev) => [...prev, q])}
+                        onClick={() => {
+                          setCustomQueriesRaw((prev) => prev ? `${prev}\n${q}` : q);
+                          setCustomQueries((prev) => [...prev, q]);
+                        }}
                       >
                         + {q.length > 25 ? `${q.substring(0, 25)}...` : q}
                       </Button>

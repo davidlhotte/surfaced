@@ -25,6 +25,7 @@ import {
   Tabs,
   Checkbox,
   TextField,
+  RangeSlider,
 } from '@shopify/polaris';
 import {
   RefreshIcon,
@@ -32,6 +33,7 @@ import {
   MagicIcon,
   CheckIcon,
   UndoIcon,
+  ReplayIcon,
 } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
@@ -156,9 +158,33 @@ export default function ProductsPage() {
   const [suggestionsToApply, setSuggestionsToApply] = useState<OptimizationSuggestion[]>([]);
   const [lastAppliedHistoryIds, setLastAppliedHistoryIds] = useState<string[]>([]);
 
+  // Regenerate field state
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regeneratingField, setRegeneratingField] = useState<{
+    index: number;
+    field: string;
+    original: string;
+  } | null>(null);
+  const [regenerateCharLimit, setRegenerateCharLimit] = useState(250);
+  const [regenerateInstructions, setRegenerateInstructions] = useState('');
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
   const { fetch: authFetch } = useAuthenticatedFetch();
   const { isLoading: shopLoading, isAuthenticated, shopDetectionFailed, error: shopError } = useShopContext();
   const { t, locale } = useAdminLanguage();
+
+  // Character limits for each field (must be after locale is defined)
+  const fieldCharLimits: Record<string, { min: number; max: number; default: number; label: string }> = locale === 'fr' ? {
+    description: { min: 100, max: 500, default: 250, label: 'Nombre de caractères' },
+    seoTitle: { min: 30, max: 70, default: 55, label: 'Nombre de caractères' },
+    seoDescription: { min: 100, max: 200, default: 155, label: 'Nombre de caractères' },
+    tags: { min: 5, max: 15, default: 8, label: 'Nombre de tags' },
+  } : {
+    description: { min: 100, max: 500, default: 250, label: 'Character count' },
+    seoTitle: { min: 30, max: 70, default: 55, label: 'Character count' },
+    seoDescription: { min: 100, max: 200, default: 155, label: 'Character count' },
+    tags: { min: 5, max: 15, default: 8, label: 'Number of tags' },
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -300,6 +326,87 @@ export default function ProductsPage() {
     };
     setSuggestionsToApply([editedSuggestion]);
     setShowApplyConfirm(true);
+  };
+
+  // Open regenerate modal for a specific field
+  const openRegenerateModal = (index: number, suggestion: OptimizationSuggestion) => {
+    const fieldKey = suggestion.field === 'seo_title' ? 'seoTitle' :
+                     suggestion.field === 'seo_description' ? 'seoDescription' :
+                     suggestion.field;
+    const limits = fieldCharLimits[fieldKey] || fieldCharLimits.description;
+
+    setRegeneratingField({
+      index,
+      field: suggestion.field,
+      original: suggestion.original,
+    });
+    setRegenerateCharLimit(limits.default);
+    setRegenerateInstructions('');
+    setShowRegenerateModal(true);
+  };
+
+  // Perform field regeneration
+  const handleRegenerateField = async () => {
+    if (!regeneratingField || !optimization) return;
+
+    try {
+      setIsRegenerating(true);
+      setError(null);
+
+      const fieldKey = regeneratingField.field === 'seo_title' ? 'seoTitle' :
+                       regeneratingField.field === 'seo_description' ? 'seoDescription' :
+                       regeneratingField.field;
+
+      const response = await authFetch('/api/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: optimization.productId,
+          field: fieldKey,
+          characterLimit: regenerateCharLimit,
+          customInstructions: regenerateInstructions || undefined,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data.suggestion) {
+        // Update the suggestion in the optimization state
+        const newSuggestions = [...optimization.suggestions];
+        newSuggestions[regeneratingField.index] = {
+          ...newSuggestions[regeneratingField.index],
+          suggested: result.data.suggestion.suggested,
+          reasoning: result.data.suggestion.reasoning,
+          improvement: result.data.suggestion.improvement,
+        };
+
+        setOptimization({
+          ...optimization,
+          suggestions: newSuggestions,
+        });
+
+        // Clear any edited value for this field
+        setEditedSuggestions((prev) => {
+          const newEdited = { ...prev };
+          delete newEdited[regeneratingField.index];
+          return newEdited;
+        });
+
+        // Update quota
+        if (result.data.quota) {
+          setQuota(result.data.quota);
+        }
+
+        setShowRegenerateModal(false);
+        setSuccess(locale === 'fr' ? 'Suggestion régénérée avec succès !' : 'Suggestion regenerated successfully!');
+      } else {
+        setError(result.error || (locale === 'fr' ? 'Échec de la régénération' : 'Regeneration failed'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : (locale === 'fr' ? 'Erreur lors de la régénération' : 'Error during regeneration'));
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   const handleApplySelected = () => {
@@ -1159,11 +1266,19 @@ export default function ProductsPage() {
                           </InlineStack>
                           <InlineStack gap="200">
                             <Button
+                              icon={ReplayIcon}
+                              size="slim"
+                              onClick={() => openRegenerateModal(index, suggestion)}
+                              disabled={!quota?.available}
+                            >
+                              {locale === 'fr' ? 'Régénérer' : 'Regenerate'}
+                            </Button>
+                            <Button
                               icon={ClipboardIcon}
                               size="slim"
-                              onClick={() => handleCopy(suggestion.suggested, suggestion.field)}
+                              onClick={() => handleCopy(getSuggestionValue(index, suggestion), suggestion.field)}
                             >
-                              {copied === suggestion.field ? (locale === 'fr' ? 'Copie !' : 'Copied!') : (locale === 'fr' ? 'Copier' : 'Copy')}
+                              {copied === suggestion.field ? (locale === 'fr' ? 'Copié !' : 'Copied!') : (locale === 'fr' ? 'Copier' : 'Copy')}
                             </Button>
                             <Button
                               icon={CheckIcon}
@@ -1300,6 +1415,142 @@ export default function ProductsPage() {
               </Text>
             </Banner>
           </BlockStack>
+        </Modal.Section>
+      </Modal>
+
+      {/* Regenerate Field Modal */}
+      <Modal
+        open={showRegenerateModal}
+        onClose={() => setShowRegenerateModal(false)}
+        title={locale === 'fr'
+          ? `Régénérer : ${regeneratingField ? getFieldLabel(regeneratingField.field) : ''}`
+          : `Regenerate: ${regeneratingField ? getFieldLabel(regeneratingField.field) : ''}`}
+        primaryAction={{
+          content: locale === 'fr' ? 'Régénérer' : 'Regenerate',
+          icon: ReplayIcon,
+          onAction: handleRegenerateField,
+          loading: isRegenerating,
+          disabled: !quota?.available,
+        }}
+        secondaryActions={[
+          {
+            content: t.common.cancel,
+            onAction: () => setShowRegenerateModal(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          {regeneratingField && (
+            <BlockStack gap="500">
+              <Banner tone="info">
+                <Text as="p">
+                  {locale === 'fr'
+                    ? 'Personnalisez la régénération de ce champ avec vos propres paramètres.'
+                    : 'Customize the regeneration of this field with your own parameters.'}
+                </Text>
+              </Banner>
+
+              {/* Character/Tag count slider */}
+              <BlockStack gap="200">
+                <Text as="p" fontWeight="semibold">
+                  {(() => {
+                    const fieldKey = regeneratingField.field === 'seo_title' ? 'seoTitle' :
+                                     regeneratingField.field === 'seo_description' ? 'seoDescription' :
+                                     regeneratingField.field;
+                    return fieldCharLimits[fieldKey]?.label || (locale === 'fr' ? 'Nombre de caractères' : 'Character count');
+                  })()}
+                </Text>
+                <RangeSlider
+                  label=""
+                  labelHidden
+                  value={regenerateCharLimit}
+                  min={(() => {
+                    const fieldKey = regeneratingField.field === 'seo_title' ? 'seoTitle' :
+                                     regeneratingField.field === 'seo_description' ? 'seoDescription' :
+                                     regeneratingField.field;
+                    return fieldCharLimits[fieldKey]?.min || 100;
+                  })()}
+                  max={(() => {
+                    const fieldKey = regeneratingField.field === 'seo_title' ? 'seoTitle' :
+                                     regeneratingField.field === 'seo_description' ? 'seoDescription' :
+                                     regeneratingField.field;
+                    return fieldCharLimits[fieldKey]?.max || 500;
+                  })()}
+                  onChange={(value) => setRegenerateCharLimit(value as number)}
+                  output
+                  suffix={
+                    <Box minWidth="60px">
+                      <Text as="span" variant="bodySm">
+                        {regeneratingField.field === 'tags'
+                          ? (locale === 'fr' ? `${regenerateCharLimit} tags` : `${regenerateCharLimit} tags`)
+                          : (locale === 'fr' ? `${regenerateCharLimit} car.` : `${regenerateCharLimit} chars`)}
+                      </Text>
+                    </Box>
+                  }
+                />
+                <Text as="p" variant="bodySm" tone="subdued">
+                  {regeneratingField.field === 'tags'
+                    ? (locale === 'fr' ? 'Nombre de tags à générer' : 'Number of tags to generate')
+                    : (locale === 'fr' ? 'Longueur cible pour le texte généré' : 'Target length for generated text')}
+                </Text>
+              </BlockStack>
+
+              {/* Custom instructions */}
+              <BlockStack gap="200">
+                <Text as="p" fontWeight="semibold">
+                  {locale === 'fr' ? 'Instructions personnalisées (optionnel)' : 'Custom instructions (optional)'}
+                </Text>
+                <TextField
+                  label=""
+                  labelHidden
+                  value={regenerateInstructions}
+                  onChange={setRegenerateInstructions}
+                  multiline={3}
+                  placeholder={locale === 'fr'
+                    ? 'Ex: Mentionner que le produit est éco-responsable, utiliser un ton plus professionnel, inclure des mots-clés spécifiques...'
+                    : 'Ex: Mention that the product is eco-friendly, use a more professional tone, include specific keywords...'}
+                  autoComplete="off"
+                />
+                <Text as="p" variant="bodySm" tone="subdued">
+                  {locale === 'fr'
+                    ? 'Ajoutez des instructions spécifiques pour guider la génération IA'
+                    : 'Add specific instructions to guide the AI generation'}
+                </Text>
+              </BlockStack>
+
+              {/* Current value preview */}
+              {regeneratingField.original && (
+                <BlockStack gap="200">
+                  <Text as="p" fontWeight="semibold">
+                    {locale === 'fr' ? 'Valeur actuelle' : 'Current value'}
+                  </Text>
+                  <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                    <Text as="p" variant="bodySm">
+                      {regeneratingField.original.length > 200
+                        ? `${regeneratingField.original.substring(0, 200)}...`
+                        : regeneratingField.original || (locale === 'fr' ? '(vide)' : '(empty)')}
+                    </Text>
+                  </Box>
+                </BlockStack>
+              )}
+
+              {/* Quota warning */}
+              {quota && (
+                <InlineStack gap="200" blockAlign="center">
+                  <Badge tone={quota.available ? 'success' : 'critical'}>
+                    {locale === 'fr'
+                      ? `${quota.remaining} crédit${quota.remaining !== 1 ? 's' : ''} restant${quota.remaining !== 1 ? 's' : ''}`
+                      : `${quota.remaining} credit${quota.remaining !== 1 ? 's' : ''} remaining`}
+                  </Badge>
+                  {!quota.available && (
+                    <Text as="span" variant="bodySm" tone="critical">
+                      {locale === 'fr' ? 'Limite atteinte ce mois-ci' : 'Limit reached this month'}
+                    </Text>
+                  )}
+                </InlineStack>
+              )}
+            </BlockStack>
+          )}
         </Modal.Section>
       </Modal>
     </Page>

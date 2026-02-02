@@ -141,6 +141,7 @@ export default function VisibilityPage() {
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [checkingPlatforms, setCheckingPlatforms] = useState<Set<Platform>>(new Set());
+  const [checkProgress, setCheckProgress] = useState(0); // Progress percentage
   const [error, setError] = useState<string | null>(null);
   const [customQuery, setCustomQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState(''); // What we're looking for in responses
@@ -195,7 +196,7 @@ export default function VisibilityPage() {
   };
 
   // Fetch history
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (preserveSearchTerm = false) => {
     try {
       setLoading(true);
       const response = await authenticatedFetch('/api/visibility');
@@ -205,8 +206,10 @@ export default function VisibilityPage() {
         setSessions(result.sessions || []);
         if (result.brandName) {
           setBrandName(result.brandName);
-          // Initialize searchTerm with brandName if not already set
-          if (!searchTerm) setSearchTerm(result.brandName);
+          // Initialize searchTerm with brandName only on first load (not after running a check)
+          if (!preserveSearchTerm && !searchTerm) {
+            setSearchTerm(result.brandName);
+          }
         }
         // Set current results from the most recent session
         if (result.sessions && result.sessions.length > 0) {
@@ -220,7 +223,7 @@ export default function VisibilityPage() {
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch]);
+  }, [authenticatedFetch, searchTerm]);
 
   useEffect(() => {
     fetchHistory();
@@ -228,24 +231,38 @@ export default function VisibilityPage() {
 
   // Run visibility check
   const runCheck = async (query: string) => {
-    if (!query.trim() || !searchTerm.trim()) return;
+    // Use searchTerm if set, otherwise use brandName as default
+    const termToUse = searchTerm.trim() || brandName;
+    if (!query.trim() || !termToUse) return;
 
     try {
       setChecking(true);
+      setCheckProgress(0);
       setError(null);
       setCurrentResults([]);
       setSelectedSession(null);
       // Mark all platforms as checking
-      setCheckingPlatforms(new Set(Object.keys(PLATFORMS) as Platform[]));
+      const allPlatforms = Object.keys(PLATFORMS) as Platform[];
+      setCheckingPlatforms(new Set(allPlatforms));
+
+      // Simulate progress while waiting for the API
+      const progressInterval = setInterval(() => {
+        setCheckProgress((prev) => {
+          if (prev >= 90) return prev; // Cap at 90% until complete
+          return prev + Math.random() * 10;
+        });
+      }, 500);
 
       const response = await authenticatedFetch('/api/visibility', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           queries: [query],
-          searchTerm: searchTerm.trim(), // Pass the term to search for
+          searchTerm: termToUse, // Pass the term to search for (uses user input or defaults to brand)
         }),
       });
+
+      clearInterval(progressInterval);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -253,10 +270,12 @@ export default function VisibilityPage() {
       }
 
       const result = await response.json();
+      setCheckProgress(100);
+
       if (result.success) {
         if (result.data.brandName) setBrandName(result.data.brandName);
-        // Refresh to get updated history
-        await fetchHistory();
+        // Refresh to get updated history, but preserve the user's search term
+        await fetchHistory(true);
       } else {
         setError(result.error || 'Error');
       }
@@ -264,6 +283,7 @@ export default function VisibilityPage() {
       setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setChecking(false);
+      setCheckProgress(0);
       setCheckingPlatforms(new Set());
     }
   };
@@ -396,10 +416,13 @@ export default function VisibilityPage() {
                   <TextField
                     label=""
                     labelHidden
-                    placeholder={t.searchTermPlaceholder}
-                    value={searchTerm || brandName}
+                    placeholder={brandName || t.searchTermPlaceholder}
+                    value={searchTerm}
                     onChange={setSearchTerm}
                     autoComplete="off"
+                    helpText={locale === 'fr'
+                      ? `Terme qui sera recherché dans les réponses IA. Par défaut: "${brandName}"`
+                      : `Term to search for in AI responses. Default: "${brandName}"`}
                     connectedLeft={
                       <div style={{
                         padding: '8px 12px',
@@ -450,12 +473,12 @@ export default function VisibilityPage() {
                 <div style={{ display: 'inline-block' }}>
                   <button
                     onClick={() => runCheck(customQuery)}
-                    disabled={!customQuery.trim() || !searchTerm.trim() || checking}
+                    disabled={!customQuery.trim() || checking}
                     style={{
-                      background: (!customQuery.trim() || !searchTerm.trim() || checking)
+                      background: (!customQuery.trim() || checking)
                         ? '#E0F2FE'
                         : 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
-                      color: (!customQuery.trim() || !searchTerm.trim() || checking)
+                      color: (!customQuery.trim() || checking)
                         ? '#64748B'
                         : 'white',
                       border: 'none',
@@ -463,8 +486,8 @@ export default function VisibilityPage() {
                       borderRadius: '10px',
                       fontWeight: '600',
                       fontSize: '16px',
-                      cursor: (!customQuery.trim() || !searchTerm.trim() || checking) ? 'not-allowed' : 'pointer',
-                      boxShadow: (!customQuery.trim() || !searchTerm.trim() || checking)
+                      cursor: (!customQuery.trim() || checking) ? 'not-allowed' : 'pointer',
+                      boxShadow: (!customQuery.trim() || checking)
                         ? 'none'
                         : '0 4px 14px rgba(14, 165, 233, 0.4)',
                       display: 'flex',
@@ -846,6 +869,94 @@ export default function VisibilityPage() {
           </Card>
         </Layout.Section>
       </Layout>
+
+      {/* Progress Modal - Blocks UI during visibility check */}
+      <Modal
+        open={checking}
+        onClose={() => {}} // Prevent closing while checking
+        title={locale === 'fr' ? 'Test de visibilité en cours...' : 'Visibility test in progress...'}
+        noScroll
+      >
+        <Modal.Section>
+          <BlockStack gap="500">
+            {/* Progress indicator */}
+            <BlockStack gap="300" inlineAlign="center">
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                animation: 'pulse 2s infinite'
+              }}>
+                <Text as="span" variant="heading2xl">🔍</Text>
+              </div>
+              <Text as="p" variant="headingMd" alignment="center">
+                {locale === 'fr'
+                  ? 'Interrogation des assistants IA...'
+                  : 'Querying AI assistants...'}
+              </Text>
+            </BlockStack>
+
+            {/* Progress bar */}
+            <BlockStack gap="200">
+              <ProgressBar progress={checkProgress} tone="highlight" size="medium" />
+              <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                {Math.round(checkProgress)}%
+              </Text>
+            </BlockStack>
+
+            {/* Platform list being checked */}
+            <BlockStack gap="200">
+              <Text as="p" variant="bodySm" fontWeight="semibold" alignment="center">
+                {locale === 'fr' ? 'Plateformes testées :' : 'Platforms being tested:'}
+              </Text>
+              <InlineStack gap="200" align="center" blockAlign="center">
+                {(Object.entries(PLATFORMS) as [Platform, typeof PLATFORMS[Platform]][]).map(([key, platform]) => (
+                  <div
+                    key={key}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '8px',
+                      background: checkingPlatforms.has(key) ? 'rgba(14, 165, 233, 0.1)' : '#F1F5F9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      opacity: checkingPlatforms.has(key) ? 1 : 0.5,
+                    }}
+                  >
+                    <Text as="span" variant="bodySm">{platform.icon}</Text>
+                    <Text as="span" variant="bodySm">{platform.displayName}</Text>
+                    {checkingPlatforms.has(key) && <Spinner size="small" />}
+                  </div>
+                ))}
+              </InlineStack>
+            </BlockStack>
+
+            {/* Search term reminder */}
+            <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+              <BlockStack gap="100">
+                <Text as="span" variant="bodySm" tone="subdued" alignment="center">
+                  {locale === 'fr' ? 'Recherche de :' : 'Looking for:'}
+                </Text>
+                <Text as="p" fontWeight="bold" alignment="center">
+                  &quot;{searchTerm || brandName}&quot;
+                </Text>
+              </BlockStack>
+            </Box>
+
+            <Banner tone="info">
+              <Text as="p" variant="bodySm">
+                {locale === 'fr'
+                  ? 'Cette opération peut prendre jusqu\'à 30 secondes. Veuillez ne pas fermer cette fenêtre.'
+                  : 'This operation may take up to 30 seconds. Please do not close this window.'}
+              </Text>
+            </Banner>
+          </BlockStack>
+        </Modal.Section>
+      </Modal>
 
       {/* Detail Modal */}
       <Modal

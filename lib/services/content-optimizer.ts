@@ -17,6 +17,14 @@ export type OptimizationSuggestion = {
   improvement: string; // Brief description of what was improved
 };
 
+// Character limits for each field type
+export const FIELD_CHARACTER_LIMITS = {
+  description: { min: 100, max: 500, default: 250 },
+  seoTitle: { min: 30, max: 70, default: 55 },
+  seoDescription: { min: 100, max: 200, default: 155 },
+  tags: { min: 5, max: 15, default: 8 }, // number of tags
+} as const;
+
 export type ProductOptimization = {
   productId: string;
   title: string;
@@ -169,24 +177,106 @@ export async function generateOptimizationSuggestions(
 }
 
 /**
- * Generate an optimized product description
+ * Regenerate a single field with custom parameters
  */
-async function generateDescriptionSuggestion(
+export async function regenerateSingleField(
+  shopDomain: string,
+  productId: string,
+  field: 'description' | 'seoTitle' | 'seoDescription' | 'tags',
+  productData: {
+    title: string;
+    description: string;
+    seoTitle?: string;
+    seoDescription?: string;
+    productType?: string;
+    vendor?: string;
+    tags: string[];
+  },
+  options: {
+    characterLimit?: number;
+    customInstructions?: string;
+  } = {}
+): Promise<OptimizationSuggestion | null> {
+  logger.info({ shopDomain, productId, field, options }, 'Regenerating single field');
+
+  // Check quota
+  const quota = await checkOptimizationQuota(shopDomain);
+  if (!quota.available) {
+    throw new Error(`AI optimization limit reached (${quota.limit}/month). Upgrade your plan for more.`);
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  let suggestion: OptimizationSuggestion | null = null;
+
+  switch (field) {
+    case 'description':
+      suggestion = await generateDescriptionSuggestionWithOptions(productData, options);
+      break;
+    case 'seoTitle':
+      suggestion = await generateSeoTitleSuggestionWithOptions(productData, options);
+      break;
+    case 'seoDescription':
+      suggestion = await generateSeoDescriptionSuggestionWithOptions(productData, options);
+      break;
+    case 'tags':
+      suggestion = await generateTagsSuggestionWithOptions(productData, options);
+      break;
+  }
+
+  // Log the regeneration
+  const shop = await prisma.shop.findUnique({
+    where: { shopDomain },
+    select: { id: true },
+  });
+
+  if (shop) {
+    await prisma.auditLog.create({
+      data: {
+        shopId: shop.id,
+        action: 'ai_optimization',
+        details: {
+          type: 'regenerate_field',
+          productId,
+          field,
+          characterLimit: options.characterLimit,
+          hasCustomInstructions: !!options.customInstructions,
+        },
+      },
+    });
+  }
+
+  return suggestion;
+}
+
+/**
+ * Generate an optimized product description with custom options
+ */
+async function generateDescriptionSuggestionWithOptions(
   productData: {
     title: string;
     description: string;
     productType?: string;
     vendor?: string;
     tags: string[];
-  }
+  },
+  options: {
+    characterLimit?: number;
+    customInstructions?: string;
+  } = {}
 ): Promise<OptimizationSuggestion | null> {
   if (!process.env.OPENAI_API_KEY) {
     logger.warn('OpenAI API key not configured, skipping description optimization');
     return null;
   }
 
+  const charLimit = options.characterLimit || FIELD_CHARACTER_LIMITS.description.default;
+  const wordCount = Math.round(charLimit / 5); // Approximate words from characters
+
   try {
-    const prompt = `You are an e-commerce content optimizer. Create an engaging, AI-friendly product description for this product.
+    let prompt = `You are an e-commerce content optimizer. Create an engaging, AI-friendly product description for this product.
 
 Product Title: ${productData.title}
 Current Description: ${productData.description || 'None'}
@@ -195,14 +285,18 @@ Brand/Vendor: ${productData.vendor || 'Not specified'}
 Tags: ${productData.tags.join(', ') || 'None'}
 
 Requirements:
-- Write 150-300 words
+- Write approximately ${charLimit} characters (about ${wordCount} words)
 - Include key features and benefits
 - Use natural language that AI assistants can easily understand
 - Include relevant keywords naturally
 - Focus on what makes this product valuable to customers
-- Do not use excessive marketing speak or clickbait
+- Do not use excessive marketing speak or clickbait`;
 
-Return ONLY the description text, no quotes or formatting.`;
+    if (options.customInstructions) {
+      prompt += `\n\nAdditional instructions from the user:\n${options.customInstructions}`;
+    }
+
+    prompt += '\n\nReturn ONLY the description text, no quotes or formatting.';
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -216,7 +310,7 @@ Return ONLY the description text, no quotes or formatting.`;
           content: prompt,
         },
       ],
-      max_tokens: 500,
+      max_tokens: Math.max(500, Math.round(charLimit * 1.5)),
       temperature: 0.7,
     });
 
@@ -230,15 +324,266 @@ Return ONLY the description text, no quotes or formatting.`;
       field: 'description',
       original: productData.description || '',
       suggested,
-      reasoning: 'AI assistants need detailed, natural language descriptions to accurately recommend products. This optimized description includes key features, benefits, and relevant keywords.',
+      reasoning: options.customInstructions
+        ? `Generated with your custom instructions. Target: ~${charLimit} characters.`
+        : `AI-optimized description with ~${charLimit} characters, including key features and natural language.`,
       improvement: productData.description
-        ? 'Enhanced description with more detail and natural language'
+        ? `Regenerated with ${charLimit} char target`
         : 'Added comprehensive product description',
     };
   } catch (error) {
     logger.error({ error }, 'Failed to generate description suggestion');
     return null;
   }
+}
+
+/**
+ * Generate an SEO title with custom options
+ */
+async function generateSeoTitleSuggestionWithOptions(
+  productData: {
+    title: string;
+    seoTitle?: string;
+    productType?: string;
+    vendor?: string;
+  },
+  options: {
+    characterLimit?: number;
+    customInstructions?: string;
+  } = {}
+): Promise<OptimizationSuggestion | null> {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+
+  const charLimit = options.characterLimit || FIELD_CHARACTER_LIMITS.seoTitle.default;
+
+  try {
+    let prompt = `Create an SEO-optimized page title for this product.
+
+Product: ${productData.title}
+Type: ${productData.productType || 'Not specified'}
+Brand: ${productData.vendor || 'Not specified'}
+Current SEO Title: ${productData.seoTitle || 'None'}
+
+Requirements:
+- Maximum ${charLimit} characters
+- Include primary keyword (product type)
+- Include brand if relevant
+- Make it compelling and clear`;
+
+    if (options.customInstructions) {
+      prompt += `\n\nAdditional instructions:\n${options.customInstructions}`;
+    }
+
+    prompt += '\n\nReturn ONLY the title text, no quotes.';
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an SEO expert. Create concise, keyword-rich page titles.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 100,
+      temperature: 0.5,
+    });
+
+    const suggested = completion.choices[0]?.message?.content?.trim() || '';
+
+    if (!suggested) {
+      return null;
+    }
+
+    return {
+      field: 'seoTitle',
+      original: productData.seoTitle || '',
+      suggested,
+      reasoning: options.customInstructions
+        ? `Generated with your custom instructions. Target: ~${charLimit} characters.`
+        : `SEO title optimized for search engines, max ${charLimit} characters.`,
+      improvement: `Regenerated SEO title (${charLimit} char max)`,
+    };
+  } catch (error) {
+    logger.error({ error }, 'Failed to generate SEO title suggestion');
+    return null;
+  }
+}
+
+/**
+ * Generate an SEO description with custom options
+ */
+async function generateSeoDescriptionSuggestionWithOptions(
+  productData: {
+    title: string;
+    description: string;
+    seoDescription?: string;
+    productType?: string;
+  },
+  options: {
+    characterLimit?: number;
+    customInstructions?: string;
+  } = {}
+): Promise<OptimizationSuggestion | null> {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+
+  const charLimit = options.characterLimit || FIELD_CHARACTER_LIMITS.seoDescription.default;
+
+  try {
+    let prompt = `Create an SEO meta description for this product.
+
+Product: ${productData.title}
+Type: ${productData.productType || 'Not specified'}
+Description: ${productData.description?.substring(0, 200) || 'Not available'}
+Current Meta Description: ${productData.seoDescription || 'None'}
+
+Requirements:
+- Maximum ${charLimit} characters
+- Include a call to action
+- Summarize the key benefit
+- Include primary keyword naturally`;
+
+    if (options.customInstructions) {
+      prompt += `\n\nAdditional instructions:\n${options.customInstructions}`;
+    }
+
+    prompt += '\n\nReturn ONLY the meta description text, no quotes.';
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an SEO expert. Create compelling meta descriptions.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 150,
+      temperature: 0.5,
+    });
+
+    const suggested = completion.choices[0]?.message?.content?.trim() || '';
+
+    if (!suggested) {
+      return null;
+    }
+
+    return {
+      field: 'seoDescription',
+      original: productData.seoDescription || '',
+      suggested,
+      reasoning: options.customInstructions
+        ? `Generated with your custom instructions. Target: ~${charLimit} characters.`
+        : `Meta description optimized for click-through, max ${charLimit} characters.`,
+      improvement: `Regenerated meta description (${charLimit} char max)`,
+    };
+  } catch (error) {
+    logger.error({ error }, 'Failed to generate SEO description suggestion');
+    return null;
+  }
+}
+
+/**
+ * Generate tags with custom options
+ */
+async function generateTagsSuggestionWithOptions(
+  productData: {
+    title: string;
+    description: string;
+    productType?: string;
+    tags: string[];
+  },
+  options: {
+    characterLimit?: number; // Used as tag count for tags
+    customInstructions?: string;
+  } = {}
+): Promise<OptimizationSuggestion | null> {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+
+  const tagCount = options.characterLimit || FIELD_CHARACTER_LIMITS.tags.default;
+
+  try {
+    let prompt = `Suggest tags for this product to improve discoverability.
+
+Product: ${productData.title}
+Type: ${productData.productType || 'Not specified'}
+Description: ${productData.description?.substring(0, 300) || 'Not available'}
+Current Tags: ${productData.tags.join(', ') || 'None'}
+
+Requirements:
+- Suggest exactly ${tagCount} relevant tags
+- Include category, material, style, use case tags
+- Make them specific and useful for filtering
+- Separate with commas`;
+
+    if (options.customInstructions) {
+      prompt += `\n\nAdditional instructions:\n${options.customInstructions}`;
+    }
+
+    prompt += '\n\nReturn ONLY the comma-separated tags, no other text.';
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an e-commerce expert. Suggest relevant product tags.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 200,
+      temperature: 0.5,
+    });
+
+    const suggestedTags = completion.choices[0]?.message?.content?.trim() || '';
+
+    if (!suggestedTags) {
+      return null;
+    }
+
+    return {
+      field: 'tags',
+      original: productData.tags.join(', '),
+      suggested: suggestedTags,
+      reasoning: options.customInstructions
+        ? `Generated ${tagCount} tags with your custom instructions.`
+        : `${tagCount} relevant tags for better product categorization.`,
+      improvement: `Regenerated with ${tagCount} tags`,
+    };
+  } catch (error) {
+    logger.error({ error }, 'Failed to generate tags suggestion');
+    return null;
+  }
+}
+
+/**
+ * Generate an optimized product description
+ */
+async function generateDescriptionSuggestion(
+  productData: {
+    title: string;
+    description: string;
+    productType?: string;
+    vendor?: string;
+    tags: string[];
+  }
+): Promise<OptimizationSuggestion | null> {
+  return generateDescriptionSuggestionWithOptions(productData, {});
 }
 
 /**

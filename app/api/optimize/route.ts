@@ -7,6 +7,8 @@ import {
   generateOptimizationSuggestions,
   getProductsForOptimization,
   checkOptimizationQuota,
+  regenerateSingleField,
+  FIELD_CHARACTER_LIMITS,
 } from '@/lib/services/content-optimizer';
 import {
   fetchProductById,
@@ -83,19 +85,112 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/optimize
  * Generate optimization suggestions for a product
+ * Supports both full optimization and single-field regeneration
+ *
+ * For full optimization: { productId }
+ * For single field: { productId, field, characterLimit?, customInstructions? }
  */
 export async function POST(request: NextRequest) {
   try {
     const shopDomain = await getShopFromRequest(request, { rateLimit: true });
 
     const body = await request.json();
-    const { productId } = body;
+    const { productId, field, characterLimit, customInstructions } = body;
 
     if (!productId) {
       return NextResponse.json(
         { success: false, error: 'Product ID is required' },
         { status: 400 }
       );
+    }
+
+    // If field is specified, do single-field regeneration
+    if (field) {
+      const validFields = ['description', 'seoTitle', 'seoDescription', 'tags'];
+      if (!validFields.includes(field)) {
+        return NextResponse.json(
+          { success: false, error: `Invalid field. Must be one of: ${validFields.join(', ')}` },
+          { status: 400 }
+        );
+      }
+
+      // Get shop with access token
+      const shop = await prisma.shop.findUnique({
+        where: { shopDomain },
+        select: { accessToken: true },
+      });
+
+      if (!shop) {
+        return NextResponse.json(
+          { success: false, error: 'Shop not found' },
+          { status: 404 }
+        );
+      }
+
+      // Fetch product data from Shopify
+      const accessToken = decryptToken(shop.accessToken);
+      const productGid = `gid://shopify/Product/${productId}`;
+
+      let productData;
+      try {
+        productData = await fetchProductById(shopDomain, accessToken, productGid);
+      } catch {
+        return NextResponse.json(
+          { success: false, error: 'Failed to fetch product from Shopify' },
+          { status: 500 }
+        );
+      }
+
+      if (!productData) {
+        return NextResponse.json(
+          { success: false, error: 'Product not found in Shopify' },
+          { status: 404 }
+        );
+      }
+
+      // Regenerate the single field
+      const suggestion = await regenerateSingleField(
+        shopDomain,
+        productId,
+        field as 'description' | 'seoTitle' | 'seoDescription' | 'tags',
+        {
+          title: productData.title,
+          description: productData.description || '',
+          seoTitle: productData.seo?.title || undefined,
+          seoDescription: productData.seo?.description || undefined,
+          productType: productData.productType || undefined,
+          vendor: productData.vendor || undefined,
+          tags: productData.tags || [],
+        },
+        {
+          characterLimit,
+          customInstructions,
+        }
+      );
+
+      if (!suggestion) {
+        return NextResponse.json(
+          { success: false, error: 'Failed to generate suggestion' },
+          { status: 500 }
+        );
+      }
+
+      // Get updated quota
+      const quota = await checkOptimizationQuota(shopDomain);
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          suggestion,
+          fieldLimits: FIELD_CHARACTER_LIMITS[field as keyof typeof FIELD_CHARACTER_LIMITS],
+          quota: {
+            used: quota.used,
+            limit: quota.limit,
+            remaining: quota.remaining,
+            available: quota.available,
+          },
+        },
+      });
     }
 
     // Get shop with access token

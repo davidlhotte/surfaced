@@ -409,30 +409,59 @@ export default function Dashboard() {
 
                 {/* Score breakdown */}
                 <BlockStack gap="300">
-                  <Text as="p" variant="bodyMd">
-                    <strong>{data?.audit.auditedProducts}</strong> {t.dashboard.productsAnalyzed}
-                  </Text>
-
-                  {criticalCount > 0 && (
-                    <Box padding="200" background="bg-surface-critical" borderRadius="200">
-                      <InlineStack gap="200" blockAlign="center">
-                        <Icon source={AlertTriangleIcon} tone="critical" />
-                        <Text as="span" variant="bodySm">
-                          <strong>{criticalCount}</strong> {t.dashboard.needsUrgentAttention}
-                        </Text>
-                      </InlineStack>
+                  {/* Products Analyzed - Clickable */}
+                  <Link href="/admin/products" style={{ textDecoration: 'none' }}>
+                    <Box padding="200" background="bg-surface-secondary" borderRadius="200" borderWidth="025" borderColor="border">
+                      <div style={{ cursor: 'pointer' }}>
+                        <InlineStack align="space-between" blockAlign="center">
+                          <InlineStack gap="200" blockAlign="center">
+                            <Icon source={ProductIcon} tone="base" />
+                            <Text as="span" variant="bodyMd">
+                              <strong>{data?.audit.auditedProducts}</strong> {t.dashboard.productsAnalyzed}
+                            </Text>
+                          </InlineStack>
+                          <Text as="span" variant="bodySm" tone="subdued">→</Text>
+                        </InlineStack>
+                      </div>
                     </Box>
+                  </Link>
+
+                  {/* Critical Issues - Clickable */}
+                  {criticalCount > 0 && (
+                    <Link href="/admin/products?filter=critical" style={{ textDecoration: 'none' }}>
+                      <Box padding="200" background="bg-surface-critical" borderRadius="200">
+                        <div style={{ cursor: 'pointer' }}>
+                          <InlineStack align="space-between" blockAlign="center">
+                            <InlineStack gap="200" blockAlign="center">
+                              <Icon source={AlertTriangleIcon} tone="critical" />
+                              <Text as="span" variant="bodySm">
+                                <strong>{criticalCount}</strong> {t.dashboard.needsUrgentAttention}
+                              </Text>
+                            </InlineStack>
+                            <Text as="span" variant="bodySm" tone="critical">→</Text>
+                          </InlineStack>
+                        </div>
+                      </Box>
+                    </Link>
                   )}
 
+                  {/* Warning Issues - Clickable */}
                   {warningCount > 0 && criticalCount === 0 && (
-                    <Box padding="200" background="bg-surface-warning" borderRadius="200">
-                      <InlineStack gap="200" blockAlign="center">
-                        <Icon source={AlertTriangleIcon} tone="warning" />
-                        <Text as="span" variant="bodySm">
-                          <strong>{warningCount}</strong> {t.dashboard.canBeImproved}
-                        </Text>
-                      </InlineStack>
-                    </Box>
+                    <Link href="/admin/products?filter=warning" style={{ textDecoration: 'none' }}>
+                      <Box padding="200" background="bg-surface-warning" borderRadius="200">
+                        <div style={{ cursor: 'pointer' }}>
+                          <InlineStack align="space-between" blockAlign="center">
+                            <InlineStack gap="200" blockAlign="center">
+                              <Icon source={AlertTriangleIcon} tone="warning" />
+                              <Text as="span" variant="bodySm">
+                                <strong>{warningCount}</strong> {t.dashboard.canBeImproved}
+                              </Text>
+                            </InlineStack>
+                            <Text as="span" variant="bodySm" tone="caution">→</Text>
+                          </InlineStack>
+                        </div>
+                      </Box>
+                    </Link>
                   )}
 
                   {criticalCount === 0 && warningCount === 0 && (
@@ -465,13 +494,13 @@ export default function Dashboard() {
         {/* Quick Stats - Only for returning users - Clickable to Statistics */}
         {hasAnalyzed && (
           <InlineStack gap="400" wrap>
-            {/* AI Visibility Metric - Clickable */}
-            <Link href="/admin/insights?metric=visibility" style={{ textDecoration: 'none' }}>
-              <Box minWidth="200px" maxWidth="300px">
+            {/* AI Visibility Metric - Circular Gauge - Clickable */}
+            <Link href="/admin/visibility" style={{ textDecoration: 'none' }}>
+              <Box minWidth="220px" maxWidth="280px">
                 <Card>
                   <div style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}>
-                    <BlockStack gap="200">
-                      <InlineStack align="space-between" blockAlign="center">
+                    <BlockStack gap="300" inlineAlign="center">
+                      <InlineStack align="space-between" blockAlign="center" gap="400">
                         <InlineStack gap="200" blockAlign="center">
                           <Icon source={ViewIcon} tone="base" />
                           <Text as="h3" variant="headingSm">{t.dashboard.aiVisibility}</Text>
@@ -480,21 +509,37 @@ export default function Dashboard() {
                           {mentionRate >= 50 ? '↑' : mentionRate > 20 ? '→' : '↓'}
                         </Badge>
                       </InlineStack>
-                      <Text as="p" variant="heading2xl" fontWeight="bold">
-                        {mentionRate}%
-                      </Text>
-                      {/* Mini bar chart */}
-                      <div style={{ display: 'flex', gap: '2px', height: '20px', alignItems: 'flex-end' }}>
-                        {[40, 55, 45, 60, 50, mentionRate, mentionRate + 5].map((val, i) => (
-                          <div key={i} style={{
-                            width: '12px',
-                            height: `${Math.min(val, 100) * 0.2}px`,
-                            backgroundColor: i >= 5 ? '#0EA5E9' : '#E0E0E0',
-                            borderRadius: '2px',
-                          }} />
-                        ))}
+                      {/* Circular Gauge */}
+                      <div style={{
+                        width: '100px',
+                        height: '100px',
+                        borderRadius: '50%',
+                        background: `conic-gradient(${mentionRate >= 50 ? '#10B981' : mentionRate > 20 ? '#F59E0B' : '#EF4444'} ${mentionRate * 3.6}deg, #E4E5E7 0deg)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <div style={{
+                          width: '80px',
+                          height: '80px',
+                          borderRadius: '50%',
+                          backgroundColor: 'white',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                          <span style={{
+                            fontSize: '24px',
+                            fontWeight: 700,
+                            color: mentionRate >= 50 ? '#10B981' : mentionRate > 20 ? '#F59E0B' : '#EF4444'
+                          }}>
+                            {mentionRate}
+                          </span>
+                          <span style={{ fontSize: '11px', color: '#6D7175' }}>/ 100</span>
+                        </div>
                       </div>
-                      <InlineStack align="space-between" blockAlign="center">
+                      <InlineStack align="space-between" blockAlign="center" gap="300">
                         <Text as="p" variant="bodySm" tone="subdued">
                           {t.dashboard.mentionRate}
                         </Text>
@@ -506,13 +551,13 @@ export default function Dashboard() {
               </Box>
             </Link>
 
-            {/* AI Score Metric - Clickable */}
-            <Link href="/admin/insights?metric=score" style={{ textDecoration: 'none' }}>
-              <Box minWidth="200px" maxWidth="300px">
+            {/* AI Score Metric - Circular Gauge - Clickable */}
+            <Link href="/admin/products" style={{ textDecoration: 'none' }}>
+              <Box minWidth="220px" maxWidth="280px">
                 <Card>
                   <div style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}>
-                    <BlockStack gap="200">
-                      <InlineStack align="space-between" blockAlign="center">
+                    <BlockStack gap="300" inlineAlign="center">
+                      <InlineStack align="space-between" blockAlign="center" gap="400">
                         <InlineStack gap="200" blockAlign="center">
                           <Icon source={ChartVerticalFilledIcon} tone="base" />
                           <Text as="h3" variant="headingSm">{t.dashboard.aiScore}</Text>
@@ -521,23 +566,35 @@ export default function Dashboard() {
                           {score >= 70 ? '↑' : score >= 40 ? '→' : '↓'}
                         </Badge>
                       </InlineStack>
-                      <Text as="p" variant="heading2xl" fontWeight="bold">
-                        {score}/100
-                      </Text>
-                      {/* Mini bar chart */}
-                      <div style={{ display: 'flex', gap: '2px', height: '20px', alignItems: 'flex-end' }}>
-                        {[50, 55, 60, 65, 70, score, score + 2].map((val, i) => (
-                          <div key={i} style={{
-                            width: '12px',
-                            height: `${Math.min(val, 100) * 0.2}px`,
-                            backgroundColor: i >= 5 ? '#10B981' : '#E0E0E0',
-                            borderRadius: '2px',
-                          }} />
-                        ))}
+                      {/* Circular Gauge */}
+                      <div style={{
+                        width: '100px',
+                        height: '100px',
+                        borderRadius: '50%',
+                        background: `conic-gradient(${scoreInfo.color} ${score * 3.6}deg, #E4E5E7 0deg)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <div style={{
+                          width: '80px',
+                          height: '80px',
+                          borderRadius: '50%',
+                          backgroundColor: 'white',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                          <span style={{ fontSize: '24px', fontWeight: 700, color: scoreInfo.color }}>
+                            {score}
+                          </span>
+                          <span style={{ fontSize: '11px', color: '#6D7175' }}>/ 100</span>
+                        </div>
                       </div>
-                      <InlineStack align="space-between" blockAlign="center">
+                      <InlineStack align="space-between" blockAlign="center" gap="300">
                         <Text as="p" variant="bodySm" tone="subdued">
-                          {locale === 'fr' ? 'Moyenne de vos produits' : 'Average across products'}
+                          {locale === 'fr' ? 'Score AEO moyen' : 'Average AEO score'}
                         </Text>
                         <Text as="span" variant="bodySm" tone="subdued">→</Text>
                       </InlineStack>
