@@ -22,8 +22,11 @@ import {
   ResourceItem,
   ProgressBar,
   Modal,
+  Thumbnail,
+  Autocomplete,
+  Icon,
 } from '@shopify/polaris';
-import { PlusCircleIcon } from '@shopify/polaris-icons';
+import { PlusCircleIcon, SearchIcon } from '@shopify/polaris-icons';
 import { useAuthenticatedFetch, useShopContext } from '@/components/providers/ShopProvider';
 import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { AdminNav } from '@/components/admin/AdminNav';
@@ -53,6 +56,18 @@ type Quota = {
   remaining: number;
 };
 
+type Product = {
+  id: string;
+  title: string;
+  handle: string;
+  images: {
+    edges: Array<{
+      node: { url: string; altText: string | null };
+    }>;
+  };
+  aiScore: number | null;
+};
+
 export default function ABTestsPage() {
   const { t, locale } = useAdminLanguage();
   const { fetch: authenticatedFetch } = useAuthenticatedFetch();
@@ -71,6 +86,12 @@ export default function ABTestsPage() {
     field: 'description',
     variantB: '',
   });
+
+  // Product picker state
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [productSearchValue, setProductSearchValue] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const fetchTests = useCallback(async () => {
     try {
@@ -94,6 +115,32 @@ export default function ABTestsPage() {
   useEffect(() => {
     fetchTests();
   }, [fetchTests]);
+
+  // Fetch products when modal opens
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoadingProducts(true);
+      const response = await authenticatedFetch('/api/products?limit=100');
+      if (!response.ok) throw new Error('Failed to load products');
+      const result = await response.json();
+      if (result.success) {
+        setProducts(result.data.products);
+      }
+    } catch (err) {
+      console.error('Error loading products:', err);
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, [authenticatedFetch]);
+
+  // Open modal and fetch products
+  const openCreateModal = useCallback(() => {
+    setShowCreateModal(true);
+    setNewTest({ name: '', productId: '', field: 'description', variantB: '' });
+    setSelectedProduct(null);
+    setProductSearchValue('');
+    fetchProducts();
+  }, [fetchProducts]);
 
   const createTest = async () => {
     if (!newTest.name || !newTest.productId || !newTest.variantB) {
@@ -261,7 +308,7 @@ export default function ABTestsPage() {
       primaryAction={{
         content: t.abTests.createTest,
         icon: PlusCircleIcon,
-        onAction: () => setShowCreateModal(true),
+        onAction: openCreateModal,
         disabled: !quota?.canCreate,
       }}
     >
@@ -362,7 +409,7 @@ export default function ABTestsPage() {
                   </BlockStack>
 
                   <Box paddingBlockStart="200">
-                    <Button variant="primary" size="large" onClick={() => setShowCreateModal(true)}>
+                    <Button variant="primary" size="large" onClick={openCreateModal}>
                       {t.abTests.createFirstTest}
                     </Button>
                   </Box>
@@ -576,14 +623,92 @@ export default function ABTestsPage() {
               autoComplete="off"
               helpText={t.abTests.testNameHelp}
             />
-            <TextField
-              label={t.abTests.productId}
-              placeholder={t.abTests.productIdPlaceholder}
-              value={newTest.productId}
-              onChange={(value) => setNewTest({ ...newTest, productId: value })}
-              autoComplete="off"
-              helpText={t.abTests.productIdHelp}
-            />
+            {/* Product Picker */}
+            <BlockStack gap="200">
+              <Text as="span" variant="bodyMd" fontWeight="semibold">
+                {locale === 'fr' ? 'Produit à tester' : 'Product to test'}
+              </Text>
+              {loadingProducts ? (
+                <InlineStack gap="200" blockAlign="center">
+                  <Spinner size="small" />
+                  <Text as="span" tone="subdued">
+                    {locale === 'fr' ? 'Chargement des produits...' : 'Loading products...'}
+                  </Text>
+                </InlineStack>
+              ) : products.length === 0 ? (
+                <Banner tone="warning">
+                  <Text as="p">
+                    {locale === 'fr'
+                      ? 'Aucun produit trouvé. Assurez-vous d\'avoir des produits dans votre boutique.'
+                      : 'No products found. Make sure you have products in your store.'}
+                  </Text>
+                </Banner>
+              ) : (
+                <BlockStack gap="200">
+                  <Autocomplete
+                    options={products
+                      .filter((p) =>
+                        p.title.toLowerCase().includes(productSearchValue.toLowerCase())
+                      )
+                      .slice(0, 20)
+                      .map((p) => ({
+                        value: p.id,
+                        label: p.title,
+                      }))}
+                    selected={newTest.productId ? [newTest.productId] : []}
+                    onSelect={(selected) => {
+                      const productId = selected[0];
+                      const product = products.find((p) => p.id === productId);
+                      if (product) {
+                        setNewTest({ ...newTest, productId: product.id });
+                        setSelectedProduct(product);
+                        setProductSearchValue(product.title);
+                      }
+                    }}
+                    textField={
+                      <Autocomplete.TextField
+                        onChange={(value) => {
+                          setProductSearchValue(value);
+                          if (!value) {
+                            setNewTest({ ...newTest, productId: '' });
+                            setSelectedProduct(null);
+                          }
+                        }}
+                        label=""
+                        labelHidden
+                        value={productSearchValue}
+                        placeholder={locale === 'fr' ? 'Rechercher un produit...' : 'Search for a product...'}
+                        autoComplete="off"
+                        prefix={<Icon source={SearchIcon} tone="subdued" />}
+                      />
+                    }
+                  />
+                  {/* Show selected product preview */}
+                  {selectedProduct && (
+                    <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                      <InlineStack gap="300" blockAlign="center">
+                        <Thumbnail
+                          source={selectedProduct.images.edges[0]?.node.url || ''}
+                          alt={selectedProduct.title}
+                          size="small"
+                        />
+                        <BlockStack gap="100">
+                          <Text as="span" fontWeight="semibold">{selectedProduct.title}</Text>
+                          <Text as="span" variant="bodySm" tone="subdued">
+                            {locale === 'fr' ? 'Sélectionné pour le test A/B' : 'Selected for A/B test'}
+                          </Text>
+                        </BlockStack>
+                      </InlineStack>
+                    </Box>
+                  )}
+                  <Text as="span" variant="bodySm" tone="subdued">
+                    {locale === 'fr'
+                      ? 'Tapez pour rechercher parmi vos produits'
+                      : 'Type to search among your products'}
+                  </Text>
+                </BlockStack>
+              )}
+            </BlockStack>
             <Select
               label={t.abTests.fieldToTest}
               options={[

@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getActiveSubscription,
-  updateShopPlan,
-  getPlanFromSubscriptionName,
-} from '@/lib/shopify/billing';
+import { syncShopPlanFromSubscription } from '@/lib/shopify/billing';
 import { logger, auditLog } from '@/lib/monitoring/logger';
-import { Plan } from '@prisma/client';
 import { isValidShopDomain } from '@/lib/utils/dev';
 import { prisma } from '@/lib/db/prisma';
 
@@ -43,20 +38,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const subscription = await getActiveSubscription(shop);
+    // Sync the shop's plan based on their Shopify subscription
+    const plan = await syncShopPlanFromSubscription(shop);
+    auditLog('plan_synced', shop, { plan, chargeId });
 
-    if (subscription && subscription.status === 'ACTIVE') {
-      const plan = getPlanFromSubscriptionName(subscription.name);
-      await updateShopPlan(shop, plan);
-      auditLog('plan_upgraded', shop, { plan, chargeId });
-    } else {
-      // Subscription was declined or cancelled
-      await updateShopPlan(shop, Plan.FREE);
-      auditLog('plan_downgraded', shop, { plan: Plan.FREE, chargeId });
-    }
-
-    // Redirect back to app
-    const redirectUrl = `https://${shop}/admin/apps/${process.env.SHOPIFY_API_KEY}`;
+    // Redirect back to app settings page
+    const redirectUrl = `https://${shop}/admin/apps/${process.env.SHOPIFY_API_KEY}/settings`;
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     logger.error({ error, shop, chargeId }, 'Billing callback error');

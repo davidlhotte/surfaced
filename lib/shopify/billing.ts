@@ -1,145 +1,26 @@
 import { shopify, getShopSession } from './auth';
 import { prisma } from '@/lib/db/prisma';
 import { Plan } from '@prisma/client';
-import { PLAN_PRICES } from '@/lib/constants/plans';
 import { logger } from '@/lib/monitoring/logger';
 
-export type BillingPlan = {
-  name: string;
-  price: number;
-  trialDays: number;
-  test: boolean;
-};
-
-// Allow test mode in production for development stores via env var
-const isTestMode = process.env.NODE_ENV !== 'production' || process.env.SHOPIFY_BILLING_TEST === 'true';
-
-const BILLING_PLANS: Record<Exclude<Plan, 'FREE'>, BillingPlan> = {
-  [Plan.BASIC]: {
-    name: 'LocateUs Basic',
-    price: PLAN_PRICES[Plan.BASIC],
-    trialDays: 7,
-    test: isTestMode,
-  },
-  [Plan.PLUS]: {
-    name: 'LocateUs Plus',
-    price: PLAN_PRICES[Plan.PLUS],
-    trialDays: 7,
-    test: isTestMode,
-  },
-  [Plan.PREMIUM]: {
-    name: 'LocateUs Premium',
-    price: PLAN_PRICES[Plan.PREMIUM],
-    trialDays: 7,
-    test: isTestMode,
-  },
-};
-
-export type SubscriptionResult = {
-  confirmationUrl: string | null;
-  error?: string;
-};
-
-export async function createSubscription(
-  shopDomain: string,
-  plan: Exclude<Plan, 'FREE'>
-): Promise<SubscriptionResult> {
-  console.log('[createSubscription] Starting for shop:', shopDomain, 'plan:', plan);
-
-  const session = await getShopSession(shopDomain);
-  if (!session) {
-    console.log('[createSubscription] No session found');
-    logger.error({ shopDomain }, 'No session found for shop');
-    return { confirmationUrl: null, error: 'No session found for shop. Please reinstall the app.' };
-  }
-
-  console.log('[createSubscription] Session found, accessToken starts with:', session.accessToken?.substring(0, 20));
-
-  // Check if we have a real access token (not a dev token)
-  if (!session.accessToken || session.accessToken.startsWith('dev-token')) {
-    console.log('[createSubscription] Invalid token - starts with dev-token or empty');
-    logger.error({ shopDomain }, 'Invalid or dev access token - app needs to be reinstalled');
-    return { confirmationUrl: null, error: 'Invalid access token. Please reinstall the app.' };
-  }
-
-  console.log('[createSubscription] Token looks valid, proceeding with billing');
-
-  const billingPlan = BILLING_PLANS[plan];
-  // Clean URL: remove whitespace, newlines, and ensure no trailing slash
-  const appUrl = (process.env.SHOPIFY_APP_URL || '').trim().replace(/[\n\r]/g, '').replace(/\/$/, '');
-  const returnUrl = `${appUrl}/api/billing/callback?shop=${shopDomain}`;
-
-  try {
-    const client = new shopify.clients.Graphql({ session });
-
-    const response = await client.request(
-      `mutation CreateSubscription($name: String!, $returnUrl: URL!, $trialDays: Int!, $test: Boolean!, $lineItems: [AppSubscriptionLineItemInput!]!) {
-        appSubscriptionCreate(
-          name: $name
-          returnUrl: $returnUrl
-          trialDays: $trialDays
-          test: $test
-          lineItems: $lineItems
-        ) {
-          appSubscription {
-            id
-          }
-          confirmationUrl
-          userErrors {
-            field
-            message
-          }
-        }
-      }`,
-      {
-        variables: {
-          name: billingPlan.name,
-          returnUrl,
-          trialDays: billingPlan.trialDays,
-          test: billingPlan.test,
-          lineItems: [
-            {
-              plan: {
-                appRecurringPricingDetails: {
-                  price: { amount: billingPlan.price, currencyCode: 'USD' },
-                  interval: 'EVERY_30_DAYS',
-                },
-              },
-            },
-          ],
-        },
-      }
-    );
-
-    const data = response.data as {
-      appSubscriptionCreate: {
-        confirmationUrl: string | null;
-        userErrors: Array<{ field: string; message: string }>;
-      };
-    };
-
-    if (data.appSubscriptionCreate.userErrors.length > 0) {
-      const errorMessages = data.appSubscriptionCreate.userErrors.map(e => e.message).join(', ');
-      logger.error({
-        errors: data.appSubscriptionCreate.userErrors,
-        shopDomain,
-      }, 'Billing errors');
-      return { confirmationUrl: null, error: `Shopify billing error: ${errorMessages}` };
-    }
-
-    return { confirmationUrl: data.appSubscriptionCreate.confirmationUrl };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error({ error, shopDomain, plan }, 'Failed to create subscription');
-    return { confirmationUrl: null, error: `Failed to create subscription: ${errorMessage}` };
-  }
-}
+/**
+ * Billing module for Surfaced app
+ *
+ * IMPORTANT: This app uses Shopify's Managed Pricing feature.
+ * Plans are configured in the Shopify Partner Dashboard, not via the Billing API.
+ *
+ * This module only handles:
+ * - Querying the current subscription status
+ * - Syncing the plan to our database
+ * - Mapping subscription names to our Plan enum
+ */
 
 export async function getActiveSubscription(
   shopDomain: string
-): Promise<{ id: string; name: string; status: string } | null> {
+): Promise<{ id: string; name: string; status: string; currentPeriodEnd?: string } | null> {
   const session = await getShopSession(shopDomain);
   if (!session) {
+    logger.warn({ shopDomain }, 'No session found when checking subscription');
     return null;
   }
 
@@ -153,6 +34,7 @@ export async function getActiveSubscription(
             id
             name
             status
+            currentPeriodEnd
           }
         }
       }`
@@ -160,16 +42,47 @@ export async function getActiveSubscription(
 
     const data = response.data as {
       currentAppInstallation: {
-        activeSubscriptions: Array<{ id: string; name: string; status: string }>;
+        activeSubscriptions: Array<{
+          id: string;
+          name: string;
+          status: string;
+          currentPeriodEnd?: string;
+        }>;
       };
     };
 
     const subscriptions = data.currentAppInstallation.activeSubscriptions;
-    return subscriptions.length > 0 ? subscriptions[0] : null;
+
+    if (subscriptions.length > 0) {
+      logger.info({ shopDomain, subscription: subscriptions[0] }, 'Active subscription found');
+      return subscriptions[0];
+    }
+
+    logger.info({ shopDomain }, 'No active subscription found');
+    return null;
   } catch (error) {
     logger.error({ error, shopDomain }, 'Failed to get active subscription');
     return null;
   }
+}
+
+/**
+ * Sync the shop's plan based on their active Shopify subscription
+ * This should be called periodically or after subscription webhooks
+ */
+export async function syncShopPlanFromSubscription(shopDomain: string): Promise<Plan> {
+  const subscription = await getActiveSubscription(shopDomain);
+
+  let plan: Plan = Plan.FREE;
+
+  if (subscription && subscription.status === 'ACTIVE') {
+    plan = getPlanFromSubscriptionName(subscription.name);
+  }
+
+  // Update the shop's plan in our database
+  await updateShopPlan(shopDomain, plan);
+
+  return plan;
 }
 
 export async function updateShopPlan(shopDomain: string, plan: Plan): Promise<void> {
@@ -181,9 +94,33 @@ export async function updateShopPlan(shopDomain: string, plan: Plan): Promise<vo
   logger.info({ shopDomain, plan }, 'Shop plan updated');
 }
 
+/**
+ * Map Shopify subscription name to our Plan enum
+ * These names should match what's configured in Shopify Partner Dashboard
+ */
 export function getPlanFromSubscriptionName(name: string): Plan {
-  if (name.includes('Premium')) return Plan.PREMIUM;
-  if (name.includes('Plus')) return Plan.PLUS;
-  if (name.includes('Basic')) return Plan.BASIC;
+  const nameLower = name.toLowerCase();
+
+  // Match based on plan names configured in Shopify Partner Dashboard
+  if (nameLower.includes('premium') || nameLower.includes('scale')) {
+    return Plan.PREMIUM;
+  }
+  if (nameLower.includes('plus') || nameLower.includes('growth')) {
+    return Plan.PLUS;
+  }
+  if (nameLower.includes('basic') || nameLower.includes('starter')) {
+    return Plan.BASIC;
+  }
+
   return Plan.FREE;
+}
+
+/**
+ * Get the URL to manage subscription (for redirecting users)
+ * With Managed Pricing, users manage their subscription through Shopify
+ */
+export function getSubscriptionManagementUrl(shopDomain: string): string {
+  // This redirects to the Shopify admin page where users can manage their app subscription
+  const shopName = shopDomain.replace('.myshopify.com', '');
+  return `https://admin.shopify.com/store/${shopName}/charges/surfaced/pricing_plans`;
 }

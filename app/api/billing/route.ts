@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  createSubscription,
   getActiveSubscription,
+  syncShopPlanFromSubscription,
+  getSubscriptionManagementUrl,
 } from '@/lib/shopify/billing';
-import { handleApiError, ValidationError } from '@/lib/utils/errors';
-import { Plan } from '@prisma/client';
-import { z } from 'zod';
+import { handleApiError } from '@/lib/utils/errors';
 import { getShopFromRequest, getShopData } from '@/lib/shopify/get-shop';
 
-const billingSchema = z.object({
-  plan: z.enum(['BASIC', 'PLUS', 'PREMIUM']),
-});
-
+/**
+ * GET /api/billing
+ *
+ * Returns the current billing status for the shop.
+ * With Managed Pricing, subscriptions are handled by Shopify.
+ * This endpoint syncs the subscription status and returns plan info.
+ */
 export async function GET(request: NextRequest) {
   try {
     const shop = await getShopFromRequest(request);
-    const shopData = await getShopData(shop);
 
+    // Sync plan from Shopify subscription
+    await syncShopPlanFromSubscription(shop);
+
+    // Get fresh shop data after sync
+    const shopData = await getShopData(shop);
     const subscription = await getActiveSubscription(shop);
 
     return NextResponse.json({
@@ -25,6 +31,8 @@ export async function GET(request: NextRequest) {
         plan: shopData.plan,
         trialEndsAt: shopData.trialEndsAt,
         subscription,
+        // URL for users to manage their subscription via Shopify
+        managementUrl: getSubscriptionManagementUrl(shop),
       },
     });
   } catch (error) {
@@ -32,45 +40,28 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * POST /api/billing
+ *
+ * With Managed Pricing, we don't create subscriptions via API.
+ * Instead, redirect users to Shopify's subscription management page.
+ */
 export async function POST(request: NextRequest) {
   try {
-    console.log('[Billing] POST request received');
-
     const shop = await getShopFromRequest(request);
-    console.log('[Billing] Shop from request:', shop);
 
-    // We don't need shopData for POST, just verify the shop exists
-    const shopData = await getShopData(shop);
-    console.log('[Billing] Shop data found, current plan:', shopData.plan);
+    // Return the URL where users can manage/upgrade their subscription
+    const managementUrl = getSubscriptionManagementUrl(shop);
 
-    const body = await request.json();
-    console.log('[Billing] Request body:', body);
-
-    const validation = billingSchema.safeParse(body);
-
-    if (!validation.success) {
-      console.log('[Billing] Validation failed:', validation.error);
-      throw new ValidationError('Invalid plan');
-    }
-
-    const { plan } = validation.data;
-    console.log('[Billing] Creating subscription for plan:', plan);
-
-    const result = await createSubscription(shop, plan as Exclude<Plan, 'FREE'>);
-    console.log('[Billing] Subscription result:', result);
-
-    if (!result.confirmationUrl) {
-      console.log('[Billing] No confirmation URL, error:', result.error);
-      throw new ValidationError(result.error || 'Failed to create subscription');
-    }
-
-    console.log('[Billing] Success, redirecting to:', result.confirmationUrl);
     return NextResponse.json({
       success: true,
-      data: { confirmationUrl: result.confirmationUrl },
+      data: {
+        // This URL redirects to Shopify's pricing page for this app
+        confirmationUrl: managementUrl,
+        message: 'Subscriptions are managed through Shopify. Redirecting to pricing page.',
+      },
     });
   } catch (error) {
-    console.error('[Billing] Error:', error);
     return handleApiError(error);
   }
 }

@@ -18,7 +18,7 @@ api_version = "2025-01"
   shop_deletion_url = "https://surfaced.vercel.app/api/webhooks/gdpr/shop-redact"
 
 [access_scopes]
-scopes = "read_products,write_products,read_content,write_content,read_themes,write_themes"
+scopes = "read_products,write_products,read_content,write_content"
 use_legacy_install_flow = false
 
 [auth]
