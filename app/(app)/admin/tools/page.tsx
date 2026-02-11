@@ -885,7 +885,7 @@ export default function ToolsPage() {
                   {t.tools.generateJsonLd}
                 </Button>
 
-                {/* Installation Steps */}
+                {/* Usage Info - No theme editing instructions */}
                 <Box
                   padding="400"
                   background="bg-surface-info"
@@ -893,64 +893,15 @@ export default function ToolsPage() {
                 >
                   <BlockStack gap="300">
                     <Text as="h3" variant="headingSm">
-                      📥 {t.tools.installationSteps}
+                      💡 {locale === 'fr' ? 'Comment utiliser ce code' : 'How to use this code'}
                     </Text>
-                    <BlockStack gap="200">
-                      <InlineStack gap="300" blockAlign="start">
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '50%',
-                          background: '#5c6ac4',
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          flexShrink: 0,
-                        }}>1</div>
-                        <Text as="p" variant="bodyMd">{t.tools.step1Copy}</Text>
-                      </InlineStack>
-                      <InlineStack gap="300" blockAlign="start">
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '50%',
-                          background: '#5c6ac4',
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          flexShrink: 0,
-                        }}>2</div>
-                        <Text as="p" variant="bodyMd">
-                          {t.tools.step2Themes}
-                        </Text>
-                      </InlineStack>
-                      <InlineStack gap="300" blockAlign="start">
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '50%',
-                          background: '#5c6ac4',
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          flexShrink: 0,
-                        }}>3</div>
-                        <Text as="p" variant="bodyMd">
-                          {t.tools.step3Paste}
-                        </Text>
-                      </InlineStack>
-                    </BlockStack>
+                    <Text as="p" variant="bodyMd">
+                      {locale === 'fr'
+                        ? 'Ce code JSON-LD aide les moteurs de recherche à mieux comprendre votre boutique. Vous pouvez le copier et l\'utiliser avec votre intégration personnalisée ou le transmettre à votre développeur.'
+                        : 'This JSON-LD code helps search engines better understand your store. You can copy it and use it with your custom integration or share it with your developer.'}
+                    </Text>
                     <Banner tone="info">
-                      {t.tools.testOnGoogle} <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6ac4' }}>Google Rich Results Test</a>
+                      {locale === 'fr' ? 'Testez votre code sur' : 'Test your code on'} <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6ac4' }}>Google Rich Results Test</a>
                     </Banner>
                   </BlockStack>
                 </Box>
