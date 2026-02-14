@@ -37,6 +37,8 @@ import { NotAuthenticated } from '@/components/admin/NotAuthenticated';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { PageBanner } from '@/components/admin/PageBanner';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
+import { PLAN_NAMES } from '@/lib/constants/plans';
+import type { Plan } from '@prisma/client';
 
 type DashboardData = {
   shop: {
@@ -656,7 +658,7 @@ export default function Dashboard() {
                         </InlineStack>
                       </InlineStack>
                       <Text as="p" variant="heading2xl" fontWeight="bold">
-                        {data?.shop.plan || 'FREE'}
+                        {PLAN_NAMES[(data?.shop.plan || 'FREE') as Plan]}
                       </Text>
                       <InlineStack align="space-between" blockAlign="center">
                         <Text as="p" variant="bodySm" tone="subdued">

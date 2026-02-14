@@ -847,7 +847,7 @@ export const adminTranslations = {
       devMode: 'Developer mode: Test different plans (no billing)',
       devModeDesc: 'Click a plan to switch instantly without being charged.',
       planNames: {
-        free: 'Free',
+        free: 'Free Trial',
         starter: 'Starter',
         growth: 'Growth',
         scale: 'Scale',
@@ -1435,7 +1435,7 @@ export const adminTranslations = {
       devMode: 'Mode développeur : Testez différents plans (sans facturation)',
       devModeDesc: 'Cliquez sur un plan pour basculer instantanément sans être facturé.',
       planNames: {
-        free: 'Gratuit',
+        free: 'Essai gratuit',
         starter: 'Starter',
         growth: 'Growth',
         scale: 'Scale',
