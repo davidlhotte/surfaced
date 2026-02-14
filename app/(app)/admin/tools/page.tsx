@@ -885,7 +885,7 @@ export default function ToolsPage() {
                   {t.tools.generateJsonLd}
                 </Button>
 
-                {/* Usage Info - No theme editing instructions */}
+                {/* Usage Info - Developer instructions only */}
                 <Box
                   padding="400"
                   background="bg-surface-info"
@@ -893,15 +893,27 @@ export default function ToolsPage() {
                 >
                   <BlockStack gap="300">
                     <Text as="h3" variant="headingSm">
-                      💡 {locale === 'fr' ? 'Comment utiliser ce code' : 'How to use this code'}
+                      👨‍💻 {locale === 'fr' ? 'Pour les développeurs' : 'For developers'}
                     </Text>
                     <Text as="p" variant="bodyMd">
                       {locale === 'fr'
-                        ? 'Ce code JSON-LD aide les moteurs de recherche à mieux comprendre votre boutique. Vous pouvez le copier et l\'utiliser avec votre intégration personnalisée ou le transmettre à votre développeur.'
-                        : 'This JSON-LD code helps search engines better understand your store. You can copy it and use it with your custom integration or share it with your developer.'}
+                        ? 'Ce code JSON-LD est généré pour votre boutique. Téléchargez-le et transmettez-le à votre développeur qui pourra l\'implémenter via une Theme App Extension ou une solution technique appropriée.'
+                        : 'This JSON-LD code is generated for your store. Download it and share it with your developer who can implement it via a Theme App Extension or appropriate technical solution.'}
                     </Text>
+                    <Banner tone="warning">
+                      <BlockStack gap="200">
+                        <Text as="p" variant="bodySm" fontWeight="semibold">
+                          {locale === 'fr' ? 'Important' : 'Important'}
+                        </Text>
+                        <Text as="p" variant="bodySm">
+                          {locale === 'fr'
+                            ? 'L\'implémentation de ce code nécessite des compétences techniques. Nous recommandons de faire appel à un développeur Shopify qui utilisera les Theme App Extensions conformément aux guidelines Shopify.'
+                            : 'Implementing this code requires technical expertise. We recommend working with a Shopify developer who will use Theme App Extensions in accordance with Shopify guidelines.'}
+                        </Text>
+                      </BlockStack>
+                    </Banner>
                     <Banner tone="info">
-                      {locale === 'fr' ? 'Testez votre code sur' : 'Test your code on'} <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6ac4' }}>Google Rich Results Test</a>
+                      {locale === 'fr' ? 'Validez votre code sur' : 'Validate your code on'} <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6ac4' }}>Google Rich Results Test</a>
                     </Banner>
                   </BlockStack>
                 </Box>
