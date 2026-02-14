@@ -940,15 +940,15 @@ export default function ToolsPage() {
         ]}
       >
         <Modal.Section>
-          <Box padding="400" background="bg-surface-secondary" borderRadius="200">
+          <Box padding="300" background="bg-surface-secondary" borderRadius="200">
             <pre
               style={{
                 margin: 0,
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
                 fontFamily: 'monospace',
-                fontSize: '12px',
-                maxHeight: '500px',
+                fontSize: '11px',
+                maxHeight: '300px',
                 overflow: 'auto',
               }}
             >
