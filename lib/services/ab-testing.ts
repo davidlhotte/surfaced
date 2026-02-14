@@ -73,19 +73,35 @@ export async function checkABTestQuota(shopDomain: string): Promise<{
 }
 
 /**
+ * Extract numeric ID from Shopify GID
+ * Handles both "gid://shopify/Product/123456" and "123456" formats
+ */
+function extractProductId(productId: string): string {
+  if (productId.startsWith('gid://')) {
+    // Extract the numeric ID from the GID
+    const parts = productId.split('/');
+    return parts[parts.length - 1];
+  }
+  return productId;
+}
+
+/**
  * Create a new A/B test
  */
 export async function createABTest(
   shopDomain: string,
   input: CreateABTestInput
 ): Promise<ABTestSummary> {
+  // Extract numeric ID from GID format if needed
+  const numericProductId = extractProductId(input.productId);
+
   const shop = await prisma.shop.findUnique({
     where: { shopDomain },
     select: {
       id: true,
       plan: true,
       productsAudit: {
-        where: { shopifyProductId: BigInt(input.productId) },
+        where: { shopifyProductId: BigInt(numericProductId) },
         select: { title: true },
       },
     },
@@ -106,7 +122,7 @@ export async function createABTest(
   // Get current content (variant A)
   const productAudit = await prisma.productAudit.findFirst({
     where: {
-      shopifyProductId: BigInt(input.productId),
+      shopifyProductId: BigInt(numericProductId),
       shop: { shopDomain },
     },
   });
@@ -124,7 +140,7 @@ export async function createABTest(
     data: {
       shopId: shop.id,
       name: input.name,
-      shopifyProductId: BigInt(input.productId),
+      shopifyProductId: BigInt(numericProductId),
       productTitle,
       field: input.field,
       variantA,
