@@ -8,10 +8,10 @@ interface PlanBadgeProps {
 }
 
 const PLAN_CONFIG: Record<Plan, { label: string; tone: 'info' | 'success' | 'attention' | 'warning' }> = {
-  FREE: { label: 'Free', tone: 'info' },
-  BASIC: { label: 'Basic', tone: 'success' },
-  PLUS: { label: 'Plus', tone: 'attention' },
-  PREMIUM: { label: 'Premium', tone: 'warning' },
+  FREE: { label: 'Free Trial', tone: 'info' },
+  BASIC: { label: 'Starter', tone: 'success' },
+  PLUS: { label: 'Growth', tone: 'attention' },
+  PREMIUM: { label: 'Scale', tone: 'warning' },
 };
 
 export function PlanBadge({ plan }: PlanBadgeProps) {
