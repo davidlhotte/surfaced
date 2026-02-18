@@ -405,7 +405,7 @@ export default function BulkEditPage() {
                               {handle}
                             </Text>
                           </BlockStack>
-                          {aiScore !== undefined && (
+                          {aiScore != null && (
                             <Badge tone={aiScore >= 70 ? 'success' : aiScore >= 40 ? 'warning' : 'critical'}>
                               {`${aiScore}/100`}
                             </Badge>

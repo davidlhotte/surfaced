@@ -47,13 +47,6 @@ const AEO_TOOLS = [
     plans: ['FREE', 'BASIC', 'PLUS', 'PREMIUM'],
   },
   {
-    id: 'aiTraffic',
-    icon: '📊',
-    color: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-    href: '/admin/aeo-tools/ai-traffic',
-    plans: ['PLUS', 'PREMIUM'],
-  },
-  {
     id: 'sitemap',
     icon: '🗺️',
     color: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)',
@@ -138,11 +131,6 @@ export default function AeoToolsPage() {
           description: 'Control which AI bots (GPTBot, ClaudeBot, PerplexityBot) can crawl and learn from your store',
           stat: 'AI bots managed',
         },
-        aiTraffic: {
-          title: 'AI Traffic Tracking',
-          description: 'Track visitors coming from ChatGPT, Perplexity, Claude and other AI platforms',
-          stat: 'AI visits tracked',
-        },
         sitemap: {
           title: 'Sitemap Generator',
           description: 'Generate optimized XML sitemaps to help AI crawlers index your products',
@@ -188,11 +176,6 @@ export default function AeoToolsPage() {
           title: 'Gestionnaire Bots IA',
           description: 'Controlez quels bots IA (GPTBot, ClaudeBot, PerplexityBot) peuvent explorer votre boutique',
           stat: 'Bots IA geres',
-        },
-        aiTraffic: {
-          title: 'Suivi Trafic IA',
-          description: 'Suivez les visiteurs venant de ChatGPT, Perplexity, Claude et autres plateformes IA',
-          stat: 'Visites IA suivies',
         },
         sitemap: {
           title: 'Generateur Sitemap',
