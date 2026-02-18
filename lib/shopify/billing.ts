@@ -69,8 +69,23 @@ export async function getActiveSubscription(
 /**
  * Sync the shop's plan based on their active Shopify subscription
  * This should be called periodically or after subscription webhooks
+ *
+ * Note: If planOverride is set, it takes priority over the Shopify subscription
  */
 export async function syncShopPlanFromSubscription(shopDomain: string): Promise<Plan> {
+  // Check if shop has a manual override
+  const shop = await prisma.shop.findUnique({
+    where: { shopDomain },
+    select: { planOverride: true },
+  });
+
+  // If planOverride is set, use it and update plan field
+  if (shop?.planOverride) {
+    logger.info({ shopDomain, planOverride: shop.planOverride }, 'Using plan override');
+    await updateShopPlan(shopDomain, shop.planOverride);
+    return shop.planOverride;
+  }
+
   const subscription = await getActiveSubscription(shopDomain);
 
   let plan: Plan = Plan.FREE;

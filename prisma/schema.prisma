@@ -17,6 +17,7 @@ model Shop {
   name            String?   // Shop name from Shopify
   email           String?   // Shop owner email
   plan            Plan      @default(FREE)
+  planOverride    Plan?     // Manual override (takes priority over Shopify subscription)
   planStartedAt   DateTime?
   trialEndsAt     DateTime?
 
