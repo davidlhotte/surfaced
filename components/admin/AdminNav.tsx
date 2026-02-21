@@ -10,7 +10,6 @@ import {
   TargetIcon,
   SettingsIcon,
   ChartVerticalFilledIcon,
-  ReplayIcon,
   SearchIcon,
 } from '@shopify/polaris-icons';
 import { Icon } from '@shopify/polaris';
@@ -29,7 +28,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/competitors', labelEn: 'Competitors', labelFr: 'Concurrents', icon: TargetIcon },
   { href: '/admin/insights', labelEn: 'Statistics', labelFr: 'Statistiques', icon: ChartVerticalFilledIcon },
   { href: '/admin/aeo-tools', labelEn: 'AEO Tools', labelFr: 'Outils AEO', icon: SearchIcon },
-  { href: '/admin/ab-tests', labelEn: 'A/B Tests', labelFr: 'Tests A/B', icon: ReplayIcon },
   { href: '/admin/settings', labelEn: 'Settings', labelFr: 'Paramètres', icon: SettingsIcon },
 ];
 

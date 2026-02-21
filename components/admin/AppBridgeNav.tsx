@@ -15,7 +15,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Competitors', destination: '/admin/competitors' },
   { label: 'Statistics', destination: '/admin/insights' },
   { label: 'AEO Tools', destination: '/admin/aeo-tools' },
-  { label: 'A/B Tests', destination: '/admin/ab-tests' },
   { label: 'Settings', destination: '/admin/settings' },
 ];
 

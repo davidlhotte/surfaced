@@ -4,7 +4,7 @@ import { Banner, Text, InlineStack, Box } from '@shopify/polaris';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 interface PageBannerProps {
-  pageKey: 'dashboard' | 'products' | 'visibility' | 'competitors' | 'insights' | 'aeoTools' | 'abTests' | 'settings' | 'llmsTxt' | 'jsonLd' | 'robotsTxt' | 'aiTraffic' | 'sitemap' | 'duplicateContent' | 'bulkEdit' | 'reports';
+  pageKey: 'dashboard' | 'products' | 'visibility' | 'competitors' | 'insights' | 'aeoTools' | 'settings' | 'llmsTxt' | 'jsonLd' | 'robotsTxt' | 'sitemap' | 'duplicateContent' | 'bulkEdit' | 'reports';
 }
 
 type BannerContent = {
@@ -58,13 +58,6 @@ const BANNER_CONTENT: Record<PageBannerProps['pageKey'], BannerContent> = {
     descEn: 'AI Engine Optimization tools to make your store more discoverable by AI. Configure llms.txt, structured data, and analyze your technical SEO for AI crawlers.',
     descFr: 'Outils d\'optimisation pour moteurs IA pour rendre votre boutique plus découvrable. Configurez llms.txt, données structurées et analysez votre SEO technique.',
   },
-  abTests: {
-    icon: '🔬',
-    titleEn: 'A/B Testing',
-    titleFr: 'Tests A/B',
-    descEn: 'Test different product content variations to see which performs better in AI responses. Optimize your content based on real AI visibility data.',
-    descFr: 'Testez différentes variations de contenu pour voir lesquelles performent mieux dans les réponses IA. Optimisez basé sur des données réelles.',
-  },
   settings: {
     icon: '⚙️',
     titleEn: 'App Settings',
@@ -92,13 +85,6 @@ const BANNER_CONTENT: Record<PageBannerProps['pageKey'], BannerContent> = {
     titleFr: 'Analyse Robots.txt',
     descEn: 'Check if your robots.txt allows AI crawlers to access your content. Some AI assistants use web crawlers to gather information about your store.',
     descFr: 'Vérifiez si votre robots.txt autorise les crawlers IA à accéder à votre contenu. Certains assistants IA utilisent des crawlers web.',
-  },
-  aiTraffic: {
-    icon: '📊',
-    titleEn: 'AI Traffic Estimation',
-    titleFr: 'Estimation du Trafic IA',
-    descEn: 'Estimate how much of your traffic comes from AI assistant referrals. Understand the impact of AI visibility on your store performance.',
-    descFr: 'Estimez quelle part de votre trafic provient des assistants IA. Comprenez l\'impact de la visibilité IA sur les performances de votre boutique.',
   },
   sitemap: {
     icon: '🗺️',
