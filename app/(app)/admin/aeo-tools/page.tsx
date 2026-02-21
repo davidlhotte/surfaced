@@ -61,13 +61,6 @@ const AEO_TOOLS = [
     plans: ['BASIC', 'PLUS', 'PREMIUM'],
   },
   {
-    id: 'bulkEdit',
-    icon: '✏️',
-    color: 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)',
-    href: '/admin/aeo-tools/bulk-edit',
-    plans: ['BASIC', 'PLUS', 'PREMIUM'],
-  },
-  {
     id: 'reports',
     icon: '📈',
     color: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
@@ -141,11 +134,6 @@ export default function AeoToolsPage() {
           description: 'Detect duplicate content that confuses AI and hurts recommendations',
           stat: 'Content score',
         },
-        bulkEdit: {
-          title: 'Bulk Optimizer',
-          description: 'Optimize alt texts, meta tags, and descriptions for multiple products at once',
-          stat: 'Products optimized',
-        },
         reports: {
           title: 'AEO Reports',
           description: 'Generate comprehensive AI visibility and audit reports for your store',
@@ -186,11 +174,6 @@ export default function AeoToolsPage() {
           title: 'Qualite du Contenu',
           description: 'Detectez le contenu duplique qui confond les IA et nuit aux recommandations',
           stat: 'Score de contenu',
-        },
-        bulkEdit: {
-          title: 'Optimiseur en Masse',
-          description: 'Optimisez alt texts, meta tags et descriptions pour plusieurs produits a la fois',
-          stat: 'Produits optimises',
         },
         reports: {
           title: 'Rapports AEO',

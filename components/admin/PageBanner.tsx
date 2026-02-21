@@ -4,7 +4,7 @@ import { Banner, Text, InlineStack, Box } from '@shopify/polaris';
 import { useAdminLanguage } from '@/lib/i18n/AdminLanguageContext';
 
 interface PageBannerProps {
-  pageKey: 'dashboard' | 'products' | 'visibility' | 'competitors' | 'insights' | 'aeoTools' | 'settings' | 'llmsTxt' | 'jsonLd' | 'robotsTxt' | 'sitemap' | 'duplicateContent' | 'bulkEdit' | 'reports';
+  pageKey: 'dashboard' | 'products' | 'visibility' | 'competitors' | 'insights' | 'aeoTools' | 'settings' | 'llmsTxt' | 'jsonLd' | 'robotsTxt' | 'sitemap' | 'duplicateContent' | 'reports';
 }
 
 type BannerContent = {
@@ -99,13 +99,6 @@ const BANNER_CONTENT: Record<PageBannerProps['pageKey'], BannerContent> = {
     titleFr: 'Vérification de Contenu Dupliqué',
     descEn: 'Find duplicate product descriptions and content that may confuse AI assistants. Unique content helps AI recommend the right products.',
     descFr: 'Trouvez les descriptions produits et contenus dupliqués qui peuvent confondre les assistants IA. Un contenu unique aide l\'IA à recommander les bons produits.',
-  },
-  bulkEdit: {
-    icon: '✏️',
-    titleEn: 'Bulk Product Editor',
-    titleFr: 'Éditeur de Produits en Masse',
-    descEn: 'Edit multiple product titles and descriptions at once. Apply AI-optimized changes across your entire catalog efficiently.',
-    descFr: 'Modifiez plusieurs titres et descriptions de produits à la fois. Appliquez des modifications optimisées pour l\'IA sur tout votre catalogue.',
   },
   reports: {
     icon: '📊',
